@@ -30,6 +30,8 @@ type ConnectionManager struct {
 	emitter             EventEmitter
 	pendingChallengesMu sync.Mutex
 	pendingChallenges   map[string]chan authChallengeResponse
+	pendingSizes        map[string][2]int
+	connecting          map[string]bool
 	onSessionClosed     func(tabID string)
 	activeBroadcastsMu  sync.Mutex
 	activeBroadcasts    map[string]context.CancelFunc
@@ -42,6 +44,8 @@ func NewConnectionManager(credService *CredentialService, hostKeyService *HostKe
 	}
 	return &ConnectionManager{
 		sessions:          make(map[string]protocol.ProtocolSession),
+		pendingSizes:      make(map[string][2]int),
+		connecting:        make(map[string]bool),
 		credService:       credService,
 		hostKeyService:    hostKeyService,
 		logService:        logService,
@@ -70,7 +74,17 @@ func (cm *ConnectionManager) OpenSession(ctx context.Context, tabID string, prof
 		_ = old.Disconnect()
 		delete(cm.sessions, tabID)
 	}
+	if cm.connecting == nil {
+		cm.connecting = make(map[string]bool)
+	}
+	cm.connecting[tabID] = true
 	cm.mu.Unlock()
+
+	defer func() {
+		cm.mu.Lock()
+		delete(cm.connecting, tabID)
+		cm.mu.Unlock()
+	}()
 
 	proto := strings.ToLower(profile.Protocol)
 	if proto == "" {
@@ -128,6 +142,9 @@ func (cm *ConnectionManager) OpenSession(ctx context.Context, tabID string, prof
 
 		cm.mu.Lock()
 		delete(cm.sessions, tabID)
+		if cm.pendingSizes != nil {
+			delete(cm.pendingSizes, tabID)
+		}
 		hook := cm.onSessionClosed
 		cm.mu.Unlock()
 
@@ -160,7 +177,20 @@ func (cm *ConnectionManager) OpenSession(ctx context.Context, tabID string, prof
 
 	cm.mu.Lock()
 	cm.sessions[tabID] = session
+	var pending [2]int
+	hasPending := false
+	if cm.pendingSizes != nil {
+		if p, ok := cm.pendingSizes[tabID]; ok {
+			pending = p
+			hasPending = true
+			delete(cm.pendingSizes, tabID)
+		}
+	}
 	cm.mu.Unlock()
+
+	if hasPending && pending[0] > 0 && pending[1] > 0 {
+		_ = session.Resize(pending[0], pending[1])
+	}
 
 	if cm.logService != nil {
 		cm.logService.LogSessionEvent(tabID, "connected", fmt.Sprintf("[%s] session active", proto))
@@ -395,12 +425,22 @@ func (cm *ConnectionManager) Write(tabID string, data []byte) error {
 func (cm *ConnectionManager) Resize(tabID string, cols, rows int) error {
 	cm.mu.Lock()
 	sess, ok := cm.sessions[tabID]
+	if ok && sess != nil {
+		cm.mu.Unlock()
+		return sess.Resize(cols, rows)
+	}
+
+	if cm.connecting != nil && cm.connecting[tabID] {
+		if cm.pendingSizes == nil {
+			cm.pendingSizes = make(map[string][2]int)
+		}
+		cm.pendingSizes[tabID] = [2]int{cols, rows}
+		cm.mu.Unlock()
+		return nil
+	}
 	cm.mu.Unlock()
 
-	if !ok || sess == nil {
-		return fmt.Errorf("session not found: %s", tabID)
-	}
-	return sess.Resize(cols, rows)
+	return fmt.Errorf("session not found: %s", tabID)
 }
 
 // CloseSession terminates an active session.
@@ -409,6 +449,12 @@ func (cm *ConnectionManager) CloseSession(tabID string) error {
 	sess, ok := cm.sessions[tabID]
 	if ok && sess != nil {
 		delete(cm.sessions, tabID)
+	}
+	if cm.connecting != nil {
+		delete(cm.connecting, tabID)
+	}
+	if cm.pendingSizes != nil {
+		delete(cm.pendingSizes, tabID)
 	}
 	cm.mu.Unlock()
 

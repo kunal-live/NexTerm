@@ -499,8 +499,10 @@ export function refitAllTerminals() {
       if (t && t.fitAddon && t.term) {
         try {
           t.fitAddon.fit();
-          if (window.go && window.go.main && window.go.main.App) {
-            window.go.main.App.ResizeTerminal(tId, t.term.cols || 80, t.term.rows || 24);
+          const cols = (t.term.cols && t.term.cols > 0) ? t.term.cols : 120;
+          const rows = (t.term.rows && t.term.rows > 0) ? t.term.rows : 30;
+          if (window.go && window.go.main && window.go.main.App && window.go.main.App.ResizeTerminal) {
+            window.go.main.App.ResizeTerminal(tId, cols, rows).catch(() => {});
           }
         } catch (_) {}
       }

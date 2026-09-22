@@ -69,6 +69,26 @@ export function registerTerminalManagerDependencies(deps) {
 }
 
 // --------------------------------------------------------------------------
+// Terminal Dimension Synchronization
+// Ensures remote PTY / ConPTY rows and cols always match xterm viewport.
+// --------------------------------------------------------------------------
+
+export function syncTerminalSize(tabId) {
+  const t = tabs[tabId];
+  if (!t || !t.term) return;
+  try {
+    if (t.fitAddon) {
+      t.fitAddon.fit();
+    }
+    const cols = (t.term.cols && t.term.cols > 0) ? t.term.cols : 120;
+    const rows = (t.term.rows && t.term.rows > 0) ? t.term.rows : 30;
+    if (window.go && window.go.main && window.go.main.App && window.go.main.App.ResizeTerminal) {
+      window.go.main.App.ResizeTerminal(tabId, cols, rows).catch(() => {});
+    }
+  } catch (_) {}
+}
+
+// --------------------------------------------------------------------------
 // Reconnection Subsystem
 // --------------------------------------------------------------------------
 
@@ -339,6 +359,11 @@ export async function executeReconnectAttempt(tabId, attempt) {
   setTabConnectionState(tabId, "Reconnecting", null, `Connecting to ${profile.host} (Attempt ${attempt}/${maxAttempts})...`);
   if (t.term) {
     t.term.write(`\x1b[1;36m● [Attempt ${attempt}/${maxAttempts}] Connecting to ${profile.host}:${profile.port || 22}...\x1b[0m\r\n`);
+    try {
+      if (t.fitAddon) t.fitAddon.fit();
+      if (t.term.cols > 0) profile.cols = t.term.cols;
+      if (t.term.rows > 0) profile.rows = t.term.rows;
+    } catch (_) {}
   }
 
   let password = "";
@@ -363,6 +388,8 @@ export async function executeReconnectAttempt(tabId, attempt) {
       } else {
         await window.go.main.App.OpenSession(profile, password);
       }
+      syncTerminalSize(tabId);
+      setTimeout(() => syncTerminalSize(tabId), 60);
     }
 
     if (t.reconnectState) {
@@ -589,13 +616,11 @@ export function activateTab(tabId) {
   const currentTab = tabs[tabId];
   applyEnvGuard(currentTab);
   if (currentTab) {
+    syncTerminalSize(tabId);
     setTimeout(() => {
       try {
-        if (currentTab.fitAddon) currentTab.fitAddon.fit();
-        currentTab.term.focus();
-        if (window.go && window.go.main && window.go.main.App) {
-          window.go.main.App.ResizeTerminal(tabId, currentTab.term.cols || 120, currentTab.term.rows || 30);
-        }
+        syncTerminalSize(tabId);
+        if (currentTab.term) currentTab.term.focus();
       } catch (e) {}
     }, 40);
 
@@ -888,6 +913,31 @@ export function createTab(tabId, profile, isLocal = false, initialState = "Conne
   const { term, fitAddon, searchAddon } = createTerminalInstance(profile, userSettings);
   term.open(termCanvas);
 
+  const unsubs = [];
+
+  // Synchronize terminal dimensions to remote PTY whenever xterm is resized
+  term.onResize(({ cols, rows }) => {
+    if (window.go && window.go.main && window.go.main.App && window.go.main.App.ResizeTerminal) {
+      window.go.main.App.ResizeTerminal(tabId, cols, rows).catch(() => {});
+    }
+  });
+
+  // Observe container size changes (window resize, sidebar drag, pane split, SFTP drawer)
+  const termContainer = paneEl.querySelector(".pane-terminal-top") || paneEl;
+  let roTimer = null;
+  const ro = new ResizeObserver(() => {
+    clearTimeout(roTimer);
+    roTimer = setTimeout(() => {
+      try {
+        if (tabs[tabId] && tabs[tabId].fitAddon) {
+          tabs[tabId].fitAddon.fit();
+        }
+      } catch (_) {}
+    }, 40);
+  });
+  ro.observe(termContainer);
+  unsubs.push(() => ro.disconnect());
+
   // Terminal search keyboard intercept
   term.attachCustomKeyEventHandler((e) => {
     if ((e.ctrlKey || e.metaKey) && ((e.shiftKey && (e.key === "F" || e.key === "f")) || (!e.shiftKey && (e.key === "f" || e.key === "F")))) {
@@ -913,11 +963,8 @@ export function createTab(tabId, profile, isLocal = false, initialState = "Conne
 
   setTimeout(() => {
     try {
-      if (fitAddon) fitAddon.fit();
+      syncTerminalSize(tabId);
       term.focus();
-      if (window.go && window.go.main && window.go.main.App) {
-        window.go.main.App.ResizeTerminal(tabId, term.cols || 120, term.rows || 30);
-      }
     } catch (e) {}
   }, 50);
 
@@ -966,8 +1013,6 @@ export function createTab(tabId, profile, isLocal = false, initialState = "Conne
     }
   } catch (_) {}
 
-  const unsubs = [];
-
   if (window.runtime && window.runtime.EventsOn) {
     const unsubData = window.runtime.EventsOn("terminal:data:" + tabId, (data) => {
       term.write(data);
@@ -1006,6 +1051,8 @@ export function createTab(tabId, profile, isLocal = false, initialState = "Conne
       } else if (st === "Connected") {
         term.write(`\x1b[1;32m● Connected to ${profile.host}\x1b[0m\r\n\r\n`);
         showToast(`● Connected: ${profile.name || profile.host}`, "success", { eventType: "connect", isSystemEvent: true });
+        syncTerminalSize(tabId);
+        setTimeout(() => syncTerminalSize(tabId), 100);
         if (switchSidebarViewFn) switchSidebarViewFn("sftp");
         const currentSFTPPath = (tabs[tabId] && tabs[tabId].sftpPath) || (profile && profile.initialDir) || "~";
         if (refreshSFTPFn) refreshSFTPFn(currentSFTPPath);
@@ -1375,6 +1422,14 @@ export async function connectToSession(profile, forceNewTab = false) {
   setTabConnectionState(tabId, "Connecting", null, `Connecting to ${profile.host}...`);
 
   try {
+    if (tabs[tabId] && tabs[tabId].term) {
+      try {
+        if (tabs[tabId].fitAddon) tabs[tabId].fitAddon.fit();
+        if (tabs[tabId].term.cols > 0) profile.cols = tabs[tabId].term.cols;
+        if (tabs[tabId].term.rows > 0) profile.rows = tabs[tabId].term.rows;
+      } catch (_) {}
+    }
+
     if (window.go && window.go.main && window.go.main.App) {
       if (typeof window.go.main.App.OpenSessionWithTabIDAndJumpSecret === "function") {
         await window.go.main.App.OpenSessionWithTabIDAndJumpSecret(tabId, profile, password, jumpSecret);
@@ -1387,6 +1442,8 @@ export async function connectToSession(profile, forceNewTab = false) {
           deleteTab(tabId);
         }
       }
+      syncTerminalSize(tabId);
+      setTimeout(() => syncTerminalSize(tabId), 60);
     } else {
       // Preview / Browser test mode fallback
       await new Promise(r => setTimeout(r, 300));

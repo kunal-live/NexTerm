@@ -515,4 +515,61 @@ func TestCredentialService_FindSessionPasswordFallback(t *testing.T) {
 	}
 }
 
+type mockResizeSession struct {
+	protocol.BaseSession
+	lastCols int
+	lastRows int
+}
+
+func (m *mockResizeSession) Connect(ctx context.Context) error { return nil }
+func (m *mockResizeSession) Disconnect() error                 { return nil }
+func (m *mockResizeSession) Write(data []byte) error          { return nil }
+func (m *mockResizeSession) Resize(cols, rows int) error {
+	m.lastCols = cols
+	m.lastRows = rows
+	return nil
+}
+
+func TestConnectionManager_ResizePendingWhenConnecting(t *testing.T) {
+	cm := NewConnectionManager(nil, nil, nil, nil)
+	tabID := "test-tab-connecting"
+
+	// 1. Unknown tab ID returns error
+	if err := cm.Resize(tabID, 140, 40); err == nil {
+		t.Fatal("expected error for non-connecting unknown tab ID, got nil")
+	}
+
+	// 2. Mark tab connecting
+	cm.mu.Lock()
+	cm.connecting[tabID] = true
+	cm.mu.Unlock()
+
+	// 3. Resize during connection buffers dimensions and returns nil
+	if err := cm.Resize(tabID, 148, 42); err != nil {
+		t.Fatalf("expected nil error while connecting, got: %v", err)
+	}
+
+	// 4. Emulate session connect completion
+	mockSess := &mockResizeSession{}
+	cm.mu.Lock()
+	cm.sessions[tabID] = mockSess
+	var pending [2]int
+	hasPending := false
+	if p, ok := cm.pendingSizes[tabID]; ok {
+		pending = p
+		hasPending = true
+		delete(cm.pendingSizes, tabID)
+	}
+	delete(cm.connecting, tabID)
+	cm.mu.Unlock()
+
+	if hasPending {
+		_ = mockSess.Resize(pending[0], pending[1])
+	}
+
+	if mockSess.lastCols != 148 || mockSess.lastRows != 42 {
+		t.Fatalf("expected pending size 148x42 applied to session, got %dx%d", mockSess.lastCols, mockSess.lastRows)
+	}
+}
+
 

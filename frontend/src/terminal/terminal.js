@@ -208,7 +208,7 @@ export function createTerminalInstance(profile, userSettings) {
     rows: profile.rows > 0 ? profile.rows : 24,
     theme: themeObj,
     allowTransparency: true,
-    smoothScrollDuration: 120,
+    smoothScrollDuration: 0,
     scrollSensitivity: 1.5,
     fastScrollSensitivity: 5,
   });
