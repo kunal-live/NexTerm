@@ -22,6 +22,34 @@ export function AppendSessionLog(arg1, arg2, arg3) {
   return window['go']['main']['App']['AppendSessionLog'](arg1, arg2, arg3);
 }
 
+export function BRMClassifyQuestion(arg1) {
+  return window['go']['main']['App']['BRMClassifyQuestion'](arg1);
+}
+
+export function BRMDetectInstallation(arg1) {
+  return window['go']['main']['App']['BRMDetectInstallation'](arg1);
+}
+
+export function BRMDiagnose(arg1) {
+  return window['go']['main']['App']['BRMDiagnose'](arg1);
+}
+
+export function BRMDiscoverLogs(arg1, arg2) {
+  return window['go']['main']['App']['BRMDiscoverLogs'](arg1, arg2);
+}
+
+export function BRMGetErrorKnowledge(arg1) {
+  return window['go']['main']['App']['BRMGetErrorKnowledge'](arg1);
+}
+
+export function BRMGetOpcodeKnowledge(arg1) {
+  return window['go']['main']['App']['BRMGetOpcodeKnowledge'](arg1);
+}
+
+export function BRMInspectSource(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['BRMInspectSource'](arg1, arg2, arg3, arg4);
+}
+
 export function BroadcastCommand(arg1, arg2, arg3) {
   return window['go']['main']['App']['BroadcastCommand'](arg1, arg2, arg3);
 }

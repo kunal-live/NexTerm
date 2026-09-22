@@ -511,6 +511,242 @@ export namespace service {
 		    return a;
 		}
 	}
+	export class BRMAction {
+	    type: string;
+	    label: string;
+	    target: string;
+	    line: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new BRMAction(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.type = source["type"];
+	        this.label = source["label"];
+	        this.target = source["target"];
+	        this.line = source["line"];
+	    }
+	}
+	export class BRMDetectedError {
+	    lineNumber: number;
+	    rawLine: string;
+	    errorCode: string;
+	    category: string;
+	    severity: string;
+	    context: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new BRMDetectedError(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.lineNumber = source["lineNumber"];
+	        this.rawLine = source["rawLine"];
+	        this.errorCode = source["errorCode"];
+	        this.category = source["category"];
+	        this.severity = source["severity"];
+	        this.context = source["context"];
+	    }
+	}
+	export class BRMDiagnosisRequest {
+	    tabId: string;
+	    question: string;
+	    environment: string;
+	    selectedSource: string;
+	    customPath: string;
+	    context: {[key: string]: string};
+	
+	    static createFrom(source: any = {}) {
+	        return new BRMDiagnosisRequest(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.tabId = source["tabId"];
+	        this.question = source["question"];
+	        this.environment = source["environment"];
+	        this.selectedSource = source["selectedSource"];
+	        this.customPath = source["customPath"];
+	        this.context = source["context"];
+	    }
+	}
+	export class BRMSourceOption {
+	    key: string;
+	    label: string;
+	    path: string;
+	    description: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new BRMSourceOption(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.key = source["key"];
+	        this.label = source["label"];
+	        this.path = source["path"];
+	        this.description = source["description"];
+	    }
+	}
+	export class BRMEvidenceItem {
+	    file: string;
+	    lineStart: number;
+	    lineEnd: number;
+	    snippet: string;
+	    contextLines: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new BRMEvidenceItem(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.file = source["file"];
+	        this.lineStart = source["lineStart"];
+	        this.lineEnd = source["lineEnd"];
+	        this.snippet = source["snippet"];
+	        this.contextLines = source["contextLines"];
+	    }
+	}
+	export class BRMDiagnosisResult {
+	    status: string;
+	    questionType: string;
+	    problem: string;
+	    component: string;
+	    error: string;
+	    confidence: string;
+	    evidence: BRMEvidenceItem[];
+	    likelyCauses: string[];
+	    checks: string[];
+	    resolution: string[];
+	    suggestedSources: BRMSourceOption[];
+	    actions: BRMAction[];
+	
+	    static createFrom(source: any = {}) {
+	        return new BRMDiagnosisResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.status = source["status"];
+	        this.questionType = source["questionType"];
+	        this.problem = source["problem"];
+	        this.component = source["component"];
+	        this.error = source["error"];
+	        this.confidence = source["confidence"];
+	        this.evidence = this.convertValues(source["evidence"], BRMEvidenceItem);
+	        this.likelyCauses = source["likelyCauses"];
+	        this.checks = source["checks"];
+	        this.resolution = source["resolution"];
+	        this.suggestedSources = this.convertValues(source["suggestedSources"], BRMSourceOption);
+	        this.actions = this.convertValues(source["actions"], BRMAction);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	export class BRMInstallation {
+	    rootPath: string;
+	    version: string;
+	    components: string[];
+	    configFiles: string[];
+	    logPaths: string[];
+	    isActive: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new BRMInstallation(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.rootPath = source["rootPath"];
+	        this.version = source["version"];
+	        this.components = source["components"];
+	        this.configFiles = source["configFiles"];
+	        this.logPaths = source["logPaths"];
+	        this.isActive = source["isActive"];
+	    }
+	}
+	export class BRMLogFile {
+	    component: string;
+	    name: string;
+	    path: string;
+	    size: number;
+	    modified: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new BRMLogFile(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.component = source["component"];
+	        this.name = source["name"];
+	        this.path = source["path"];
+	        this.size = source["size"];
+	        this.modified = source["modified"];
+	    }
+	}
+	export class BRMSourceInspection {
+	    sourcePath: string;
+	    lines: string[];
+	    lineStart: number;
+	    lineEnd: number;
+	    totalLines: number;
+	    errorsFound: BRMDetectedError[];
+	
+	    static createFrom(source: any = {}) {
+	        return new BRMSourceInspection(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.sourcePath = source["sourcePath"];
+	        this.lines = source["lines"];
+	        this.lineStart = source["lineStart"];
+	        this.lineEnd = source["lineEnd"];
+	        this.totalLines = source["totalLines"];
+	        this.errorsFound = this.convertValues(source["errorsFound"], BRMDetectedError);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
 	export class BroadcastTargetResult {
 	    tabId: string;
 	    name: string;
@@ -562,6 +798,28 @@ export namespace service {
 		}
 	}
 	
+	export class ErrorKnowledge {
+	    code: string;
+	    component: string;
+	    description: string;
+	    likelyCauses: string[];
+	    checks: string[];
+	    resolutions: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ErrorKnowledge(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.code = source["code"];
+	        this.component = source["component"];
+	        this.description = source["description"];
+	        this.likelyCauses = source["likelyCauses"];
+	        this.checks = source["checks"];
+	        this.resolutions = source["resolutions"];
+	    }
+	}
 	export class LogEntry {
 	    // Go type: time
 	    timestamp: any;
@@ -600,6 +858,26 @@ export namespace service {
 		    }
 		    return a;
 		}
+	}
+	export class OpcodeInfo {
+	    name: string;
+	    description: string;
+	    type: string;
+	    inputFlist: string;
+	    outputFlist: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new OpcodeInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.type = source["type"];
+	        this.inputFlist = source["inputFlist"];
+	        this.outputFlist = source["outputFlist"];
+	    }
 	}
 	export class SFTPListResult {
 	    path: string;

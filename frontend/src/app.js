@@ -88,6 +88,7 @@ import { applyDesignTokens } from './design/themeManager.js';
 import { openCommandPalette, closeCommandPalette, registerCommandPaletteActions } from './commandPalette/commandPalette.js';
 import { initStatusBar, updateStatusBarDisplay } from './statusBar/statusBar.js';
 import { initModernNavigation } from './navigation/navigation.js';
+import { initBRMAssistant, detectCurrentEnvironment } from './brm/brmAssistant.js';
 
 // Hook up workspace tab actions
 registerWorkspaceTabActions({
@@ -641,6 +642,10 @@ export function setupEventListeners() {
       serverEl.textContent = "No SSH connection";
     }
   });
+  safeClick("navTabBRM", () => {
+    switchSidebarView("brm");
+    detectCurrentEnvironment();
+  });
 
   // Nexterm SFTP Toolbar Controls
   safeClick("sftpFollowTermBtn", () => {
@@ -1162,6 +1167,14 @@ export function setupEventListeners() {
   safeClick("toolHash", showHashDialog);
   safeClick("toolKeyGen", showKeyGenDialog);
   safeClick("toolTunnel", showTunnelingDialog);
+  safeClick("toolBRMAssistant", () => {
+    switchSidebarView("brm");
+    detectCurrentEnvironment();
+  });
+  safeClick("mToolBRM", () => {
+    switchSidebarView("brm");
+    detectCurrentEnvironment();
+  });
 
   // Window Resize
   window.addEventListener("resize", () => {
@@ -1345,6 +1358,9 @@ export async function init() {
   // Auto-open any session groups flagged "auto-start" (after the tree is loaded
   // so saved profiles can be resolved). Small delay lets the workspace settle.
   setTimeout(() => { try { maybeAutoStartGroups(); } catch (_) { } }, 1200);
+
+  // Initialize Oracle BRM Assistant
+  try { initBRMAssistant(); } catch (e) { console.warn("Failed to init BRM Assistant:", e); }
 }
 
 // Auto-run on DOMContentLoaded

@@ -72,6 +72,7 @@ type App struct {
 	settingsService   *service.SettingsService
 	hostKeyService    *service.HostKeyService
 	loggingService    *service.LoggingService
+	brmService        *service.BRMAssistantService
 
 	tunnelMgr *tunnel.TunnelManager
 	macroMgr  *macro.MacroManager
@@ -93,6 +94,7 @@ func NewApp() *App {
 	a.sftpService = service.NewSFTPService(a.connectionManager, emitter)
 	a.settingsService = service.NewSettingsService(nil)
 	a.sessionService = service.NewSessionService(nil)
+	a.brmService = service.NewBRMAssistantService(a.connectionManager, a.loggingService)
 
 	// Clean up workspace tabs and watchers on disconnect
 	a.connectionManager.SetOnSessionClosed(func(tabID string) {
@@ -1116,3 +1118,36 @@ func (a *App) SaveTerminalOutput(suggestedFilename, content string) (string, err
 	a.loggingService.LogAudit("TRANSCRIPT_SAVED", "terminal", "", "", "", "SUCCESS", savePath)
 	return savePath, nil
 }
+
+// =========================================================================
+// Oracle BRM Assistant
+// =========================================================================
+
+func (a *App) BRMDetectInstallation(tabID string) (*service.BRMInstallation, error) {
+	return a.brmService.DetectInstallation(tabID)
+}
+
+func (a *App) BRMDiscoverLogs(tabID, rootPath string) ([]service.BRMLogFile, error) {
+	return a.brmService.DiscoverLogs(tabID, rootPath)
+}
+
+func (a *App) BRMInspectSource(tabID, sourcePath, filterQuery string, maxLines int) (*service.BRMSourceInspection, error) {
+	return a.brmService.InspectSource(tabID, sourcePath, filterQuery, maxLines)
+}
+
+func (a *App) BRMDiagnose(req service.BRMDiagnosisRequest) (*service.BRMDiagnosisResult, error) {
+	return a.brmService.Diagnose(req)
+}
+
+func (a *App) BRMClassifyQuestion(question string) string {
+	return a.brmService.ClassifyQuestion(question)
+}
+
+func (a *App) BRMGetOpcodeKnowledge(op string) service.OpcodeInfo {
+	return a.brmService.GetOpcodeKnowledge(op)
+}
+
+func (a *App) BRMGetErrorKnowledge(code string) service.ErrorKnowledge {
+	return a.brmService.GetErrorKnowledge(code)
+}
+

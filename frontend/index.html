@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="vendor/xterm.css" />
   <link rel="stylesheet" href="src/style.css" />
   <link rel="stylesheet" href="src/modern-ui.css" />
+  <link rel="stylesheet" href="src/brm/brmAssistant.css" />
 </head>
 
 <body>
@@ -71,6 +72,8 @@
           <div class="menu-separator"></div>
           <div class="menu-option" id="mSnippets">📋 Command Snippets...</div>
           <div class="menu-option" id="mStartXServer">🖥️ Start X Server (Linux GUI apps)</div>
+          <div class="menu-separator"></div>
+          <div class="menu-option" id="mToolBRM">🤖 Oracle BRM Assistant...</div>
         </div>
       </div>
       <div class="menu-item" data-menu="menu-tunneling">Tunneling
@@ -611,6 +614,15 @@
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
               </svg>
             </button>
+            <button class="nav-strip-btn" id="navTabBRM" title="Oracle BRM Assistant (AI Diagnostics)">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5v1.5h-4v-1.5c-1.2-.7-2-2-2-3.5a4 4 0 0 1 4-4z"></path>
+                <path d="M9 15h6"></path>
+                <path d="M10 18h4"></path>
+                <path d="M11 21h2"></path>
+              </svg>
+            </button>
           </nav>
 
           <!-- Sidebar Content Area -->
@@ -987,6 +999,12 @@
                 <span class="tool-icon">🔍</span>
                 <span class="tool-text">List open network ports (ResMon)</span>
               </div>
+
+              <div class="tools-category-header">Oracle BRM Diagnostic Suite</div>
+              <div class="tool-item" id="toolBRMAssistant">
+                <span class="tool-icon">🤖</span>
+                <span class="tool-text">Oracle BRM Assistant (Diagnostics)</span>
+              </div>
             </div>
 
             <!-- View F: Follow Terminal Folder Panel -->
@@ -1062,6 +1080,10 @@
                 📊 Open Live Monitoring Dashboard
               </button>
             </div>
+
+            <!-- View H: Oracle BRM Assistant -->
+            <div id="viewBRM" class="side-tab-view hidden brm-assistant-view"
+              style="flex-direction:column; height:100%; overflow:hidden;"></div>
           </div>
         </div>
       </aside>

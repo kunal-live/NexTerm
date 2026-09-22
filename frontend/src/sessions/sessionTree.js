@@ -912,7 +912,8 @@ export function switchSidebarView(view) {
     tunnel: { viewId: "viewTunnel", tabId: "navTabTunnel" },
     tools: { viewId: "viewTools", tabId: "navTabTools" },
     followterm: { viewId: "viewFollowTerm", tabId: "navTabFollowTerm" },
-    monitor: { viewId: "viewMonitor", tabId: "navTabMonitor" }
+    monitor: { viewId: "viewMonitor", tabId: "navTabMonitor" },
+    brm: { viewId: "viewBRM", tabId: "navTabBRM" }
   };
 
   Object.entries(views).forEach(([v, ids]) => {

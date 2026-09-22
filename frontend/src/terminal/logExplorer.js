@@ -25,6 +25,11 @@ export function showLogExplorer() {
   render();
 }
 
+export function openLogInExplorer(path) {
+  if (path) state.path = path;
+  showLogExplorer();
+}
+
 function stopPoll() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
 
 function render() {
