@@ -10,12 +10,29 @@ import { openLogInExplorer } from "../terminal/logExplorer.js";
 import { switchSidebarView } from "../sessions/sessionTree.js";
 import { refreshSFTP } from "../sftp/sftpPanel.js";
 import { tabs, activeTabId } from "../state/tabState.js";
+import { setSidebarCollapsed } from "../navigation/navigation.js";
 
 let conversation = [];
 let diagnosticHistory = [];
 let pendingQuestion = "";
 let activeInstallation = null;
 let isBusy = false;
+
+export function openBRMAssistant() {
+  try {
+    setSidebarCollapsed(false);
+  } catch (_) {}
+  switchSidebarView("brm");
+  detectCurrentEnvironment();
+  const input = document.getElementById("brmInput");
+  if (input) {
+    setTimeout(() => {
+      input.focus();
+      input.classList.add("brm-input-highlight");
+      setTimeout(() => input.classList.remove("brm-input-highlight"), 1200);
+    }, 120);
+  }
+}
 
 export function initBRMAssistant() {
   const container = document.getElementById("viewBRM");
@@ -24,6 +41,24 @@ export function initBRMAssistant() {
   renderAssistantLayout(container);
   bindAssistantEvents(container);
   detectCurrentEnvironment();
+
+  // Wire launcher entry points
+  const fab = document.getElementById("brmFloatingFab");
+  if (fab) fab.onclick = () => openBRMAssistant();
+
+  const tbmBtn = document.getElementById("tbmBRM");
+  if (tbmBtn) tbmBtn.onclick = () => openBRMAssistant();
+
+  const statusBtn = document.getElementById("statusBarBRMBtn");
+  if (statusBtn) statusBtn.onclick = () => openBRMAssistant();
+
+  // Global hotkey: Alt+A
+  window.addEventListener("keydown", (e) => {
+    if (e.altKey && (e.key === "a" || e.key === "A")) {
+      e.preventDefault();
+      openBRMAssistant();
+    }
+  });
 }
 
 function getEffectiveTabId() {
