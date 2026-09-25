@@ -3242,15 +3242,33 @@ html {
    Top chrome stacking guarantee — keep the top bar & menu bar clickable
    above the (now positioned) main layout, but below modals (z-index 500)
    ========================================================================== */
-/* Menu bar sits ABOVE the top bar so its dropdowns aren't hidden behind it */
+/* Menu bar sits ABOVE all top bars and sidebars so dropdowns are NEVER covered or pierced */
 #menuBar {
   position: relative !important;
-  z-index: 120 !important;
+  z-index: 2000 !important;
   overflow: visible !important;
 }
 
-#menuBar .dropdown-menu {
-  z-index: 130 !important;
+#menuBar .dropdown-menu,
+.dropdown-menu {
+  z-index: 2100 !important;
+}
+
+.sidebar-collapse-toggle {
+  z-index: 40 !important;
+  background: rgba(30, 41, 59, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #94a3b8 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  transition: all 0.15s ease !important;
+}
+
+.sidebar-collapse-toggle:hover {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4) !important;
+  transform: scale(1.1) !important;
 }
 
 .nx-topbar {
