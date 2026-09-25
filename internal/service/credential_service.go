@@ -400,6 +400,20 @@ func (c *CredentialService) RemoveMasterPassword(currentPassword string) error {
 	return nil
 }
 
+// ResetMasterPassword removes the master password protection without requiring the current password.
+// This is used for recovery when the user has forgotten their master password.
+func (c *CredentialService) ResetMasterPassword() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.vault == nil {
+		return fmt.Errorf("vault is not initialized")
+	}
+	_ = c.vault.Delete(vaultMasterHashKey)
+	_ = c.vault.Delete(vaultMasterHintKey)
+	return nil
+}
+
 // ChangeMasterPassword updates the master password and hint after verifying the current password.
 func (c *CredentialService) ChangeMasterPassword(currentPassword, newPassword, newHint string) error {
 	c.mu.Lock()

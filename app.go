@@ -553,6 +553,14 @@ func (a *App) RemoveMasterPassword(currentPassword string) error {
 	return err
 }
 
+func (a *App) ResetMasterPassword() error {
+	err := a.credentialService.ResetMasterPassword()
+	if err == nil {
+		a.loggingService.LogAudit("MASTER_PASSWORD_RESET", "vault", "", "", "master", "SUCCESS", "Master password reset after forgotten password")
+	}
+	return err
+}
+
 func (a *App) ChangeMasterPassword(currentPassword, newPassword, newHint string) error {
 	err := a.credentialService.ChangeMasterPassword(currentPassword, newPassword, newHint)
 	if err == nil {

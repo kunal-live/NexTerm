@@ -166,6 +166,8 @@ export function RemoveMasterPassword(arg1:string):Promise<void>;
 
 export function RenameNode(arg1:string,arg2:string):Promise<model.TreeNode>;
 
+export function ResetMasterPassword():Promise<void>;
+
 export function ResizeTerminal(arg1:string,arg2:number,arg3:number):Promise<void>;
 
 export function RespondAuthChallenge(arg1:string,arg2:Array<string>):Promise<void>;

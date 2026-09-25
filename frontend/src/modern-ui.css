@@ -6497,21 +6497,220 @@ html {
   align-items: center !important;
   justify-content: center !important;
   gap: 10px !important;
-  max-width: 400px !important;
+  max-width: 420px !important;
   margin: 0 auto !important;
 }
 
-.vault-input-lg {
+.vault-lock-form .pwd-input-wrap {
+  flex: 1 !important;
+  min-width: 0 !important;
+}
+
+.vault-lock-form input,
+.vault-input-lg,
+.modal-card input.form-input {
+  background: rgba(15, 23, 42, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #f8fafc !important;
+  border-radius: 8px !important;
+  padding: 8px 36px 8px 12px !important;
   font-size: 13px !important;
-  padding: 8px 12px !important;
+  outline: none !important;
+  transition: all 0.18s ease !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.vault-lock-form input:focus,
+.vault-input-lg:focus,
+.modal-card input.form-input:focus {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.28) !important;
+  background: rgba(15, 23, 42, 0.98) !important;
+}
+
+.vault-lock-form input::placeholder,
+.modal-card input.form-input::placeholder {
+  color: #64748b !important;
 }
 
 .vault-lock-footer {
-  margin-top: 14px !important;
+  margin-top: 16px !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
+  gap: 10px !important;
+}
+
+/* 13.5.1 Forgot Password Trigger Button */
+.vault-forgot-btn {
+  background: rgba(245, 158, 11, 0.08) !important;
+  border: 1px solid rgba(245, 158, 11, 0.28) !important;
+  color: #fbbf24 !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  padding: 6px 14px !important;
+  border-radius: 20px !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.vault-forgot-btn:hover {
+  background: rgba(245, 158, 11, 0.18) !important;
+  border-color: rgba(245, 158, 11, 0.5) !important;
+  color: #fef08a !important;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.25) !important;
+  transform: translateY(-1px) !important;
+}
+
+.vault-forgot-icon {
+  font-size: 13px !important;
+  filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.5)) !important;
+}
+
+/* 13.5.2 Expandable Recovery & Hint Card */
+.vault-recovery-panel {
+  margin-top: 10px !important;
+  padding: 14px 16px !important;
+  background: linear-gradient(135deg, rgba(26, 32, 53, 0.95), rgba(15, 20, 35, 0.98)) !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 20px rgba(245, 158, 11, 0.08) !important;
+  max-width: 440px !important;
+  width: 100% !important;
+  text-align: left !important;
+  animation: recoverySlideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-sizing: border-box !important;
+}
+
+@keyframes recoverySlideDown {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.vault-recovery-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 10px !important;
+  padding-bottom: 6px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+.recovery-title-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+
+.recovery-icon {
+  font-size: 14px !important;
+}
+
+.recovery-title {
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  color: #fbbf24 !important;
+  letter-spacing: 0.2px !important;
+}
+
+.vault-recovery-close {
+  background: transparent !important;
+  border: none !important;
+  color: #94a3b8 !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  cursor: pointer !important;
+  padding: 0 4px !important;
+  border-radius: 4px !important;
+  transition: all 0.15s ease !important;
+}
+
+.vault-recovery-close:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.recovery-hint-quote {
+  background: rgba(245, 158, 11, 0.1) !important;
+  border-left: 3px solid #f59e0b !important;
+  border-radius: 6px !important;
+  padding: 10px 14px !important;
+  margin-bottom: 8px !important;
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 4px !important;
+}
+
+.quote-symbol {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #fbbf24 !important;
+  line-height: 1 !important;
+}
+
+.quote-text {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #fef08a !important;
+  word-break: break-word !important;
+}
+
+.recovery-hint-subtext {
+  font-size: 11px !important;
+  color: #94a3b8 !important;
+  margin-bottom: 12px !important;
+}
+
+.recovery-no-hint {
+  display: flex !important;
+  align-items: center !important;
   gap: 8px !important;
+  background: rgba(148, 163, 184, 0.08) !important;
+  border: 1px dashed rgba(148, 163, 184, 0.25) !important;
+  border-radius: 8px !important;
+  padding: 10px 12px !important;
+  color: #cbd5e1 !important;
+  font-size: 11.5px !important;
+  margin-bottom: 12px !important;
+}
+
+.vault-recovery-footer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  padding-top: 8px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.recovery-footer-text {
+  font-size: 11px !important;
+  color: #94a3b8 !important;
+}
+
+.btn-reset-vault {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border: 1px solid rgba(239, 68, 68, 0.3) !important;
+  color: #f87171 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 4px 10px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.16s ease !important;
+  white-space: nowrap !important;
+}
+
+.btn-reset-vault:hover {
+  background: rgba(239, 68, 68, 0.22) !important;
+  border-color: rgba(239, 68, 68, 0.55) !important;
+  color: #fca5a5 !important;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.25) !important;
 }
 
 .vault-hint-box {
@@ -7170,5 +7369,74 @@ html {
   background: #4f46e5 !important;
   color: #ffffff !important;
 }
+
+:root[data-theme="light-modern"] .vault-forgot-btn {
+  background: #fef3c7 !important;
+  border-color: #f59e0b !important;
+  color: #b45309 !important;
+}
+
+:root[data-theme="light-modern"] .vault-forgot-btn:hover {
+  background: #fde68a !important;
+  color: #92400e !important;
+}
+
+:root[data-theme="light-modern"] .vault-recovery-panel {
+  background: #ffffff !important;
+  border-color: #f59e0b !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+}
+
+:root[data-theme="light-modern"] .recovery-title {
+  color: #b45309 !important;
+}
+
+:root[data-theme="light-modern"] .recovery-hint-quote {
+  background: #fffbeb !important;
+  border-left-color: #f59e0b !important;
+}
+
+:root[data-theme="light-modern"] .quote-text {
+  color: #92400e !important;
+}
+
+:root[data-theme="light-modern"] .recovery-hint-subtext,
+:root[data-theme="light-modern"] .recovery-footer-text {
+  color: #64748b !important;
+}
+
+:root[data-theme="light-modern"] .recovery-no-hint {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+:root[data-theme="light-modern"] .vault-lock-form input,
+:root[data-theme="light-modern"] .vault-input-lg,
+:root[data-theme="light-modern"] .modal-card input.form-input {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .vault-lock-form input:focus,
+:root[data-theme="light-modern"] .vault-input-lg:focus,
+:root[data-theme="light-modern"] .modal-card input.form-input:focus {
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 10px rgba(2, 132, 199, 0.25) !important;
+}
+
+/* Strict visibility overrides to guarantee locked vault hides credentials list */
+.hidden,
+#vaultContentSection.hidden,
+#vaultLockGate.hidden,
+#vaultSetupCard.hidden,
+#vaultChangeCard.hidden,
+#vaultGenDrawer.hidden,
+#vaultLockHintBox.hidden,
+.tab-content.hidden {
+  display: none !important;
+}
+
 
 

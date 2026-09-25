@@ -614,8 +614,28 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
               <button type="button" class="btn btn-primary btn-lock-vault" id="btnVaultUnlock">🔓 Unlock Vault</button>
             </div>
             <div class="vault-lock-footer">
-              <button type="button" class="btn-link" id="btnLockShowHint">💡 Forgot password? Show Hint</button>
-              <div id="vaultLockHintBox" class="vault-hint-box hidden"></div>
+              <button type="button" class="vault-forgot-btn" id="btnLockShowHint" title="Show master password hint or recovery options">
+                <span class="vault-forgot-icon">💡</span>
+                <span>Forgot password? Show Hint</span>
+              </button>
+              <div id="vaultLockHintBox" class="vault-recovery-panel hidden">
+                <div class="vault-recovery-header">
+                  <div class="recovery-title-row">
+                    <span class="recovery-icon">💡</span>
+                    <span class="recovery-title">Password Memory Hint</span>
+                  </div>
+                  <button type="button" class="vault-recovery-close" id="btnCloseRecoveryPanel" title="Close hint panel">&times;</button>
+                </div>
+                <div class="vault-recovery-body" id="vaultHintContent">
+                  <!-- Injected dynamically -->
+                </div>
+                <div class="vault-recovery-footer">
+                  <span class="recovery-footer-text">Still can't remember?</span>
+                  <button type="button" class="btn-reset-vault" id="btnResetMasterLock" title="Reset Master Password Lock">
+                    ⚠️ Reset Vault Lock
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1504,6 +1524,16 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
   };
 
   const handleShowHint = async () => {
+    const hintBox = box.querySelector("#vaultLockHintBox");
+    const hintContent = box.querySelector("#vaultHintContent");
+    if (!hintBox) return;
+
+    // Toggle off if already open
+    if (!hintBox.classList.contains("hidden")) {
+      hintBox.classList.add("hidden");
+      return;
+    }
+
     let hint = "";
     if (window.go && window.go.main && window.go.main.App && window.go.main.App.GetMasterPasswordHint) {
       try {
@@ -1513,20 +1543,29 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
         return;
       }
     }
-    const hintBox = box.querySelector("#vaultLockHintBox");
+
     if (hint && hint.trim()) {
-      if (hintBox) {
-        hintBox.innerHTML = `<strong>💡 Password Hint:</strong> <em>"${escapeHtml(hint.trim())}"</em>`;
-        hintBox.classList.remove("hidden");
+      if (hintContent) {
+        hintContent.innerHTML = `
+          <div class="recovery-hint-quote">
+            <span class="quote-symbol">“</span>
+            <span class="quote-text">${escapeHtml(hint.trim())}</span>
+            <span class="quote-symbol">”</span>
+          </div>
+          <div class="recovery-hint-subtext">This memory hint was configured when the master password was set.</div>
+        `;
       }
-      showToast(`Password Hint: "${hint.trim()}"`, "info");
     } else {
-      if (hintBox) {
-        hintBox.innerHTML = `<em>No password hint was saved during setup.</em>`;
-        hintBox.classList.remove("hidden");
+      if (hintContent) {
+        hintContent.innerHTML = `
+          <div class="recovery-no-hint">
+            <span class="no-hint-icon">ℹ️</span>
+            <span>No password memory hint was configured during setup.</span>
+          </div>
+        `;
       }
-      showToast("No password hint configured for this vault.", "info");
     }
+    hintBox.classList.remove("hidden");
   };
 
   const handleRemoveProtection = async () => {
@@ -1851,6 +1890,33 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
 
     const lockHintBtn = box.querySelector("#btnLockShowHint");
     if (lockHintBtn) lockHintBtn.onclick = handleShowHint;
+
+    const btnCloseRec = box.querySelector("#btnCloseRecoveryPanel");
+    if (btnCloseRec) {
+      btnCloseRec.onclick = () => {
+        const hintBox = box.querySelector("#vaultLockHintBox");
+        if (hintBox) hintBox.classList.add("hidden");
+      };
+    }
+
+    const btnResetLock = box.querySelector("#btnResetMasterLock");
+    if (btnResetLock) {
+      btnResetLock.onclick = async () => {
+        if (!confirm("⚠️ Reset Master Password Lock?\n\nThis will remove the master password lock so you can regain access and configure a new password.\n\nAll stored session credentials protected by Windows DPAPI will remain safely intact in your vault.\n\nAre you sure you want to proceed?")) {
+          return;
+        }
+        try {
+          if (window.go && window.go.main && window.go.main.App && window.go.main.App.ResetMasterPassword) {
+            await window.go.main.App.ResetMasterPassword();
+          }
+          isVaultUnlocked = true;
+          showToast("Master password lock reset successfully! You can now access your vault.", "success");
+          await refreshVaultView();
+        } catch (err) {
+          showToast("Failed to reset master password lock: " + err, "error");
+        }
+      };
+    }
 
     // 2. Setup Password Generator Controls
     box.querySelectorAll(".btn-gen-len").forEach(b => {
