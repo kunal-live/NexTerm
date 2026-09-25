@@ -577,12 +577,21 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
       </div>
 
       <!-- 2. Passwords & Vault Tab -->
+      <!-- 2. Passwords & Vault Tab -->
       <div id="tab-settings-pwd" class="tab-content hidden">
-        <!-- Vault Header & Protection Status Bar -->
-        <div class="vault-status-bar">
-          <div class="vault-status-info">
-            <span id="vaultStatusBadge" class="vault-badge badge-warning">⚠️ Checking Vault...</span>
-            <span id="vaultStatusText" class="vault-status-desc">Loading vault protection status...</span>
+        <!-- Vault Header & Protection Status Hero Card -->
+        <div class="vault-hero-card" id="vaultHeroCard">
+          <div class="vault-hero-left">
+            <div class="vault-shield-avatar" id="vaultShieldAvatar">🛡️</div>
+            <div class="vault-hero-text">
+              <div class="vault-hero-heading">
+                <span class="vault-hero-title" id="vaultStatusTitle">Vault Security & Key Management</span>
+                <span id="vaultStatusBadge" class="vault-pulse-dot">● Checking...</span>
+              </div>
+              <div class="vault-hero-subtitle" id="vaultStatusText">
+                Hardware DPAPI encryption active. Loading vault protection...
+              </div>
+            </div>
           </div>
           <div class="vault-header-actions" id="vaultHeaderActions"></div>
         </div>
@@ -590,17 +599,19 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
         <!-- Master Password Lock Gate (shown if protected & locked) -->
         <div id="vaultLockGate" class="vault-lock-gate hidden">
           <div class="vault-lock-card">
-            <div class="vault-lock-icon">🔒</div>
+            <div class="vault-lock-halo">
+              <div class="vault-lock-icon">🔒</div>
+            </div>
             <h3 class="vault-lock-title">Vault is Protected & Locked</h3>
             <p class="vault-lock-desc">
-              Your credentials are encrypted. Enter your personal master password to unlock and manage your vault.
+              Your credentials are hardware-encrypted with Windows DPAPI and locked with your Master Password. Enter your password to unlock.
             </p>
             <div class="vault-lock-form">
               <div class="pwd-input-wrap">
-                <input type="password" id="vaultUnlockPwd" class="form-input" placeholder="Enter master password..." autocomplete="off" />
+                <input type="password" id="vaultUnlockPwd" class="form-input vault-input-lg" placeholder="Enter master password..." autocomplete="off" />
                 <button type="button" class="pwd-eye-btn" id="btnToggleUnlockPwd" title="Show/Hide Password">👁️</button>
               </div>
-              <button type="button" class="btn btn-primary" id="btnVaultUnlock">🔓 Unlock Vault</button>
+              <button type="button" class="btn btn-primary btn-lock-vault" id="btnVaultUnlock">🔓 Unlock Vault</button>
             </div>
             <div class="vault-lock-footer">
               <button type="button" class="btn-link" id="btnLockShowHint">💡 Forgot password? Show Hint</button>
@@ -621,11 +632,11 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
             </div>
           </div>
 
-          <!-- Password Generator Section -->
+          <!-- Password Generator Section in Setup -->
           <div class="vault-gen-section">
             <div class="vault-gen-header">
               <span class="vault-gen-title">🎲 Secure Password Generator</span>
-              <span class="vault-gen-sub">Generate a high-entropy master password or session password</span>
+              <span class="vault-gen-sub">Generate a cryptographically secure, high-entropy password</span>
             </div>
             <div class="vault-gen-controls">
               <div class="vault-gen-options">
@@ -653,7 +664,7 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
 
           <!-- Master Password Form -->
           <div class="vault-form-box">
-            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
               <div class="form-group">
                 <label for="newMasterPwd">Create Master Password <span class="required-star" style="color: #ef4444;">*</span></label>
                 <div class="pwd-input-wrap">
@@ -678,7 +689,7 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
             </div>
 
             <!-- Password Hint -->
-            <div class="form-group" style="margin-top: 6px;">
+            <div class="form-group" style="margin-top: 8px;">
               <label for="newMasterHint" style="display: flex; align-items: center; justify-content: space-between;">
                 <span>💡 Password Hint <span style="font-weight: normal; color: var(--text-dim);">(Helps you remember)</span></span>
               </label>
@@ -688,8 +699,8 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
               </div>
             </div>
 
-            <div class="vault-form-actions" style="margin-top: 12px; display: flex; justify-content: flex-end;">
-              <button type="button" class="btn btn-primary" id="btnSaveMasterPwd">
+            <div class="vault-form-actions" style="margin-top: 14px; display: flex; justify-content: flex-end;">
+              <button type="button" class="btn btn-primary btn-lock-vault" id="btnSaveMasterPwd">
                 🔒 Set Master Password & Protect Vault
               </button>
             </div>
@@ -698,9 +709,9 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
 
         <!-- Master Password Change Panel (Collapsible) -->
         <div id="vaultChangeCard" class="vault-change-card hidden">
-          <div class="vault-change-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <h4 style="margin: 0; font-size: 13px; color: #f1f5f9;">🔑 Change Master Password</h4>
-            <button type="button" class="btn-link" id="btnCancelChangeMaster" style="font-size: 11.5px;">Cancel</button>
+          <div class="vault-change-header">
+            <h4>🔑 Change Master Password</h4>
+            <button type="button" class="btn-link" id="btnCancelChangeMaster">Cancel</button>
           </div>
           <div class="form-group" style="margin-bottom: 8px;">
             <label for="chgCurrPwd">Current Master Password</label>
@@ -722,18 +733,54 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
           </div>
           <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px;">
             <button type="button" class="btn btn-secondary btn-sm" id="btnChangeGenHelp">🎲 Quick Generate</button>
-            <button type="button" class="btn btn-primary btn-sm" id="btnSubmitChangeMaster">Save New Password</button>
+            <button type="button" class="btn btn-primary btn-sm btn-lock-vault" id="btnSubmitChangeMaster">Save New Password</button>
           </div>
         </div>
 
         <!-- Stored Passwords Section (visible when unlocked or unprotected) -->
         <div id="vaultContentSection" class="vault-content-section">
+          <!-- Standalone Generator Drawer (Collapsible) -->
+          <div id="vaultGenDrawer" class="vault-gen-section hidden" style="margin-bottom: 12px;">
+            <div class="vault-gen-header" style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <span class="vault-gen-title">🎲 Instant Password Generator</span>
+                <span class="vault-gen-sub" style="display: block;">Generate cryptographically secure passwords for sessions or accounts</span>
+              </div>
+              <button type="button" class="btn-link" id="btnCloseGenDrawer" style="font-size: 11.5px;">&times; Close</button>
+            </div>
+            <div class="vault-gen-controls">
+              <div class="vault-gen-options">
+                <div class="vault-gen-lens">
+                  <span class="gen-lens-lbl">Length:</span>
+                  <button type="button" class="btn-gen-len-drawer" data-len="12">12</button>
+                  <button type="button" class="btn-gen-len-drawer active" data-len="16">16</button>
+                  <button type="button" class="btn-gen-len-drawer" data-len="20">20</button>
+                  <button type="button" class="btn-gen-len-drawer" data-len="24">24</button>
+                  <button type="button" class="btn-gen-len-drawer" data-len="32">32</button>
+                </div>
+                <label class="checkbox-label" style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                  <input type="checkbox" id="genSymbolsDrawer" checked />
+                  <span>Include Symbols (!@#$%...)</span>
+                </label>
+              </div>
+              <div class="vault-gen-output-row">
+                <input type="text" id="genOutputDrawer" class="vault-gen-input" readonly placeholder="Generating password..." />
+                <button type="button" class="btn btn-secondary btn-sm" id="btnRunGenDrawer" title="Generate New Password">🎲 Generate</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnCopyGenDrawer" title="Copy Password">📋 Copy</button>
+              </div>
+            </div>
+          </div>
+
           <div class="vault-list-header">
-            <div class="vault-list-title" style="display: flex; align-items: center; gap: 6px;">
-              <span style="font-weight: 600; font-size: 12.5px; color: #f1f5f9;">Saved Session Credentials</span>
+            <div class="vault-list-title">
+              <span class="vault-section-title">Saved Session Credentials</span>
               <span id="vaultCredCount" class="vault-counter-badge">0</span>
             </div>
             <div class="vault-list-actions">
+              <div class="vault-search-box">
+                <input type="text" id="vaultSearchInput" class="vault-search-input" placeholder="🔍 Filter sessions or hosts..." />
+              </div>
+              <button type="button" class="btn btn-secondary btn-xs" id="btnToggleGenDrawer" title="Toggle Password Generator">🎲 Generator</button>
               <button type="button" class="btn btn-secondary btn-xs" id="btnRefreshVaultList" title="Refresh Vault Credentials">🔄 Refresh</button>
             </div>
           </div>
@@ -879,7 +926,7 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
       <button class="btn-secondary" id="modalCancel">Cancel</button>
       <button class="btn-primary" id="cfgSave">💾 Save All Settings</button>
     </div>
-  `, "modal-lg");
+  `, "modal-lg modal-settings-pro");
 
   async function loadKnownHostsList() {
     const container = box.querySelector("#knownHostsListContainer");
@@ -1501,87 +1548,135 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
     }
   };
 
-  // Load vault passwords into the list
-  const loadVaultPasswords = async () => {
+  let cachedVaultCreds = [];
+  let vaultFilterQuery = "";
+  let selectedDrawerGenLength = 16;
+
+  // Render vault cards from cached credentials
+  const renderVaultList = () => {
     const listContainer = box.querySelector("#pwdVaultList");
     if (!listContainer) return;
-    try {
-      let creds = [];
-      if (window.go && window.go.main && window.go.main.App) {
-        creds = await window.go.main.App.GetSavedPasswords() || [];
-      }
-      const countEl = box.querySelector("#vaultCredCount");
-      if (countEl) countEl.textContent = creds.length;
 
-      if (creds.length === 0) {
+    let creds = cachedVaultCreds || [];
+    if (vaultFilterQuery) {
+      creds = creds.filter(c =>
+        (c.sessionName && c.sessionName.toLowerCase().includes(vaultFilterQuery)) ||
+        (c.host && c.host.toLowerCase().includes(vaultFilterQuery)) ||
+        (c.username && c.username.toLowerCase().includes(vaultFilterQuery))
+      );
+    }
+
+    const countEl = box.querySelector("#vaultCredCount");
+    if (countEl) {
+      countEl.textContent = vaultFilterQuery
+        ? `${creds.length}/${cachedVaultCreds.length}`
+        : `${creds.length}`;
+    }
+
+    if (creds.length === 0) {
+      if (cachedVaultCreds.length > 0 && vaultFilterQuery) {
+        listContainer.innerHTML = `
+          <div class="pwd-empty-state">
+            🔍 No saved credentials match "<b>${escapeHtml(vaultFilterQuery)}</b>".
+          </div>
+        `;
+      } else {
         listContainer.innerHTML = `
           <div class="pwd-empty-state">
             🔒 No saved credentials in Windows DPAPI vault.<br/>
             Connect to any SSH server and check <b>"Remember password"</b> to securely save credentials here.
           </div>
         `;
-        return;
       }
+      return;
+    }
 
-      listContainer.innerHTML = creds.map((c, idx) => `
-        <div class="pwd-card" data-vaultkey="${escapeHtml(c.vaultKey)}">
-          <div class="pwd-card-header">
-            <span class="pwd-card-title">🔑 ${escapeHtml(c.sessionName || c.host)}</span>
-            <span class="pwd-card-meta">${escapeHtml(c.username)}@${escapeHtml(c.host)}:${c.port || 22}</span>
+    listContainer.innerHTML = creds.map((c, idx) => `
+      <div class="pwd-card" data-vaultkey="${escapeHtml(c.vaultKey)}">
+        <div class="pwd-card-header">
+          <div class="pwd-card-left">
+            <div class="pwd-key-avatar">🔑</div>
+            <div class="pwd-name-wrap">
+              <span class="pwd-card-title">${escapeHtml(c.sessionName || c.host)}</span>
+              <span class="pwd-session-type">SSH Session</span>
+            </div>
           </div>
-          <div class="pwd-card-body">
-            <div class="pwd-value-wrap">
-              <span class="pwd-masked" id="pwdMask_${idx}">••••••••••••</span>
-              <span class="pwd-plain hidden" id="pwdPlain_${idx}">${escapeHtml(c.password)}</span>
-            </div>
-            <div class="pwd-actions">
-              <button class="pwd-action-btn toggle-pwd-btn" data-idx="${idx}">👁️ Show</button>
-              <button class="pwd-action-btn copy-pwd-btn" data-pwd="${escapeHtml(c.password)}">📋 Copy</button>
-              <button class="pwd-action-btn danger delete-pwd-btn" data-vaultkey="${escapeHtml(c.vaultKey)}" data-name="${escapeHtml(c.sessionName || c.host)}">🗑️ Delete</button>
-            </div>
+          <div class="pwd-card-badges">
+            <span class="pwd-badge user-badge" title="Username">👤 ${escapeHtml(c.username || "root")}</span>
+            <span class="pwd-badge host-badge" title="Host & Port">🖥️ ${escapeHtml(c.host)}:${c.port || 22}</span>
           </div>
         </div>
-      `).join("");
+        <div class="pwd-card-body">
+          <div class="pwd-value-wrap">
+            <span class="pwd-lock-ico">🔒</span>
+            <span class="pwd-masked" id="pwdMask_${idx}">••••••••••••••••</span>
+            <span class="pwd-plain hidden" id="pwdPlain_${idx}">${escapeHtml(c.password)}</span>
+          </div>
+          <div class="pwd-actions">
+            <button type="button" class="pwd-action-btn toggle-pwd-btn" data-idx="${idx}" title="Reveal or Hide Password">
+              👁️ Show
+            </button>
+            <button type="button" class="pwd-action-btn copy-pwd-btn" data-pwd="${escapeHtml(c.password)}" title="Copy Password">
+              📋 Copy
+            </button>
+            <button type="button" class="pwd-action-btn danger delete-pwd-btn" data-vaultkey="${escapeHtml(c.vaultKey)}" data-name="${escapeHtml(c.sessionName || c.host)}" title="Delete from Vault">
+              🗑️ Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    `).join("");
 
-      listContainer.querySelectorAll(".toggle-pwd-btn").forEach(btn => {
-        btn.onclick = () => {
-          const idx = btn.dataset.idx;
-          const maskEl = box.querySelector(`#pwdMask_${idx}`);
-          const plainEl = box.querySelector(`#pwdPlain_${idx}`);
-          if (!maskEl || !plainEl) return;
-          const isHidden = plainEl.classList.contains("hidden");
-          if (isHidden) {
-            maskEl.classList.add("hidden");
-            plainEl.classList.remove("hidden");
-            btn.innerHTML = "🔒 Hide";
-          } else {
-            maskEl.classList.remove("hidden");
-            plainEl.classList.add("hidden");
-            btn.innerHTML = "👁️ Show";
+    listContainer.querySelectorAll(".toggle-pwd-btn").forEach(btn => {
+      btn.onclick = () => {
+        const idx = btn.dataset.idx;
+        const maskEl = box.querySelector(`#pwdMask_${idx}`);
+        const plainEl = box.querySelector(`#pwdPlain_${idx}`);
+        if (!maskEl || !plainEl) return;
+        const isHidden = plainEl.classList.contains("hidden");
+        if (isHidden) {
+          maskEl.classList.add("hidden");
+          plainEl.classList.remove("hidden");
+          btn.innerHTML = "🔒 Hide";
+        } else {
+          maskEl.classList.remove("hidden");
+          plainEl.classList.add("hidden");
+          btn.innerHTML = "👁️ Show";
+        }
+      };
+    });
+
+    listContainer.querySelectorAll(".copy-pwd-btn").forEach(btn => {
+      btn.onclick = () => {
+        navigator.clipboard.writeText(btn.dataset.pwd);
+        showToast("Password copied to clipboard", "success");
+      };
+    });
+
+    listContainer.querySelectorAll(".delete-pwd-btn").forEach(btn => {
+      btn.onclick = async () => {
+        if (window.go && window.go.main && window.go.main.App) {
+          try {
+            await window.go.main.App.DeleteSavedPassword(btn.dataset.vaultkey);
+            showToast(`Removed password for "${btn.dataset.name}"`, "info");
+            await loadVaultPasswords();
+          } catch (err) {
+            showToast("Failed to delete password: " + err, "error");
           }
-        };
-      });
+        }
+      };
+    });
+  };
 
-      listContainer.querySelectorAll(".copy-pwd-btn").forEach(btn => {
-        btn.onclick = () => {
-          navigator.clipboard.writeText(btn.dataset.pwd);
-          showToast("Password copied to clipboard", "success");
-        };
-      });
-
-      listContainer.querySelectorAll(".delete-pwd-btn").forEach(btn => {
-        btn.onclick = async () => {
-          if (window.go && window.go.main && window.go.main.App) {
-            try {
-              await window.go.main.App.DeleteSavedPassword(btn.dataset.vaultkey);
-              showToast(`Removed password for "${btn.dataset.name}"`, "info");
-              await loadVaultPasswords();
-            } catch (err) {
-              showToast("Failed to delete password: " + err, "error");
-            }
-          }
-        };
-      });
+  // Load vault passwords into the list
+  const loadVaultPasswords = async () => {
+    try {
+      let creds = [];
+      if (window.go && window.go.main && window.go.main.App) {
+        creds = await window.go.main.App.GetSavedPasswords() || [];
+      }
+      cachedVaultCreds = creds;
+      renderVaultList();
     } catch (_) {}
   };
 
@@ -1598,6 +1693,9 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
       }
     }
 
+    const heroCardEl = box.querySelector("#vaultHeroCard");
+    const shieldAvatarEl = box.querySelector("#vaultShieldAvatar");
+    const statusTitleEl = box.querySelector("#vaultStatusTitle");
     const badgeEl = box.querySelector("#vaultStatusBadge");
     const statusTextEl = box.querySelector("#vaultStatusText");
     const actionsEl = box.querySelector("#vaultHeaderActions");
@@ -1609,12 +1707,18 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
     if (hasMaster) {
       if (!isVaultUnlocked) {
         // Protected & Locked
+        if (heroCardEl) heroCardEl.className = "vault-hero-card";
+        if (shieldAvatarEl) {
+          shieldAvatarEl.className = "vault-shield-avatar";
+          shieldAvatarEl.innerHTML = "🔒";
+        }
+        if (statusTitleEl) statusTitleEl.textContent = "Vault is Protected & Locked";
         if (badgeEl) {
-          badgeEl.className = "vault-badge badge-warning";
-          badgeEl.innerHTML = "🔒 Protected & Locked";
+          badgeEl.className = "vault-pulse-dot dot-warning";
+          badgeEl.innerHTML = "● Locked";
         }
         if (statusTextEl) {
-          statusTextEl.textContent = "Vault is protected with Master Password. Unlock to manage credentials.";
+          statusTextEl.textContent = "Vault is encrypted with Master Password. Unlock to manage credentials.";
         }
         if (actionsEl) {
           actionsEl.innerHTML = `
@@ -1629,19 +1733,25 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
         if (contentSecEl) contentSecEl.classList.add("hidden");
       } else {
         // Protected & Unlocked
+        if (heroCardEl) heroCardEl.className = "vault-hero-card";
+        if (shieldAvatarEl) {
+          shieldAvatarEl.className = "vault-shield-avatar";
+          shieldAvatarEl.innerHTML = "🛡️";
+        }
+        if (statusTitleEl) statusTitleEl.textContent = "Dual-Layer Hardware Vault Active";
         if (badgeEl) {
-          badgeEl.className = "vault-badge badge-success";
-          badgeEl.innerHTML = "🛡️ Master Password Active";
+          badgeEl.className = "vault-pulse-dot";
+          badgeEl.innerHTML = "● Protected";
         }
         if (statusTextEl) {
-          statusTextEl.textContent = "Dual-layer security active: Windows DPAPI + bcrypt master password.";
+          statusTextEl.textContent = "Hardware DPAPI (CryptProtectData) + Bcrypt Master Key Gate";
         }
         if (actionsEl) {
           actionsEl.innerHTML = `
             <button type="button" class="btn btn-secondary btn-xs" id="btnHeaderShowHint" title="Show password hint">💡 Hint</button>
             <button type="button" class="btn btn-secondary btn-xs" id="btnHeaderChangePwd" title="Change master password">🔑 Change</button>
-            <button type="button" class="btn btn-secondary btn-xs btn-danger" id="btnHeaderRemovePwd" title="Remove master password protection">🔓 Remove</button>
-            <button type="button" class="btn btn-primary btn-xs" id="btnHeaderLockVault" title="Lock vault now">🔒 Lock Vault</button>
+            <button type="button" class="btn btn-secondary btn-xs btn-ghost-danger" id="btnHeaderRemovePwd" title="Remove master password protection">🔓 Remove</button>
+            <button type="button" class="btn btn-primary btn-xs btn-lock-vault" id="btnHeaderLockVault" title="Lock vault now">🔒 Lock Vault</button>
           `;
           const hBtn = actionsEl.querySelector("#btnHeaderShowHint");
           if (hBtn) hBtn.onclick = handleShowHint;
@@ -1666,15 +1776,31 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
     } else {
       // Unprotected: prompt user to set up master password
       isVaultUnlocked = true;
+      if (heroCardEl) heroCardEl.className = "vault-hero-card unprotected";
+      if (shieldAvatarEl) {
+        shieldAvatarEl.className = "vault-shield-avatar warning-shield";
+        shieldAvatarEl.innerHTML = "⚠️";
+      }
+      if (statusTitleEl) statusTitleEl.textContent = "Basic Protection Only (DPAPI Hardware)";
       if (badgeEl) {
-        badgeEl.className = "vault-badge badge-warning";
-        badgeEl.innerHTML = "⚠️ Unprotected (DPAPI Only)";
+        badgeEl.className = "vault-pulse-dot dot-warning";
+        badgeEl.innerHTML = "● Master Password Recommended";
       }
       if (statusTextEl) {
         statusTextEl.textContent = "Protect your stored passwords with your own Master Password.";
       }
       if (actionsEl) {
-        actionsEl.innerHTML = "";
+        actionsEl.innerHTML = `
+          <button type="button" class="btn btn-primary btn-xs btn-lock-vault" id="btnHeaderSetupJump" title="Configure Master Password">🔒 Set Master Password</button>
+        `;
+        const sBtn = actionsEl.querySelector("#btnHeaderSetupJump");
+        if (sBtn) sBtn.onclick = () => {
+          const setupCard = box.querySelector("#vaultSetupCard");
+          if (setupCard) {
+            setupCard.scrollIntoView({ behavior: 'smooth' });
+            box.querySelector("#newMasterPwd")?.focus();
+          }
+        };
       }
       if (lockGateEl) lockGateEl.classList.add("hidden");
       if (setupCardEl) setupCardEl.classList.remove("hidden");
@@ -1726,7 +1852,7 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
     const lockHintBtn = box.querySelector("#btnLockShowHint");
     if (lockHintBtn) lockHintBtn.onclick = handleShowHint;
 
-    // 2. Generator Length Controls
+    // 2. Setup Password Generator Controls
     box.querySelectorAll(".btn-gen-len").forEach(b => {
       b.onclick = () => {
         box.querySelectorAll(".btn-gen-len").forEach(x => x.classList.remove("active"));
@@ -1771,6 +1897,77 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
         }
         updateStrengthMeter();
         showToast("Password populated! Enter an optional hint below and click Save.", "info");
+      };
+    }
+
+    // 2b. Standalone Generator Drawer in Credentials Section
+    const btnToggleDrawer = box.querySelector("#btnToggleGenDrawer");
+    const drawerEl = box.querySelector("#vaultGenDrawer");
+    const btnCloseDrawer = box.querySelector("#btnCloseGenDrawer");
+
+    const triggerDrawerGen = async () => {
+      const incSymbols = box.querySelector("#genSymbolsDrawer") ? box.querySelector("#genSymbolsDrawer").checked : true;
+      let pwd = "";
+      if (window.go && window.go.main && window.go.main.App && window.go.main.App.GenerateSecurePassword) {
+        try {
+          pwd = await window.go.main.App.GenerateSecurePassword(selectedDrawerGenLength, incSymbols);
+        } catch (_) {}
+      }
+      if (!pwd) {
+        pwd = generatePasswordFallback(selectedDrawerGenLength, incSymbols);
+      }
+      const out = box.querySelector("#genOutputDrawer");
+      if (out) out.value = pwd;
+      return pwd;
+    };
+
+    if (btnToggleDrawer && drawerEl) {
+      btnToggleDrawer.onclick = () => {
+        const isHidden = drawerEl.classList.contains("hidden");
+        if (isHidden) {
+          drawerEl.classList.remove("hidden");
+          triggerDrawerGen();
+        } else {
+          drawerEl.classList.add("hidden");
+        }
+      };
+    }
+    if (btnCloseDrawer && drawerEl) {
+      btnCloseDrawer.onclick = () => drawerEl.classList.add("hidden");
+    }
+
+    box.querySelectorAll(".btn-gen-len-drawer").forEach(b => {
+      b.onclick = () => {
+        box.querySelectorAll(".btn-gen-len-drawer").forEach(x => x.classList.remove("active"));
+        b.classList.add("active");
+        selectedDrawerGenLength = parseInt(b.dataset.len, 10) || 16;
+        triggerDrawerGen();
+      };
+    });
+
+    const btnRunGenDrawer = box.querySelector("#btnRunGenDrawer");
+    if (btnRunGenDrawer) btnRunGenDrawer.onclick = () => triggerDrawerGen();
+
+    const genSymbolsDrawerCb = box.querySelector("#genSymbolsDrawer");
+    if (genSymbolsDrawerCb) genSymbolsDrawerCb.onchange = () => triggerDrawerGen();
+
+    const btnCopyGenDrawer = box.querySelector("#btnCopyGenDrawer");
+    if (btnCopyGenDrawer) {
+      btnCopyGenDrawer.onclick = () => {
+        const out = box.querySelector("#genOutputDrawer");
+        if (out && out.value) {
+          navigator.clipboard.writeText(out.value);
+          showToast("Generated password copied to clipboard!", "success");
+        }
+      };
+    }
+
+    // 2c. Real-time Search Filter for Credentials
+    const searchInput = box.querySelector("#vaultSearchInput");
+    if (searchInput) {
+      searchInput.oninput = (e) => {
+        vaultFilterQuery = e.target.value.toLowerCase().trim();
+        renderVaultList();
       };
     }
 
