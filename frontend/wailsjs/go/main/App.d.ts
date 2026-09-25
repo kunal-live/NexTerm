@@ -42,6 +42,8 @@ export function CancelAuthChallenge(arg1:string):Promise<void>;
 
 export function CancelBroadcast(arg1:string):Promise<void>;
 
+export function ChangeMasterPassword(arg1:string,arg2:string,arg3:string):Promise<void>;
+
 export function CheckSSHAgent():Promise<Record<string, any>>;
 
 export function ClassifyConnectionError(arg1:string):Promise<sshsession.ClassifiedError>;
@@ -86,6 +88,8 @@ export function FindSessionPassword(arg1:string,arg2:string,arg3:number,arg4:str
 
 export function FocusWorkspacePane(arg1:string):Promise<void>;
 
+export function GenerateSecurePassword(arg1:number,arg2:boolean):Promise<string>;
+
 export function GetAuditLogs(arg1:number):Promise<Array<service.AuditEvent>>;
 
 export function GetAvailableSerialPorts():Promise<Array<string>>;
@@ -95,6 +99,8 @@ export function GetCustomizerConfig():Promise<security.CustomizerConfig>;
 export function GetKnownHosts():Promise<Array<hostkey.HostKeyEntry>>;
 
 export function GetMacros():Promise<Array<macro.Macro>>;
+
+export function GetMasterPasswordHint():Promise<string>;
 
 export function GetRecentLogs(arg1:number):Promise<Array<service.LogEntry>>;
 
@@ -113,6 +119,8 @@ export function GetSessionTree():Promise<model.TreeNode>;
 export function GetTunnels():Promise<Array<tunnel.TunnelConfig>>;
 
 export function GetWorkspace():Promise<model.Workspace>;
+
+export function HasMasterPassword():Promise<boolean>;
 
 export function HasSavedPassword(arg1:string):Promise<boolean>;
 
@@ -153,6 +161,8 @@ export function OpenSessionWithTabID(arg1:string,arg2:model.SessionProfile,arg3:
 export function OpenSessionWithTabIDAndJumpSecret(arg1:string,arg2:model.SessionProfile,arg3:string,arg4:string):Promise<void>;
 
 export function QuickConnect(arg1:string,arg2:number,arg3:string,arg4:string,arg5:string):Promise<string>;
+
+export function RemoveMasterPassword(arg1:string):Promise<void>;
 
 export function RenameNode(arg1:string,arg2:string):Promise<model.TreeNode>;
 
@@ -224,6 +234,8 @@ export function SelectPrivateKeyFile():Promise<string>;
 
 export function SelectUploadFile():Promise<string>;
 
+export function SetMasterPassword(arg1:string,arg2:string):Promise<void>;
+
 export function SetWorkspaceActiveTab(arg1:string,arg2:string):Promise<void>;
 
 export function SetWorkspaceLayout(arg1:string):Promise<model.Workspace>;
@@ -241,5 +253,7 @@ export function UpdateFolder(arg1:string,arg2:string):Promise<model.TreeNode>;
 export function UpdateSession(arg1:model.SessionProfile):Promise<model.TreeNode>;
 
 export function ValidatePrivateKeyFile(arg1:string,arg2:string):Promise<sshsession.KeyInfo>;
+
+export function VerifyMasterPassword(arg1:string):Promise<boolean>;
 
 export function WriteToTerminal(arg1:string,arg2:string):Promise<void>;

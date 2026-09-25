@@ -517,6 +517,54 @@ func (a *App) CheckSSHAgent() (map[string]interface{}, error) {
 	return a.credentialService.CheckSSHAgent()
 }
 
+func (a *App) HasMasterPassword() (bool, error) {
+	return a.credentialService.HasMasterPassword()
+}
+
+func (a *App) SetMasterPassword(password, hint string) error {
+	err := a.credentialService.SetMasterPassword(password, hint)
+	if err == nil {
+		a.loggingService.LogAudit("MASTER_PASSWORD_SET", "vault", "", "", "master", "SUCCESS", "Master password protection enabled")
+	}
+	return err
+}
+
+func (a *App) VerifyMasterPassword(password string) (bool, error) {
+	valid, err := a.credentialService.VerifyMasterPassword(password)
+	if err == nil {
+		status := "DENIED"
+		if valid {
+			status = "SUCCESS"
+		}
+		a.loggingService.LogAudit("MASTER_PASSWORD_VERIFY", "vault", "", "", "master", status, "Master password authentication attempt")
+	}
+	return valid, err
+}
+
+func (a *App) GetMasterPasswordHint() (string, error) {
+	return a.credentialService.GetMasterPasswordHint()
+}
+
+func (a *App) RemoveMasterPassword(currentPassword string) error {
+	err := a.credentialService.RemoveMasterPassword(currentPassword)
+	if err == nil {
+		a.loggingService.LogAudit("MASTER_PASSWORD_REMOVED", "vault", "", "", "master", "SUCCESS", "Master password protection disabled")
+	}
+	return err
+}
+
+func (a *App) ChangeMasterPassword(currentPassword, newPassword, newHint string) error {
+	err := a.credentialService.ChangeMasterPassword(currentPassword, newPassword, newHint)
+	if err == nil {
+		a.loggingService.LogAudit("MASTER_PASSWORD_CHANGED", "vault", "", "", "master", "SUCCESS", "Master password updated")
+	}
+	return err
+}
+
+func (a *App) GenerateSecurePassword(length int, includeSymbols bool) string {
+	return service.GenerateSecurePassword(length, includeSymbols)
+}
+
 // =========================================================================
 // Connection & Protocol Session Delegations
 // =========================================================================
@@ -1150,4 +1198,3 @@ func (a *App) BRMGetOpcodeKnowledge(op string) service.OpcodeInfo {
 func (a *App) BRMGetErrorKnowledge(code string) service.ErrorKnowledge {
 	return a.brmService.GetErrorKnowledge(code)
 }
-

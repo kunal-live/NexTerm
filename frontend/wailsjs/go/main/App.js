@@ -66,6 +66,10 @@ export function CancelBroadcast(arg1) {
   return window['go']['main']['App']['CancelBroadcast'](arg1);
 }
 
+export function ChangeMasterPassword(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ChangeMasterPassword'](arg1, arg2, arg3);
+}
+
 export function CheckSSHAgent() {
   return window['go']['main']['App']['CheckSSHAgent']();
 }
@@ -154,6 +158,10 @@ export function FocusWorkspacePane(arg1) {
   return window['go']['main']['App']['FocusWorkspacePane'](arg1);
 }
 
+export function GenerateSecurePassword(arg1, arg2) {
+  return window['go']['main']['App']['GenerateSecurePassword'](arg1, arg2);
+}
+
 export function GetAuditLogs(arg1) {
   return window['go']['main']['App']['GetAuditLogs'](arg1);
 }
@@ -172,6 +180,10 @@ export function GetKnownHosts() {
 
 export function GetMacros() {
   return window['go']['main']['App']['GetMacros']();
+}
+
+export function GetMasterPasswordHint() {
+  return window['go']['main']['App']['GetMasterPasswordHint']();
 }
 
 export function GetRecentLogs(arg1) {
@@ -208,6 +220,10 @@ export function GetTunnels() {
 
 export function GetWorkspace() {
   return window['go']['main']['App']['GetWorkspace']();
+}
+
+export function HasMasterPassword() {
+  return window['go']['main']['App']['HasMasterPassword']();
 }
 
 export function HasSavedPassword(arg1) {
@@ -288,6 +304,10 @@ export function OpenSessionWithTabIDAndJumpSecret(arg1, arg2, arg3, arg4) {
 
 export function QuickConnect(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['QuickConnect'](arg1, arg2, arg3, arg4, arg5);
+}
+
+export function RemoveMasterPassword(arg1) {
+  return window['go']['main']['App']['RemoveMasterPassword'](arg1);
 }
 
 export function RenameNode(arg1, arg2) {
@@ -430,6 +450,10 @@ export function SelectUploadFile() {
   return window['go']['main']['App']['SelectUploadFile']();
 }
 
+export function SetMasterPassword(arg1, arg2) {
+  return window['go']['main']['App']['SetMasterPassword'](arg1, arg2);
+}
+
 export function SetWorkspaceActiveTab(arg1, arg2) {
   return window['go']['main']['App']['SetWorkspaceActiveTab'](arg1, arg2);
 }
@@ -464,6 +488,10 @@ export function UpdateSession(arg1) {
 
 export function ValidatePrivateKeyFile(arg1, arg2) {
   return window['go']['main']['App']['ValidatePrivateKeyFile'](arg1, arg2);
+}
+
+export function VerifyMasterPassword(arg1) {
+  return window['go']['main']['App']['VerifyMasterPassword'](arg1);
 }
 
 export function WriteToTerminal(arg1, arg2) {

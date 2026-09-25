@@ -477,7 +477,7 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
     </div>
     <div class="modal-tabs">
       <button class="modal-tab-btn active" data-tab="tab-settings-term">🖥️ Terminal & UI</button>
-      <button class="modal-tab-btn" data-tab="tab-settings-pwd">🔑 Password Vault</button>
+      <button class="modal-tab-btn" data-tab="tab-settings-pwd">🔑 Passwords & Vault</button>
       <button class="modal-tab-btn" data-tab="tab-settings-sec">🛡️ Security Policies</button>
       <button class="modal-tab-btn" data-tab="tab-settings-custom">🏢 Customizer</button>
       <button class="modal-tab-btn" data-tab="tab-settings-knownhosts">🛡️ Known Hosts</button>
@@ -576,13 +576,170 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
         </div>
       </div>
 
-      <!-- 2. Password Management Vault Tab -->
+      <!-- 2. Passwords & Vault Tab -->
       <div id="tab-settings-pwd" class="tab-content hidden">
-        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">
-          🔒 Stored passwords are hardware-encrypted with <b>Windows DPAPI (CryptProtectData)</b>. Passwords are never saved in plaintext on disk.
+        <!-- Vault Header & Protection Status Bar -->
+        <div class="vault-status-bar">
+          <div class="vault-status-info">
+            <span id="vaultStatusBadge" class="vault-badge badge-warning">⚠️ Checking Vault...</span>
+            <span id="vaultStatusText" class="vault-status-desc">Loading vault protection status...</span>
+          </div>
+          <div class="vault-header-actions" id="vaultHeaderActions"></div>
         </div>
-        <div id="pwdVaultList" style="display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; padding-right: 2px;">
-          <div style="text-align: center; padding: 20px; color: var(--text-dim);">Loading vault credentials...</div>
+
+        <!-- Master Password Lock Gate (shown if protected & locked) -->
+        <div id="vaultLockGate" class="vault-lock-gate hidden">
+          <div class="vault-lock-card">
+            <div class="vault-lock-icon">🔒</div>
+            <h3 class="vault-lock-title">Vault is Protected & Locked</h3>
+            <p class="vault-lock-desc">
+              Your credentials are encrypted. Enter your personal master password to unlock and manage your vault.
+            </p>
+            <div class="vault-lock-form">
+              <div class="pwd-input-wrap">
+                <input type="password" id="vaultUnlockPwd" class="form-input" placeholder="Enter master password..." autocomplete="off" />
+                <button type="button" class="pwd-eye-btn" id="btnToggleUnlockPwd" title="Show/Hide Password">👁️</button>
+              </div>
+              <button type="button" class="btn btn-primary" id="btnVaultUnlock">🔓 Unlock Vault</button>
+            </div>
+            <div class="vault-lock-footer">
+              <button type="button" class="btn-link" id="btnLockShowHint">💡 Forgot password? Show Hint</button>
+              <div id="vaultLockHintBox" class="vault-hint-box hidden"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Master Password Setup Card (shown if master password is NOT set) -->
+        <div id="vaultSetupCard" class="vault-setup-card hidden">
+          <div class="vault-banner">
+            <div class="vault-banner-icon">🛡️</div>
+            <div class="vault-banner-body">
+              <h4 class="vault-banner-title">Protect Your Passwords with Your Own Master Password</h4>
+              <p class="vault-banner-text">
+                Stored session credentials are hardware-encrypted with Windows DPAPI, but anyone with access to your workstation can view them. Set your own Master Password to lock down your credential vault with dual-layer bcrypt security. You can also generate a strong password and save a memory hint.
+              </p>
+            </div>
+          </div>
+
+          <!-- Password Generator Section -->
+          <div class="vault-gen-section">
+            <div class="vault-gen-header">
+              <span class="vault-gen-title">🎲 Secure Password Generator</span>
+              <span class="vault-gen-sub">Generate a high-entropy master password or session password</span>
+            </div>
+            <div class="vault-gen-controls">
+              <div class="vault-gen-options">
+                <div class="vault-gen-lens">
+                  <span class="gen-lens-lbl">Length:</span>
+                  <button type="button" class="btn-gen-len" data-len="12">12</button>
+                  <button type="button" class="btn-gen-len active" data-len="16">16</button>
+                  <button type="button" class="btn-gen-len" data-len="20">20</button>
+                  <button type="button" class="btn-gen-len" data-len="24">24</button>
+                  <button type="button" class="btn-gen-len" data-len="32">32</button>
+                </div>
+                <label class="checkbox-label" style="font-size: 11px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                  <input type="checkbox" id="genSymbols" checked />
+                  <span>Include Symbols (!@#$%...)</span>
+                </label>
+              </div>
+              <div class="vault-gen-output-row">
+                <input type="text" id="genOutput" class="vault-gen-input" readonly placeholder="Generating password..." />
+                <button type="button" class="btn btn-secondary btn-sm" id="btnRunGen" title="Generate New Password">🎲 Generate</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="btnCopyGen" title="Copy Password">📋 Copy</button>
+                <button type="button" class="btn btn-accent btn-sm" id="btnUseGen" title="Use as Master Password">⚡ Use as Master Password</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Master Password Form -->
+          <div class="vault-form-box">
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <div class="form-group">
+                <label for="newMasterPwd">Create Master Password <span class="required-star" style="color: #ef4444;">*</span></label>
+                <div class="pwd-input-wrap">
+                  <input type="password" id="newMasterPwd" class="form-input" placeholder="Enter master password (min 4 chars)" autocomplete="new-password" />
+                  <button type="button" class="pwd-eye-btn" id="btnToggleNewMasterPwd" title="Show/Hide">👁️</button>
+                </div>
+                <div class="pwd-strength-container">
+                  <div class="pwd-strength-meter">
+                    <div id="pwdStrengthBar" class="pwd-strength-fill" style="width: 0%;"></div>
+                  </div>
+                  <span id="pwdStrengthText" class="pwd-strength-text">Password strength</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="confirmMasterPwd">Confirm Master Password <span class="required-star" style="color: #ef4444;">*</span></label>
+                <div class="pwd-input-wrap">
+                  <input type="password" id="confirmMasterPwd" class="form-input" placeholder="Re-type master password" autocomplete="new-password" />
+                  <button type="button" class="pwd-eye-btn" id="btnToggleConfirmMasterPwd" title="Show/Hide">👁️</button>
+                </div>
+                <span id="pwdMatchNotice" class="pwd-match-text"></span>
+              </div>
+            </div>
+
+            <!-- Password Hint -->
+            <div class="form-group" style="margin-top: 6px;">
+              <label for="newMasterHint" style="display: flex; align-items: center; justify-content: space-between;">
+                <span>💡 Password Hint <span style="font-weight: normal; color: var(--text-dim);">(Helps you remember)</span></span>
+              </label>
+              <input type="text" id="newMasterHint" class="form-input" placeholder="e.g. Favorite childhood pet + first car model" autocomplete="off" />
+              <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">
+                Only you will see this hint. Never enter your actual password here.
+              </div>
+            </div>
+
+            <div class="vault-form-actions" style="margin-top: 12px; display: flex; justify-content: flex-end;">
+              <button type="button" class="btn btn-primary" id="btnSaveMasterPwd">
+                🔒 Set Master Password & Protect Vault
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Master Password Change Panel (Collapsible) -->
+        <div id="vaultChangeCard" class="vault-change-card hidden">
+          <div class="vault-change-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h4 style="margin: 0; font-size: 13px; color: #f1f5f9;">🔑 Change Master Password</h4>
+            <button type="button" class="btn-link" id="btnCancelChangeMaster" style="font-size: 11.5px;">Cancel</button>
+          </div>
+          <div class="form-group" style="margin-bottom: 8px;">
+            <label for="chgCurrPwd">Current Master Password</label>
+            <input type="password" id="chgCurrPwd" class="form-input" placeholder="Current master password..." />
+          </div>
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+            <div class="form-group">
+              <label for="chgNewPwd">New Master Password</label>
+              <input type="password" id="chgNewPwd" class="form-input" placeholder="New master password (min 4 chars)..." />
+            </div>
+            <div class="form-group">
+              <label for="chgConfirmPwd">Confirm New Password</label>
+              <input type="password" id="chgConfirmPwd" class="form-input" placeholder="Confirm new password..." />
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom: 8px;">
+            <label for="chgNewHint">New Password Hint</label>
+            <input type="text" id="chgNewHint" class="form-input" placeholder="New hint to remember..." />
+          </div>
+          <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px;">
+            <button type="button" class="btn btn-secondary btn-sm" id="btnChangeGenHelp">🎲 Quick Generate</button>
+            <button type="button" class="btn btn-primary btn-sm" id="btnSubmitChangeMaster">Save New Password</button>
+          </div>
+        </div>
+
+        <!-- Stored Passwords Section (visible when unlocked or unprotected) -->
+        <div id="vaultContentSection" class="vault-content-section">
+          <div class="vault-list-header">
+            <div class="vault-list-title" style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-weight: 600; font-size: 12.5px; color: #f1f5f9;">Saved Session Credentials</span>
+              <span id="vaultCredCount" class="vault-counter-badge">0</span>
+            </div>
+            <div class="vault-list-actions">
+              <button type="button" class="btn btn-secondary btn-xs" id="btnRefreshVaultList" title="Refresh Vault Credentials">🔄 Refresh</button>
+            </div>
+          </div>
+          <div id="pwdVaultList" class="pwd-vault-list">
+            <div style="text-align: center; padding: 20px; color: var(--text-dim);">Loading vault credentials...</div>
+          </div>
         </div>
       </div>
 
@@ -1194,6 +1351,8 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
         loadAuditLogsList();
       } else if (btn.dataset.tab === "tab-settings-ai") {
         renderAiKnowledgeUI();
+      } else if (btn.dataset.tab === "tab-settings-pwd") {
+        refreshVaultView();
       }
     };
   });
@@ -1236,7 +1395,113 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
     } catch (_) {}
   }
 
-  // Load vault passwords
+  // =========================================================================
+  // Passwords & Vault Protection Management
+  // =========================================================================
+  let isVaultUnlocked = false; // session unlock state
+  let selectedGenLength = 16;
+
+  // Standalone Generator Fallback
+  const generatePasswordFallback = (length = 16, includeSymbols = true) => {
+    const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const numbers = "0123456789";
+    const symbols = "!@#$%^&*()-_=+[]{}<>";
+    let chars = letters + numbers;
+    if (includeSymbols) chars += symbols;
+    const array = new Uint32Array(length);
+    window.crypto.getRandomValues(array);
+    let res = "";
+    for (let i = 0; i < length; i++) {
+      res += chars[array[i] % chars.length];
+    }
+    return res;
+  };
+
+  const calculatePasswordStrength = (pwd) => {
+    if (!pwd || pwd.length === 0) return { score: 0, text: "Enter a password", width: "0%", color: "#64748b" };
+    if (pwd.length < 4) return { score: 1, text: "Too short (min 4 chars)", width: "15%", color: "#ef4444" };
+    let points = 0;
+    if (pwd.length >= 8) points++;
+    if (pwd.length >= 12) points++;
+    if (pwd.length >= 16) points++;
+    if (/[a-z]/.test(pwd)) points++;
+    if (/[A-Z]/.test(pwd)) points++;
+    if (/[0-9]/.test(pwd)) points++;
+    if (/[^a-zA-Z0-9]/.test(pwd)) points++;
+
+    if (points <= 3) {
+      return { score: 2, text: "Weak password", width: "35%", color: "#f87171" };
+    } else if (points <= 5) {
+      return { score: 3, text: "Moderate strength", width: "65%", color: "#fbbf24" };
+    } else if (points === 6) {
+      return { score: 4, text: "Strong password", width: "85%", color: "#38bdf8" };
+    } else {
+      return { score: 5, text: "Very Strong (Maximum entropy)", width: "100%", color: "#34d399" };
+    }
+  };
+
+  const triggerGeneratePassword = async () => {
+    const incSymbols = box.querySelector("#genSymbols") ? box.querySelector("#genSymbols").checked : true;
+    let pwd = "";
+    if (window.go && window.go.main && window.go.main.App && window.go.main.App.GenerateSecurePassword) {
+      try {
+        pwd = await window.go.main.App.GenerateSecurePassword(selectedGenLength, incSymbols);
+      } catch (_) {}
+    }
+    if (!pwd) {
+      pwd = generatePasswordFallback(selectedGenLength, incSymbols);
+    }
+    const out = box.querySelector("#genOutput");
+    if (out) out.value = pwd;
+    return pwd;
+  };
+
+  const handleShowHint = async () => {
+    let hint = "";
+    if (window.go && window.go.main && window.go.main.App && window.go.main.App.GetMasterPasswordHint) {
+      try {
+        hint = await window.go.main.App.GetMasterPasswordHint();
+      } catch (err) {
+        showToast("Failed to fetch password hint: " + err, "error");
+        return;
+      }
+    }
+    const hintBox = box.querySelector("#vaultLockHintBox");
+    if (hint && hint.trim()) {
+      if (hintBox) {
+        hintBox.innerHTML = `<strong>💡 Password Hint:</strong> <em>"${escapeHtml(hint.trim())}"</em>`;
+        hintBox.classList.remove("hidden");
+      }
+      showToast(`Password Hint: "${hint.trim()}"`, "info");
+    } else {
+      if (hintBox) {
+        hintBox.innerHTML = `<em>No password hint was saved during setup.</em>`;
+        hintBox.classList.remove("hidden");
+      }
+      showToast("No password hint configured for this vault.", "info");
+    }
+  };
+
+  const handleRemoveProtection = async () => {
+    const pwd = prompt("Enter your current Master Password to remove protection:");
+    if (pwd === null) return;
+    if (!pwd.trim()) {
+      showToast("Current password is required to remove protection", "warning");
+      return;
+    }
+    if (window.go && window.go.main && window.go.main.App && window.go.main.App.RemoveMasterPassword) {
+      try {
+        await window.go.main.App.RemoveMasterPassword(pwd.trim());
+        isVaultUnlocked = true;
+        showToast("Master password protection removed. Vault is now unprotected.", "info");
+        await refreshVaultView();
+      } catch (err) {
+        showToast("Failed to remove master password: " + err, "error");
+      }
+    }
+  };
+
+  // Load vault passwords into the list
   const loadVaultPasswords = async () => {
     const listContainer = box.querySelector("#pwdVaultList");
     if (!listContainer) return;
@@ -1245,6 +1510,9 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
       if (window.go && window.go.main && window.go.main.App) {
         creds = await window.go.main.App.GetSavedPasswords() || [];
       }
+      const countEl = box.querySelector("#vaultCredCount");
+      if (countEl) countEl.textContent = creds.length;
+
       if (creds.length === 0) {
         listContainer.innerHTML = `
           <div class="pwd-empty-state">
@@ -1316,7 +1584,360 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
       });
     } catch (_) {}
   };
-  loadVaultPasswords();
+
+  const refreshVaultView = async () => {
+    const tabEl = box.querySelector("#tab-settings-pwd");
+    if (!tabEl) return;
+
+    let hasMaster = false;
+    if (window.go && window.go.main && window.go.main.App && window.go.main.App.HasMasterPassword) {
+      try {
+        hasMaster = await window.go.main.App.HasMasterPassword();
+      } catch (err) {
+        console.warn("Failed to check master password status:", err);
+      }
+    }
+
+    const badgeEl = box.querySelector("#vaultStatusBadge");
+    const statusTextEl = box.querySelector("#vaultStatusText");
+    const actionsEl = box.querySelector("#vaultHeaderActions");
+    const lockGateEl = box.querySelector("#vaultLockGate");
+    const setupCardEl = box.querySelector("#vaultSetupCard");
+    const changeCardEl = box.querySelector("#vaultChangeCard");
+    const contentSecEl = box.querySelector("#vaultContentSection");
+
+    if (hasMaster) {
+      if (!isVaultUnlocked) {
+        // Protected & Locked
+        if (badgeEl) {
+          badgeEl.className = "vault-badge badge-warning";
+          badgeEl.innerHTML = "🔒 Protected & Locked";
+        }
+        if (statusTextEl) {
+          statusTextEl.textContent = "Vault is protected with Master Password. Unlock to manage credentials.";
+        }
+        if (actionsEl) {
+          actionsEl.innerHTML = `
+            <button type="button" class="btn btn-secondary btn-xs" id="btnHeaderShowHint" title="Show password hint">💡 Show Hint</button>
+          `;
+          const hBtn = actionsEl.querySelector("#btnHeaderShowHint");
+          if (hBtn) hBtn.onclick = handleShowHint;
+        }
+        if (lockGateEl) lockGateEl.classList.remove("hidden");
+        if (setupCardEl) setupCardEl.classList.add("hidden");
+        if (changeCardEl) changeCardEl.classList.add("hidden");
+        if (contentSecEl) contentSecEl.classList.add("hidden");
+      } else {
+        // Protected & Unlocked
+        if (badgeEl) {
+          badgeEl.className = "vault-badge badge-success";
+          badgeEl.innerHTML = "🛡️ Master Password Active";
+        }
+        if (statusTextEl) {
+          statusTextEl.textContent = "Dual-layer security active: Windows DPAPI + bcrypt master password.";
+        }
+        if (actionsEl) {
+          actionsEl.innerHTML = `
+            <button type="button" class="btn btn-secondary btn-xs" id="btnHeaderShowHint" title="Show password hint">💡 Hint</button>
+            <button type="button" class="btn btn-secondary btn-xs" id="btnHeaderChangePwd" title="Change master password">🔑 Change</button>
+            <button type="button" class="btn btn-secondary btn-xs btn-danger" id="btnHeaderRemovePwd" title="Remove master password protection">🔓 Remove</button>
+            <button type="button" class="btn btn-primary btn-xs" id="btnHeaderLockVault" title="Lock vault now">🔒 Lock Vault</button>
+          `;
+          const hBtn = actionsEl.querySelector("#btnHeaderShowHint");
+          if (hBtn) hBtn.onclick = handleShowHint;
+          const cBtn = actionsEl.querySelector("#btnHeaderChangePwd");
+          if (cBtn) cBtn.onclick = () => {
+            if (changeCardEl) changeCardEl.classList.toggle("hidden");
+          };
+          const rBtn = actionsEl.querySelector("#btnHeaderRemovePwd");
+          if (rBtn) rBtn.onclick = handleRemoveProtection;
+          const lBtn = actionsEl.querySelector("#btnHeaderLockVault");
+          if (lBtn) lBtn.onclick = () => {
+            isVaultUnlocked = false;
+            showToast("Vault locked", "info");
+            refreshVaultView();
+          };
+        }
+        if (lockGateEl) lockGateEl.classList.add("hidden");
+        if (setupCardEl) setupCardEl.classList.add("hidden");
+        if (contentSecEl) contentSecEl.classList.remove("hidden");
+        loadVaultPasswords();
+      }
+    } else {
+      // Unprotected: prompt user to set up master password
+      isVaultUnlocked = true;
+      if (badgeEl) {
+        badgeEl.className = "vault-badge badge-warning";
+        badgeEl.innerHTML = "⚠️ Unprotected (DPAPI Only)";
+      }
+      if (statusTextEl) {
+        statusTextEl.textContent = "Protect your stored passwords with your own Master Password.";
+      }
+      if (actionsEl) {
+        actionsEl.innerHTML = "";
+      }
+      if (lockGateEl) lockGateEl.classList.add("hidden");
+      if (setupCardEl) setupCardEl.classList.remove("hidden");
+      if (changeCardEl) changeCardEl.classList.add("hidden");
+      if (contentSecEl) contentSecEl.classList.remove("hidden");
+      loadVaultPasswords();
+    }
+  };
+
+  // Wire up Vault Event Listeners
+  const setupVaultUI = () => {
+    // 1. Lock Gate Unlock
+    const unlockBtn = box.querySelector("#btnVaultUnlock");
+    const unlockInput = box.querySelector("#vaultUnlockPwd");
+    const handleUnlockAction = async () => {
+      if (!unlockInput) return;
+      const pwd = unlockInput.value.trim();
+      if (!pwd) {
+        showToast("Please enter your master password", "warning");
+        unlockInput.focus();
+        return;
+      }
+      if (window.go && window.go.main && window.go.main.App && window.go.main.App.VerifyMasterPassword) {
+        try {
+          const ok = await window.go.main.App.VerifyMasterPassword(pwd);
+          if (ok) {
+            isVaultUnlocked = true;
+            unlockInput.value = "";
+            showToast("Vault unlocked successfully!", "success");
+            await refreshVaultView();
+          } else {
+            showToast("Incorrect master password. Please try again.", "error");
+            unlockInput.classList.add("shake-error");
+            setTimeout(() => unlockInput.classList.remove("shake-error"), 500);
+            unlockInput.select();
+          }
+        } catch (err) {
+          showToast("Error verifying password: " + err, "error");
+        }
+      }
+    };
+    if (unlockBtn) unlockBtn.onclick = handleUnlockAction;
+    if (unlockInput) {
+      unlockInput.onkeydown = (e) => {
+        if (e.key === "Enter") handleUnlockAction();
+      };
+    }
+
+    const lockHintBtn = box.querySelector("#btnLockShowHint");
+    if (lockHintBtn) lockHintBtn.onclick = handleShowHint;
+
+    // 2. Generator Length Controls
+    box.querySelectorAll(".btn-gen-len").forEach(b => {
+      b.onclick = () => {
+        box.querySelectorAll(".btn-gen-len").forEach(x => x.classList.remove("active"));
+        b.classList.add("active");
+        selectedGenLength = parseInt(b.dataset.len, 10) || 16;
+        triggerGeneratePassword();
+      };
+    });
+
+    const btnRunGen = box.querySelector("#btnRunGen");
+    if (btnRunGen) btnRunGen.onclick = () => triggerGeneratePassword();
+
+    const genSymbolsCb = box.querySelector("#genSymbols");
+    if (genSymbolsCb) genSymbolsCb.onchange = () => triggerGeneratePassword();
+
+    const btnCopyGen = box.querySelector("#btnCopyGen");
+    if (btnCopyGen) {
+      btnCopyGen.onclick = () => {
+        const out = box.querySelector("#genOutput");
+        if (out && out.value) {
+          navigator.clipboard.writeText(out.value);
+          showToast("Generated password copied to clipboard!", "success");
+        }
+      };
+    }
+
+    const btnUseGen = box.querySelector("#btnUseGen");
+    if (btnUseGen) {
+      btnUseGen.onclick = () => {
+        const out = box.querySelector("#genOutput");
+        if (!out || !out.value) return;
+        const pwd = out.value;
+        const newPwdInput = box.querySelector("#newMasterPwd");
+        const confirmPwdInput = box.querySelector("#confirmMasterPwd");
+        if (newPwdInput) {
+          newPwdInput.value = pwd;
+          newPwdInput.type = "text";
+        }
+        if (confirmPwdInput) {
+          confirmPwdInput.value = pwd;
+          confirmPwdInput.type = "text";
+        }
+        updateStrengthMeter();
+        showToast("Password populated! Enter an optional hint below and click Save.", "info");
+      };
+    }
+
+    // 3. Strength Meter & Match Validation
+    const updateStrengthMeter = () => {
+      const newPwdInput = box.querySelector("#newMasterPwd");
+      const confirmPwdInput = box.querySelector("#confirmMasterPwd");
+      const fillEl = box.querySelector("#pwdStrengthBar");
+      const textEl = box.querySelector("#pwdStrengthText");
+      const matchEl = box.querySelector("#pwdMatchNotice");
+
+      const pwd = newPwdInput ? newPwdInput.value : "";
+      const conf = confirmPwdInput ? confirmPwdInput.value : "";
+
+      const st = calculatePasswordStrength(pwd);
+      if (fillEl) {
+        fillEl.style.width = st.width;
+        fillEl.style.backgroundColor = st.color;
+      }
+      if (textEl) {
+        textEl.textContent = st.text;
+        textEl.style.color = st.color;
+      }
+
+      if (matchEl) {
+        if (!conf) {
+          matchEl.textContent = "";
+        } else if (pwd === conf) {
+          matchEl.textContent = "✓ Passwords match";
+          matchEl.style.color = "#34d399";
+        } else {
+          matchEl.textContent = "✕ Passwords do not match";
+          matchEl.style.color = "#f87171";
+        }
+      }
+    };
+
+    const newMasterInput = box.querySelector("#newMasterPwd");
+    if (newMasterInput) newMasterInput.oninput = updateStrengthMeter;
+
+    const confMasterInput = box.querySelector("#confirmMasterPwd");
+    if (confMasterInput) confMasterInput.oninput = updateStrengthMeter;
+
+    // 4. Set Master Password Save Button
+    const btnSaveMaster = box.querySelector("#btnSaveMasterPwd");
+    if (btnSaveMaster) {
+      btnSaveMaster.onclick = async () => {
+        const pwd = (box.querySelector("#newMasterPwd")?.value || "").trim();
+        const conf = (box.querySelector("#confirmMasterPwd")?.value || "").trim();
+        const hint = (box.querySelector("#newMasterHint")?.value || "").trim();
+
+        if (pwd.length < 4) {
+          showToast("Master password must be at least 4 characters long", "warning");
+          box.querySelector("#newMasterPwd")?.focus();
+          return;
+        }
+        if (pwd !== conf) {
+          showToast("Master passwords do not match", "error");
+          box.querySelector("#confirmMasterPwd")?.focus();
+          return;
+        }
+        if (hint && hint.toLowerCase().includes(pwd.toLowerCase())) {
+          showToast("Security risk: Your password hint cannot contain the password itself!", "warning");
+          box.querySelector("#newMasterHint")?.focus();
+          return;
+        }
+
+        if (window.go && window.go.main && window.go.main.App && window.go.main.App.SetMasterPassword) {
+          try {
+            await window.go.main.App.SetMasterPassword(pwd, hint);
+            isVaultUnlocked = true;
+            showToast("Master password set! Your vault is now protected.", "success");
+            await refreshVaultView();
+          } catch (err) {
+            showToast("Failed to set master password: " + err, "error");
+          }
+        }
+      };
+    }
+
+    // 5. Change Master Password Panel
+    const cancelChangeBtn = box.querySelector("#btnCancelChangeMaster");
+    if (cancelChangeBtn) {
+      cancelChangeBtn.onclick = () => {
+        const cCard = box.querySelector("#vaultChangeCard");
+        if (cCard) cCard.classList.add("hidden");
+      };
+    }
+
+    const changeGenHelpBtn = box.querySelector("#btnChangeGenHelp");
+    if (changeGenHelpBtn) {
+      changeGenHelpBtn.onclick = async () => {
+        const pwd = await triggerGeneratePassword();
+        const chgNew = box.querySelector("#chgNewPwd");
+        const chgConf = box.querySelector("#chgConfirmPwd");
+        if (chgNew) { chgNew.value = pwd; chgNew.type = "text"; }
+        if (chgConf) { chgConf.value = pwd; chgConf.type = "text"; }
+        showToast("Generated new password filled into inputs", "info");
+      };
+    }
+
+    const btnSubmitChange = box.querySelector("#btnSubmitChangeMaster");
+    if (btnSubmitChange) {
+      btnSubmitChange.onclick = async () => {
+        const curr = (box.querySelector("#chgCurrPwd")?.value || "").trim();
+        const newPwd = (box.querySelector("#chgNewPwd")?.value || "").trim();
+        const conf = (box.querySelector("#chgConfirmPwd")?.value || "").trim();
+        const newHint = (box.querySelector("#chgNewHint")?.value || "").trim();
+
+        if (!curr) {
+          showToast("Current master password is required", "warning");
+          box.querySelector("#chgCurrPwd")?.focus();
+          return;
+        }
+        if (newPwd.length < 4) {
+          showToast("New master password must be at least 4 characters long", "warning");
+          box.querySelector("#chgNewPwd")?.focus();
+          return;
+        }
+        if (newPwd !== conf) {
+          showToast("New passwords do not match", "error");
+          box.querySelector("#chgConfirmPwd")?.focus();
+          return;
+        }
+
+        if (window.go && window.go.main && window.go.main.App && window.go.main.App.ChangeMasterPassword) {
+          try {
+            await window.go.main.App.ChangeMasterPassword(curr, newPwd, newHint);
+            showToast("Master password updated successfully!", "success");
+            const cCard = box.querySelector("#vaultChangeCard");
+            if (cCard) cCard.classList.add("hidden");
+            await refreshVaultView();
+          } catch (err) {
+            showToast("Failed to update master password: " + err, "error");
+          }
+        }
+      };
+    }
+
+    // 6. Eye Toggles
+    const setupEyeToggle = (btnId, inputId) => {
+      const btn = box.querySelector(`#${btnId}`);
+      const input = box.querySelector(`#${inputId}`);
+      if (btn && input) {
+        btn.onclick = () => {
+          if (input.type === "password") {
+            input.type = "text";
+            btn.textContent = "🔒";
+          } else {
+            input.type = "password";
+            btn.textContent = "👁️";
+          }
+        };
+      }
+    };
+    setupEyeToggle("btnToggleUnlockPwd", "vaultUnlockPwd");
+    setupEyeToggle("btnToggleNewMasterPwd", "newMasterPwd");
+    setupEyeToggle("btnToggleConfirmMasterPwd", "confirmMasterPwd");
+
+    // 7. Refresh list button
+    const btnRefVault = box.querySelector("#btnRefreshVaultList");
+    if (btnRefVault) btnRefVault.onclick = () => loadVaultPasswords();
+  };
+
+  setupVaultUI();
+  refreshVaultView();
+  triggerGeneratePassword();
 
   box.querySelector("#cfgSave").onclick = async () => {
     // 1. Terminal & UI Preferences

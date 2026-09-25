@@ -258,7 +258,7 @@ func TestValidateAndNormalizeTree(t *testing.T) {
 				Session: &model.SessionProfile{
 					Name:     "Invalid Port",
 					Host:     "192.168.1.100",
-					Port:     999999,          // invalid port -> should normalize to 22
+					Port:     999999,           // invalid port -> should normalize to 22
 					Protocol: "CUSTOM_UNKNOWN", // invalid proto -> should normalize to "ssh"
 				},
 			},
@@ -523,7 +523,7 @@ type mockResizeSession struct {
 
 func (m *mockResizeSession) Connect(ctx context.Context) error { return nil }
 func (m *mockResizeSession) Disconnect() error                 { return nil }
-func (m *mockResizeSession) Write(data []byte) error          { return nil }
+func (m *mockResizeSession) Write(data []byte) error           { return nil }
 func (m *mockResizeSession) Resize(cols, rows int) error {
 	m.lastCols = cols
 	m.lastRows = rows
@@ -572,4 +572,117 @@ func TestConnectionManager_ResizePendingWhenConnecting(t *testing.T) {
 	}
 }
 
+func TestMasterPasswordAndGenerator(t *testing.T) {
+	// Test Password Generator
+	pwd16 := GenerateSecurePassword(16, true)
+	if len(pwd16) != 16 {
+		t.Fatalf("expected 16-char password, got %d chars: %s", len(pwd16), pwd16)
+	}
+	pwd24 := GenerateSecurePassword(24, false)
+	if len(pwd24) != 24 {
+		t.Fatalf("expected 24-char password, got %d chars: %s", len(pwd24), pwd24)
+	}
+	if pwd16 == pwd24 {
+		t.Fatalf("passwords should not match")
+	}
 
+	// Test Master Password Service
+	v, err := vault.NewVaultAt(t.TempDir())
+	if err != nil {
+		t.Fatalf("failed to create vault: %v", err)
+	}
+	svc := NewCredentialService(v)
+
+	// Initially no master password
+	has, err := svc.HasMasterPassword()
+	if err != nil || has {
+		t.Fatalf("expected HasMasterPassword=false, got %v, err=%v", has, err)
+	}
+
+	// Verification with no master password returns true (open)
+	ok, err := svc.VerifyMasterPassword("anything")
+	if err != nil || !ok {
+		t.Fatalf("expected VerifyMasterPassword=true when unprotected, got %v, err=%v", ok, err)
+	}
+
+	// Setting too short master password fails
+	if err := svc.SetMasterPassword("12", "hint"); err == nil {
+		t.Fatal("expected error for password < 4 chars, got nil")
+	}
+
+	// Set valid master password and hint
+	masterPwd := "SuperSecure#2026!"
+	hint := "Year and exclamation"
+	if err := svc.SetMasterPassword(masterPwd, hint); err != nil {
+		t.Fatalf("SetMasterPassword failed: %v", err)
+	}
+
+	// Now HasMasterPassword should be true
+	has, err = svc.HasMasterPassword()
+	if err != nil || !has {
+		t.Fatalf("expected HasMasterPassword=true, got %v, err=%v", has, err)
+	}
+
+	// Check hint
+	gotHint, err := svc.GetMasterPasswordHint()
+	if err != nil || gotHint != hint {
+		t.Fatalf("expected hint %q, got %q, err=%v", hint, gotHint, err)
+	}
+
+	// Correct password verifies
+	ok, err = svc.VerifyMasterPassword(masterPwd)
+	if err != nil || !ok {
+		t.Fatalf("expected VerifyMasterPassword=true for correct password, got %v, err=%v", ok, err)
+	}
+
+	// Wrong password rejected
+	ok, err = svc.VerifyMasterPassword("WrongPassword123")
+	if err != nil || ok {
+		t.Fatalf("expected VerifyMasterPassword=false for wrong password, got %v, err=%v", ok, err)
+	}
+
+	// Change Master Password with wrong current fails
+	if err := svc.ChangeMasterPassword("BadPassword", "NewSecurePass#99", "new hint"); err == nil {
+		t.Fatal("expected error when changing with incorrect current password")
+	}
+
+	// Change Master Password with correct current succeeds
+	newPwd := "NewSecurePass#99"
+	newHint := "Updated hint 99"
+	if err := svc.ChangeMasterPassword(masterPwd, newPwd, newHint); err != nil {
+		t.Fatalf("ChangeMasterPassword failed: %v", err)
+	}
+
+	// Old password no longer works
+	ok, _ = svc.VerifyMasterPassword(masterPwd)
+	if ok {
+		t.Fatal("old master password should no longer verify")
+	}
+
+	// New password works
+	ok, err = svc.VerifyMasterPassword(newPwd)
+	if err != nil || !ok {
+		t.Fatalf("new master password failed to verify: %v, err=%v", ok, err)
+	}
+
+	// New hint works
+	gotHint, _ = svc.GetMasterPasswordHint()
+	if gotHint != newHint {
+		t.Fatalf("expected new hint %q, got %q", newHint, gotHint)
+	}
+
+	// Remove with wrong password fails
+	if err := svc.RemoveMasterPassword("Wrong"); err == nil {
+		t.Fatal("expected error removing with wrong password")
+	}
+
+	// Remove with correct password succeeds
+	if err := svc.RemoveMasterPassword(newPwd); err != nil {
+		t.Fatalf("RemoveMasterPassword failed: %v", err)
+	}
+
+	has, _ = svc.HasMasterPassword()
+	if has {
+		t.Fatal("expected HasMasterPassword=false after removal")
+	}
+}

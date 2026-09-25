@@ -222,6 +222,14 @@ registerCommandPaletteActions([
     action: () => showSettingsDialog()
   },
   {
+    id: "cmd-passwords-vault",
+    category: "Security",
+    title: "Passwords & Vault...",
+    subtitle: "Master password protection, password generator, and hints",
+    icon: "🔑",
+    action: () => showSettingsDialog("tab-settings-pwd")
+  },
+  {
     id: "cmd-theme",
     category: "Appearance",
     title: "Choose UI Theme...",
@@ -340,6 +348,7 @@ export function setupEventListeners() {
   safeClick("mSwitchTheme", showThemePickerDialog);
   safeClick("mOpenTunneling", showTunnelingDialog);
   safeClick("mOpenSettings", showSettingsDialog);
+  safeClick("mOpenPasswordsVault", () => showSettingsDialog("tab-settings-pwd"));
   safeClick("mRecordMacro", showRecordMacroDialog);
   safeClick("mStartXServer", async () => {
     if (!(window.go && window.go.main && window.go.main.App && window.go.main.App.LaunchXServer)) {

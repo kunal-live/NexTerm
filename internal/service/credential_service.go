@@ -2,12 +2,16 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"nexterm/internal/model"
 	"nexterm/internal/sshsession"
 	"nexterm/internal/vault"
 	"strings"
 	"sync"
+
+	"golang.org/x/crypto/bcrypt"
 
 	wailsruntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -288,4 +292,207 @@ func (c *CredentialService) CheckSSHAgent() (map[string]interface{}, error) {
 		"keyCount":  count,
 		"error":     errMsg,
 	}, nil
+}
+
+// Master password internal vault keys
+const (
+	vaultMasterHashKey = "__vault_master_hash__"
+	vaultMasterHintKey = "__vault_master_hint__"
+)
+
+// HasMasterPassword reports whether the vault is secured with a user-defined master password.
+func (c *CredentialService) HasMasterPassword() (bool, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	if c.vault == nil {
+		return false, nil
+	}
+	hash, ok, err := c.vault.Load(vaultMasterHashKey)
+	if err != nil {
+		return false, err
+	}
+	return ok && hash != "", nil
+}
+
+// SetMasterPassword hashes and stores a user-defined master password and optional hint.
+func (c *CredentialService) SetMasterPassword(password, hint string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.vault == nil {
+		return fmt.Errorf("vault is not initialized")
+	}
+	trimmed := strings.TrimSpace(password)
+	if len(trimmed) < 4 {
+		return fmt.Errorf("master password must be at least 4 characters")
+	}
+
+	hashBytes, err := bcrypt.GenerateFromPassword([]byte(trimmed), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("failed to hash master password: %w", err)
+	}
+
+	if err := c.vault.Save(vaultMasterHashKey, string(hashBytes)); err != nil {
+		return fmt.Errorf("failed to save master password: %w", err)
+	}
+	if err := c.vault.Save(vaultMasterHintKey, strings.TrimSpace(hint)); err != nil {
+		return fmt.Errorf("failed to save master password hint: %w", err)
+	}
+	return nil
+}
+
+// VerifyMasterPassword checks if the provided password matches the stored master password hash.
+func (c *CredentialService) VerifyMasterPassword(password string) (bool, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	if c.vault == nil {
+		return true, nil
+	}
+	storedHash, ok, err := c.vault.Load(vaultMasterHashKey)
+	if err != nil {
+		return false, err
+	}
+	if !ok || storedHash == "" {
+		return true, nil // No master password configured
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(strings.TrimSpace(password)))
+	return err == nil, nil
+}
+
+// GetMasterPasswordHint returns the password hint configured by the user.
+func (c *CredentialService) GetMasterPasswordHint() (string, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	if c.vault == nil {
+		return "", nil
+	}
+	hint, ok, err := c.vault.Load(vaultMasterHintKey)
+	if err != nil || !ok {
+		return "", nil
+	}
+	return hint, nil
+}
+
+// RemoveMasterPassword removes the master password protection after verifying the current password.
+func (c *CredentialService) RemoveMasterPassword(currentPassword string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.vault == nil {
+		return fmt.Errorf("vault is not initialized")
+	}
+	storedHash, ok, err := c.vault.Load(vaultMasterHashKey)
+	if err != nil {
+		return err
+	}
+	if ok && storedHash != "" {
+		if err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(strings.TrimSpace(currentPassword))); err != nil {
+			return fmt.Errorf("incorrect master password")
+		}
+	}
+
+	_ = c.vault.Delete(vaultMasterHashKey)
+	_ = c.vault.Delete(vaultMasterHintKey)
+	return nil
+}
+
+// ChangeMasterPassword updates the master password and hint after verifying the current password.
+func (c *CredentialService) ChangeMasterPassword(currentPassword, newPassword, newHint string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.vault == nil {
+		return fmt.Errorf("vault is not initialized")
+	}
+	storedHash, ok, err := c.vault.Load(vaultMasterHashKey)
+	if err != nil {
+		return err
+	}
+	if ok && storedHash != "" {
+		if err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(strings.TrimSpace(currentPassword))); err != nil {
+			return fmt.Errorf("incorrect current master password")
+		}
+	}
+
+	trimmedNew := strings.TrimSpace(newPassword)
+	if len(trimmedNew) < 4 {
+		return fmt.Errorf("new master password must be at least 4 characters")
+	}
+
+	hashBytes, err := bcrypt.GenerateFromPassword([]byte(trimmedNew), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("failed to hash new master password: %w", err)
+	}
+
+	if err := c.vault.Save(vaultMasterHashKey, string(hashBytes)); err != nil {
+		return fmt.Errorf("failed to save new master password: %w", err)
+	}
+	if err := c.vault.Save(vaultMasterHintKey, strings.TrimSpace(newHint)); err != nil {
+		return fmt.Errorf("failed to save new master password hint: %w", err)
+	}
+	return nil
+}
+
+// GenerateSecurePassword generates a high-entropy cryptographically secure password.
+func GenerateSecurePassword(length int, includeSymbols bool) string {
+	if length < 8 {
+		length = 16
+	} else if length > 128 {
+		length = 128
+	}
+
+	const (
+		lowerChars  = "abcdefghijkmnopqrstuvwxyz"
+		upperChars  = "ABCDEFGHJKLMNPQRSTUVWXYZ"
+		numberChars = "23456789"
+		symbolChars = "!@#$%^&*()-_=+[]{}<>"
+	)
+
+	// Guarantee at least one character from each required category
+	var chars strings.Builder
+	chars.WriteString(lowerChars)
+	chars.WriteString(upperChars)
+	chars.WriteString(numberChars)
+	if includeSymbols {
+		chars.WriteString(symbolChars)
+	}
+	allChars := chars.String()
+
+	randomChar := func(source string) byte {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(source))))
+		if err != nil {
+			return source[0]
+		}
+		return source[n.Int64()]
+	}
+
+	buf := make([]byte, length)
+	buf[0] = randomChar(lowerChars)
+	buf[1] = randomChar(upperChars)
+	buf[2] = randomChar(numberChars)
+	idx := 3
+	if includeSymbols {
+		buf[3] = randomChar(symbolChars)
+		idx = 4
+	}
+
+	for i := idx; i < length; i++ {
+		buf[i] = randomChar(allChars)
+	}
+
+	// Fisher-Yates shuffle with crypto/rand
+	for i := length - 1; i > 0; i-- {
+		jBig, err := rand.Int(rand.Reader, big.NewInt(int64(i+1)))
+		if err != nil {
+			continue
+		}
+		j := int(jBig.Int64())
+		buf[i], buf[j] = buf[j], buf[i]
+	}
+
+	return string(buf)
 }
