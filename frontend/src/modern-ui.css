@@ -453,6 +453,7 @@ html {
   flex-direction: column !important;
   align-items: stretch !important;
   gap: 6px !important;
+  overflow: hidden !important;
 }
 
 .sessions-root-label {
@@ -462,18 +463,23 @@ html {
   color: #94a3b8 !important;
   display: flex !important;
   align-items: center !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .session-tree-tools {
   display: flex !important;
   align-items: center !important;
   gap: 4px !important;
-  flex-wrap: wrap !important;
+  flex-wrap: nowrap !important;
+  overflow: hidden !important;
 }
 
 .session-tree-tools button {
   width: 20px !important;
   height: 20px !important;
+  flex-shrink: 0 !important;
   background: rgba(255, 255, 255, 0.04) !important;
   border: 1px solid rgba(255, 255, 255, 0.06) !important;
   color: #94a3b8 !important;
@@ -483,6 +489,24 @@ html {
   justify-content: center !important;
   cursor: pointer !important;
   transition: all 0.12s ease !important;
+}
+
+.moba-sftp-bottom-options {
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.moba-sftp-opt-label {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  min-width: 0 !important;
+}
+
+.moba-sftp-opt-label input[type="checkbox"],
+.moba-opt-icon {
+  flex-shrink: 0 !important;
 }
 
 .session-tree-tools button:hover {
@@ -498,6 +522,7 @@ html {
   background: rgba(56, 189, 248, 0.12) !important;
   border-color: rgba(56, 189, 248, 0.25) !important;
   color: #38bdf8 !important;
+  flex-shrink: 0 !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -5460,3 +5485,703 @@ html {
 #mainLayout {
   height: calc(100% - 24px - 52px - 64px - 26px) !important;
 }
+/* Left Panel Narrow Layout Guards */
+.tree-node-row {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+}
+
+.tree-node-row .node-name {
+  min-width: 0 !important;
+}
+
+.tree-node-proto-badge,
+.tree-node-env-badge,
+.tree-node-row .node-badge,
+.tree-node-row .node-icon,
+.tree-node-row .chevron,
+.tree-node-row .status-dot {
+  flex-shrink: 0 !important;
+}
+
+/* ==========================================================================
+   Comprehensive Modern Light Theme Overhaul (data-theme="light-modern")
+   ========================================================================== */
+
+/* 1. Brand & Logo Fix ("Nex" visibility) */
+:root[data-theme="light-modern"] .nb-nex,
+:root[data-theme="light-modern"] .nx-brand-name .nb-nex,
+:root[data-theme="light-modern"] .nexterm-hero-title .nb-nex,
+:root[data-theme="light-modern"] .nexterm-brand-text .nb-nex {
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .nx-brand-tag {
+  color: #64748b !important;
+}
+
+/* 2. Top Windows Menubar */
+:root[data-theme="light-modern"] .menubar {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #334155 !important;
+}
+
+:root[data-theme="light-modern"] .menu-item {
+  color: #475569 !important;
+}
+
+:root[data-theme="light-modern"] .menu-item:hover,
+:root[data-theme="light-modern"] .menu-item.active {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .dropdown-menu {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+:root[data-theme="light-modern"] .menu-option {
+  color: #334155 !important;
+}
+
+:root[data-theme="light-modern"] .menu-option:hover {
+  background: #f1f5f9 !important;
+  color: #0284c7 !important;
+}
+
+:root[data-theme="light-modern"] .menu-separator {
+  background: #e2e8f0 !important;
+}
+
+/* 3. Moba Ribbon Toolbar */
+:root[data-theme="light-modern"] .moba-toolbar {
+  background: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+}
+
+:root[data-theme="light-modern"] .moba-tb-btn {
+  color: #475569 !important;
+}
+
+:root[data-theme="light-modern"] .moba-tb-btn:hover {
+  background: rgba(99, 102, 241, 0.08) !important;
+  border-color: rgba(99, 102, 241, 0.22) !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .moba-tb-btn.active {
+  background: rgba(99, 102, 241, 0.12) !important;
+  border-color: rgba(99, 102, 241, 0.35) !important;
+}
+
+:root[data-theme="light-modern"] .moba-tb-sep {
+  background: #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] .moba-tb-label {
+  color: #334155 !important;
+}
+
+/* 4. Topbar Header (.nx-topbar) */
+:root[data-theme="light-modern"] .nx-topbar {
+  background: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] .nx-topbar-search {
+  background: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+:root[data-theme="light-modern"] .nx-topbar-search input {
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .nx-topbar-search input::placeholder {
+  color: #94a3b8 !important;
+}
+
+:root[data-theme="light-modern"] .nx-topbar-kbd {
+  background: #e2e8f0 !important;
+  color: #64748b !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+:root[data-theme="light-modern"] .nx-top-icon {
+  color: #475569 !important;
+}
+
+:root[data-theme="light-modern"] .nx-top-icon:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .nx-menu-toggle {
+  color: #475569 !important;
+}
+
+:root[data-theme="light-modern"] .nx-menu-toggle:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* 5. Tabbar & Tabs (.tabbar-container) */
+:root[data-theme="light-modern"] .tabbar-container {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] .tab-item {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #64748b !important;
+}
+
+:root[data-theme="light-modern"] .tab-item:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+:root[data-theme="light-modern"] .tab-item.active {
+  background: #ffffff !important;
+  border-color: #38bdf8 !important;
+  color: #0284c7 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(56, 189, 248, 0.25) !important;
+  font-weight: 600 !important;
+}
+
+:root[data-theme="light-modern"] .home-tab.active .home-tab-icon {
+  color: #0284c7 !important;
+}
+
+:root[data-theme="light-modern"] .tab-close {
+  color: #94a3b8 !important;
+}
+
+:root[data-theme="light-modern"] .tab-close:hover {
+  background: #fee2e2 !important;
+  color: #ef4444 !important;
+}
+
+:root[data-theme="light-modern"] .tab-add-icon-btn,
+:root[data-theme="light-modern"] .tab-tool-icon-btn {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #64748b !important;
+}
+
+:root[data-theme="light-modern"] .tab-add-icon-btn:hover,
+:root[data-theme="light-modern"] .tab-tool-icon-btn:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+:root[data-theme="light-modern"] .tabbar-actions {
+  color: #64748b !important;
+}
+
+/* 6. Left Sidebar & Navigation Strip */
+:root[data-theme="light-modern"] .sidebar {
+  background: #f8fafc !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] .vertical-nav-strip {
+  background: #f1f5f9 !important;
+  border-right: 1px solid #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] .nav-strip-btn {
+  color: #64748b !important;
+}
+
+:root[data-theme="light-modern"] .nav-strip-btn:hover {
+  color: #0f172a !important;
+  background: #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] .nav-strip-btn.active {
+  color: #0284c7 !important;
+  background: rgba(2, 132, 199, 0.12) !important;
+  border-color: rgba(2, 132, 199, 0.3) !important;
+}
+
+:root[data-theme="light-modern"] .sidebar-quick-connect {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] .sidebar-quick-connect input {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .sidebar-quick-connect input::placeholder {
+  color: #94a3b8 !important;
+}
+
+:root[data-theme="light-modern"] .connected-section {
+  background: transparent !important;
+}
+
+:root[data-theme="light-modern"] .connected-header {
+  background: #f1f5f9 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] .section-title-text {
+  color: #334155 !important;
+}
+
+:root[data-theme="light-modern"] .connected-header-bcast-btn {
+  background: rgba(168, 85, 247, 0.1) !important;
+  border: 1px solid rgba(168, 85, 247, 0.25) !important;
+  color: #7c3aed !important;
+}
+
+:root[data-theme="light-modern"] .connected-badge {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #059669 !important;
+}
+
+:root[data-theme="light-modern"] .connected-empty-msg {
+  color: #64748b !important;
+}
+
+:root[data-theme="light-modern"] .saved-header-row {
+  background: #f1f5f9 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] .sessions-root-label,
+:root[data-theme="light-modern"] .sessions-root-label span {
+  color: #334155 !important;
+}
+
+:root[data-theme="light-modern"] .session-tree-tools button {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+:root[data-theme="light-modern"] .session-tree-tools button:hover {
+  background: #e2e8f0 !important;
+  color: #0284c7 !important;
+  border-color: #cbd5e1 !important;
+}
+
+:root[data-theme="light-modern"] .tree-multiconnect-btn {
+  background: rgba(2, 132, 199, 0.1) !important;
+  border-color: rgba(2, 132, 199, 0.25) !important;
+  color: #0284c7 !important;
+}
+
+:root[data-theme="light-modern"] .tree-container,
+:root[data-theme="light-modern"] #sessionTree {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .tree-node-row {
+  color: #334155 !important;
+}
+
+:root[data-theme="light-modern"] .tree-node-row:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .tree-node-row.selected {
+  background: #e0f2fe !important;
+  color: #0369a1 !important;
+}
+
+:root[data-theme="light-modern"] .tree-node-row .node-badge {
+  background: #e2e8f0 !important;
+  color: #64748b !important;
+}
+
+:root[data-theme="light-modern"] .tree-node-row .chevron {
+  color: #94a3b8 !important;
+}
+
+:root[data-theme="light-modern"] .folder-options-btn {
+  color: #64748b !important;
+}
+
+:root[data-theme="light-modern"] .folder-options-btn:hover {
+  color: #0f172a !important;
+  background: #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] .moba-sftp-bottom-options {
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+:root[data-theme="light-modern"] .moba-sftp-opt-label {
+  color: #475569 !important;
+}
+
+:root[data-theme="light-modern"] .moba-sftp-opt-label:hover {
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .sidebar-resizer {
+  background: #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] .sidebar-resizer:hover,
+:root[data-theme="light-modern"] .sidebar-resizer.dragging {
+  background: #38bdf8 !important;
+}
+
+/* SFTP panel inside sidebar in light mode */
+:root[data-theme="light-modern"] .moba-sftp-toolbar {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] .moba-sftp-pathbar {
+  background: #f1f5f9 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .moba-sftp-filelist {
+  background: #ffffff !important;
+  color: #334155 !important;
+}
+
+:root[data-theme="light-modern"] .moba-file-row {
+  color: #334155 !important;
+}
+
+:root[data-theme="light-modern"] .moba-file-row:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .moba-file-row.selected {
+  background: #e0f2fe !important;
+  color: #0369a1 !important;
+}
+
+/* 7. Main Dashboard Panels & Cards */
+:root[data-theme="light-modern"] .nx-panel {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04) !important;
+}
+
+:root[data-theme="light-modern"] .nx-panel .nx-panel-head {
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+:root[data-theme="light-modern"] .nx-panel .nx-panel-title,
+:root[data-theme="light-modern"] .nx-panel-title {
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .nx-panel .nx-panel-title svg,
+:root[data-theme="light-modern"] .nx-panel-title svg {
+  color: #0284c7 !important;
+}
+
+:root[data-theme="light-modern"] .nx-panel-add {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #0284c7 !important;
+}
+
+:root[data-theme="light-modern"] .nx-panel-add:hover {
+  background: #e0f2fe !important;
+  border-color: #38bdf8 !important;
+  color: #0369a1 !important;
+}
+
+:root[data-theme="light-modern"] .nx-saved-search {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+:root[data-theme="light-modern"] .nx-saved-search input {
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .nx-saved-search input::placeholder {
+  color: #94a3b8 !important;
+}
+
+:root[data-theme="light-modern"] .nx-saved-search svg {
+  color: #94a3b8 !important;
+}
+
+:root[data-theme="light-modern"] .nx-saved-filter {
+  color: #64748b !important;
+}
+
+:root[data-theme="light-modern"] .nx-saved-filter:hover {
+  color: #0284c7 !important;
+}
+
+/* System Overview Panel in light mode */
+:root[data-theme="light-modern"] .nx-panel-sys .nx-sys-target {
+  background: rgba(2, 132, 199, 0.1) !important;
+  border: 1px solid rgba(2, 132, 199, 0.25) !important;
+  color: #0284c7 !important;
+}
+
+:root[data-theme="light-modern"] .nx-metric-label {
+  color: #334155 !important;
+}
+
+:root[data-theme="light-modern"] .nx-metric-val {
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .nx-metric-bar {
+  background: #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] .nx-sys-stats {
+  border-top: 1px solid #f1f5f9 !important;
+}
+
+:root[data-theme="light-modern"] .nx-stat-card {
+  background: linear-gradient(145deg, rgba(2, 132, 199, 0.06), #ffffff) !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] .nx-stat-card:hover {
+  border-color: rgba(2, 132, 199, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
+}
+
+:root[data-theme="light-modern"] .nx-stat-card svg {
+  color: #0284c7 !important;
+}
+
+:root[data-theme="light-modern"] .nx-stat-num {
+  background: linear-gradient(90deg, #0284c7, #6366f1);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+:root[data-theme="light-modern"] .nx-stat-label {
+  color: #64748b !important;
+}
+
+/* Saved Sessions List inside Panel in light mode */
+:root[data-theme="light-modern"] #recentSessionsGrid .home-env-header {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] #recentSessionsGrid .home-env-name {
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] #recentSessionsGrid .home-env-count {
+  color: #64748b !important;
+  background: #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] #recentSessionsGrid .home-env-empty {
+  color: #64748b !important;
+  background: #f8fafc !important;
+  border: 1px dashed #cbd5e1 !important;
+}
+
+:root[data-theme="light-modern"] #recentSessionsGrid .recent-session-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+:root[data-theme="light-modern"] #recentSessionsGrid .recent-session-card:hover {
+  background: #f8fafc !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.1) !important;
+}
+
+:root[data-theme="light-modern"] #recentSessionsGrid .card-name {
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] #recentSessionsGrid .card-host {
+  color: #64748b !important;
+}
+
+:root[data-theme="light-modern"] #recentSessionsGrid .card-connect-btn {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme="light-modern"] #recentSessionsGrid .card-connect-btn:hover {
+  background: #0369a1 !important;
+}
+
+:root[data-theme="light-modern"] #recentSessionsGrid .card-color-btn,
+:root[data-theme="light-modern"] #recentSessionsGrid .card-delete-btn {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #64748b !important;
+}
+
+:root[data-theme="light-modern"] #recentSessionsGrid .card-delete-btn:hover {
+  background: #fee2e2 !important;
+  color: #ef4444 !important;
+  border-color: #fca5a5 !important;
+}
+
+/* 8. Quick Action Feature Cards in light mode */
+:root[data-theme="light-modern"] .nx-feature-card {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+}
+
+:root[data-theme="light-modern"] .nx-feature-card:hover {
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.09) !important;
+  border-color: rgba(2, 132, 199, 0.4) !important;
+}
+
+:root[data-theme="light-modern"] .nx-feat-title {
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .nx-feat-desc {
+  color: #64748b !important;
+}
+
+:root[data-theme="light-modern"] .nx-feat-arrow {
+  color: #94a3b8 !important;
+}
+
+:root[data-theme="light-modern"] .nx-feature-card:hover .nx-feat-arrow {
+  color: #0284c7 !important;
+}
+
+/* 9. Panes & Workspace in light mode */
+:root[data-theme="light-modern"] .main-workspace,
+:root[data-theme="light-modern"] .panes-container,
+:root[data-theme="light-modern"] .panes {
+  background: #f8fafc !important;
+}
+
+:root[data-theme="light-modern"] .split-separator {
+  background: #e2e8f0 !important;
+}
+
+/* 10. Statusbar in light mode */
+:root[data-theme="light-modern"] .statusbar {
+  background: #ffffff !important;
+  border-top: 1px solid #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+:root[data-theme="light-modern"] .status-msg {
+  color: #334155 !important;
+}
+
+:root[data-theme="light-modern"] #activeTargetText,
+:root[data-theme="light-modern"] #activeSessionsCount {
+  color: #64748b !important;
+}
+
+:root[data-theme="light-modern"] .status-brm-btn {
+  background: rgba(56, 189, 248, 0.1) !important;
+  border: 1px solid rgba(56, 189, 248, 0.25) !important;
+  color: #0284c7 !important;
+}
+
+:root[data-theme="light-modern"] .status-brm-btn:hover {
+  background: rgba(56, 189, 248, 0.2) !important;
+}
+
+/* 11. Modals & Context Menus in light mode */
+:root[data-theme="light-modern"] .modal-overlay {
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+:root[data-theme="light-modern"] .modal-card,
+:root[data-theme="light-modern"] .modal-box {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.15) !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .modal-header {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .modal-header h3,
+:root[data-theme="light-modern"] .modal-title {
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .modal-footer {
+  background: #f8fafc !important;
+  border-top: 1px solid #e2e8f0 !important;
+}
+
+:root[data-theme="light-modern"] .modal-body {
+  color: #334155 !important;
+}
+
+:root[data-theme="light-modern"] .modal-card input,
+:root[data-theme="light-modern"] .modal-card select,
+:root[data-theme="light-modern"] .modal-card textarea {
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .context-menu {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12) !important;
+  color: #334155 !important;
+}
+
+:root[data-theme="light-modern"] .context-menu-item {
+  color: #334155 !important;
+}
+
+:root[data-theme="light-modern"] .context-menu-item:hover {
+  background: #f1f5f9 !important;
+  color: #0284c7 !important;
+}
+
+:root[data-theme="light-modern"] .context-menu-separator {
+  background: #e2e8f0 !important;
+}
+
+/* 12. MultiExec Bar in light mode */
+:root[data-theme="light-modern"] #multiExecBar,
+:root[data-theme="light-modern"] .multiexec-bar {
+  background: #ffffff !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+:root[data-theme="light-modern"] .multiexec-bar input {
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+}
+

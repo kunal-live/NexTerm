@@ -1,0 +1,60 @@
+{
+  "opcodes": [
+    {
+      "name": "PCM_OP_CUST_COMMIT_CUSTOMER",
+      "category": "Customer Management",
+      "description": "Atomically creates account, service, profile, balance group, and payinfo in Oracle BRM.",
+      "input_flist": "PIN_FLD_POID (routing), PIN_FLD_NAMEINFO, PIN_FLD_SERVICES, PIN_FLD_BAL_INFO",
+      "output_flist": "PIN_FLD_POID (account obj), PIN_FLD_RESULTS",
+      "common_errors": ["PIN_ERR_DUPLICATE", "PIN_ERR_MISSING_ARG"]
+    },
+    {
+      "name": "PCM_OP_CUST_POL_PRE_COMMIT",
+      "category": "Customer Policy",
+      "description": "Pre-creation validation hook for customer accounts; allows custom field validation and business logic overrides.",
+      "input_flist": "PIN_FLD_POID, PIN_FLD_NAMEINFO, PIN_FLD_SERVICES",
+      "output_flist": "PIN_FLD_POID, PIN_FLD_STATUS",
+      "common_errors": ["PIN_ERR_BAD_ARG"]
+    },
+    {
+      "name": "PCM_OP_BILL_MAKE_BILL",
+      "category": "Billing",
+      "description": "Core scheduled billing run; closes bill items, calculates cycle fees, and produces final bill objects.",
+      "input_flist": "PIN_FLD_POID (account), PIN_FLD_BILLINFO_OBJ, PIN_FLD_FLAGS",
+      "output_flist": "PIN_FLD_POID (bill obj), PIN_FLD_RESULTS",
+      "common_errors": ["PIN_ERR_STORAGE", "PIN_ERR_NOT_FOUND"]
+    },
+    {
+      "name": "PCM_OP_BILL_MAKE_BILL_NOW",
+      "category": "Billing",
+      "description": "Immediate on-demand billing execution outside normal scheduled billing cycle.",
+      "input_flist": "PIN_FLD_POID (account), PIN_FLD_BILLINFO_OBJ, PIN_FLD_PROGRAM_NAME",
+      "output_flist": "PIN_FLD_POID (bill obj), PIN_FLD_RESULTS",
+      "common_errors": ["PIN_ERR_STORAGE", "PIN_ERR_NOT_FOUND"]
+    },
+    {
+      "name": "PCM_OP_PYMT_COLLECT",
+      "category": "Payments",
+      "description": "Charges payment instruments (credit card, direct debit) and applies payments to open A/R items.",
+      "input_flist": "PIN_FLD_POID (account), PIN_FLD_CHARGES, PIN_FLD_PAYINFO_OBJ",
+      "output_flist": "PIN_FLD_POID (event_billing_payment), PIN_FLD_RESULTS",
+      "common_errors": ["PIN_ERR_STORAGE", "PIN_ERR_BAD_ARG"]
+    },
+    {
+      "name": "PCM_OP_ACT_USAGE",
+      "category": "Rating & Usage",
+      "description": "Rates and records usage events (voice, data, messaging) against subscriber balance groups.",
+      "input_flist": "PIN_FLD_POID (account), PIN_FLD_EVENT (timestamp, quantity, service obj)",
+      "output_flist": "PIN_FLD_POID (event obj), PIN_FLD_RATED_AMOUNT, PIN_FLD_RESULTS",
+      "common_errors": ["PIN_ERR_NOT_FOUND", "PIN_ERR_PARTITION_NOT_FOUND"]
+    },
+    {
+      "name": "PCM_OP_SEARCH",
+      "category": "Base Infrastructure",
+      "description": "Executes SQL query against Oracle database through DM and returns matching flist arrays.",
+      "input_flist": "PIN_FLD_POID, PIN_FLD_FLAGS, PIN_FLD_TEMPLATE (SQL string), PIN_FLD_ARGS",
+      "output_flist": "PIN_FLD_RESULTS (array of storable class flists)",
+      "common_errors": ["PIN_ERR_NO_MEM", "PIN_ERR_STORAGE"]
+    }
+  ]
+}

@@ -6,6 +6,18 @@
 import { getTabs } from "../state/tabState.js";
 import { showToast, escapeHtml } from "../ui/notifications.js";
 import { showModal, hideModal } from "../ui/modal.js";
+import {
+  getKnowledgeFiles,
+  getKnowledgeFolders,
+  getKnowledgeSummary,
+  addFolder,
+  deleteFolder,
+  addKnowledgeFile,
+  updateKnowledgeFile,
+  deleteKnowledgeFile,
+  formatFileSize,
+  MAX_KNOWLEDGE_FILES
+} from "../brm/aiKnowledgeStore.js";
 
 // Default user settings
 export let userSettings = {
@@ -457,7 +469,7 @@ export function showThemePickerDialog() {
   if (closeX) closeX.onclick = hideModal;
 }
 
-export async function showSettingsDialog() {
+export async function showSettingsDialog(initialTab = "tab-settings-term") {
   const box = showModal(`
     <div class="modal-header">
       <div class="modal-title">⚙️ NexTerm Professional Settings & Preferences</div>
@@ -470,6 +482,7 @@ export async function showSettingsDialog() {
       <button class="modal-tab-btn" data-tab="tab-settings-custom">🏢 Customizer</button>
       <button class="modal-tab-btn" data-tab="tab-settings-knownhosts">🛡️ Known Hosts</button>
       <button class="modal-tab-btn" data-tab="tab-settings-audit">📜 Audit Log</button>
+      <button class="modal-tab-btn" data-tab="tab-settings-ai">🤖 AI Assistant</button>
     </div>
     <div class="modal-body" style="max-height: 480px; overflow-y: auto;">
       <!-- 1. Terminal & UI Settings Tab -->
@@ -659,6 +672,50 @@ export async function showSettingsDialog() {
           <div style="color: #94a3b8; padding: 12px; text-align: center;">Loading audit logs...</div>
         </div>
       </div>
+
+      <!-- 7. AI Assistant & Knowledge Base Tab -->
+      <div id="tab-settings-ai" class="tab-content hidden">
+        <div class="ai-kb-header-card">
+          <div class="ai-kb-header-info">
+            <h4 style="margin: 0; color: #fff; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+              <span>🤖 AI Assistant Knowledge Base</span>
+              <span class="ai-grounded-pill">Strict Grounding</span>
+            </h4>
+            <p style="margin: 3px 0 0; color: #94a3b8; font-size: 11.5px; line-height: 1.4;">
+              All answers in the AI Assistant chat are strictly based on your uploaded files. Upload presentations (.pptx), PDFs, JSON schemas, configs, and guides.
+            </p>
+          </div>
+          <div class="ai-quota-card">
+            <div class="ai-quota-meta">
+              <span class="ai-quota-lbl">Knowledge Limit</span>
+              <strong id="aiQuotaText">0 / 20 files</strong>
+            </div>
+            <div class="ai-quota-bar-track">
+              <div id="aiQuotaBarFill" class="ai-quota-bar-fill" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toolbar: Folders filter & actions -->
+        <div class="ai-kb-toolbar">
+          <div id="aiFolderFilterChips" class="ai-folder-chips-container"></div>
+          <div class="ai-kb-toolbar-actions">
+            <button class="btn btn-secondary btn-sm" id="btnAiAddFolder" type="button" title="Create a new folder to organize files">
+              📁 + New Folder
+            </button>
+            <button class="btn btn-primary btn-sm" id="btnAiUploadFile" type="button" title="Upload files (.pptx, .pdf, .json, .txt, .log)">
+              📤 Upload Files
+            </button>
+            <input type="file" id="aiFileInput" multiple accept=".pptx,.pdf,.txt,.json,.log,.md,.csv,.doc,.docx" style="display:none;" />
+            <input type="file" id="aiReplaceFileInput" accept=".pptx,.pdf,.txt,.json,.log,.md,.csv,.doc,.docx" style="display:none;" />
+          </div>
+        </div>
+
+        <!-- Files list container -->
+        <div id="aiFilesListContainer" class="ai-files-list-container">
+          <div style="color: #94a3b8; padding: 20px; text-align: center;">Loading uploaded files...</div>
+        </div>
+      </div>
     </div>
 
     <div class="modal-footer">
@@ -827,6 +884,302 @@ export async function showSettingsDialog() {
     };
   }
 
+  // --- AI Knowledge Base Management ---
+  let activeFolderFilter = "all";
+  let pendingReplaceFileId = null;
+
+  function renderAiKnowledgeUI() {
+    const summary = getKnowledgeSummary();
+    const files = getKnowledgeFiles();
+    const folders = getKnowledgeFolders();
+
+    // 1. Quota meta & progress bar
+    const quotaText = box.querySelector("#aiQuotaText");
+    const quotaFill = box.querySelector("#aiQuotaBarFill");
+    if (quotaText) {
+      quotaText.textContent = `${summary.total} / ${summary.max} files`;
+      if (summary.isFull) {
+        quotaText.style.color = "#ef4444";
+      } else if (summary.total >= summary.max - 3) {
+        quotaText.style.color = "#f59e0b";
+      } else {
+        quotaText.style.color = "#38bdf8";
+      }
+    }
+    if (quotaFill) {
+      const pct = Math.min(100, Math.round((summary.total / summary.max) * 100));
+      quotaFill.style.width = `${pct}%`;
+      if (summary.isFull) {
+        quotaFill.style.background = "#ef4444";
+      } else if (pct >= 80) {
+        quotaFill.style.background = "#f59e0b";
+      } else {
+        quotaFill.style.background = "linear-gradient(90deg, #0284c7, #38bdf8)";
+      }
+    }
+
+    // 2. Render folder filter chips
+    const folderChipsContainer = box.querySelector("#aiFolderFilterChips");
+    if (folderChipsContainer) {
+      let chipsHtml = `
+        <button class="ai-folder-chip ${activeFolderFilter === 'all' ? 'active' : ''}" data-folder="all" type="button">
+          <span>All Files</span>
+          <span class="ai-chip-count">${files.length}</span>
+        </button>
+      `;
+
+      folders.forEach(f => {
+        const count = files.filter(item => item.folder === f).length;
+        const isSelected = activeFolderFilter === f;
+        const canDelete = f !== "General";
+        chipsHtml += `
+          <div class="ai-folder-chip-wrap">
+            <button class="ai-folder-chip ${isSelected ? 'active' : ''}" data-folder="${escapeHtml(f)}" type="button">
+              <span>📁 ${escapeHtml(f)}</span>
+              <span class="ai-chip-count">${count}</span>
+            </button>
+            ${canDelete ? `<button class="ai-del-folder-btn" data-folder="${escapeHtml(f)}" type="button" title="Delete folder (files will move to General)">&times;</button>` : ""}
+          </div>
+        `;
+      });
+
+      folderChipsContainer.innerHTML = chipsHtml;
+
+      folderChipsContainer.querySelectorAll(".ai-folder-chip").forEach(btn => {
+        btn.onclick = () => {
+          activeFolderFilter = btn.dataset.folder;
+          renderAiKnowledgeUI();
+        };
+      });
+
+      folderChipsContainer.querySelectorAll(".ai-del-folder-btn").forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const targetFolder = btn.dataset.folder;
+          if (confirm(`Delete folder "${targetFolder}"? Any files inside will be moved to "General".`)) {
+            try {
+              deleteFolder(targetFolder);
+              if (activeFolderFilter === targetFolder) activeFolderFilter = "all";
+              showToast(`Folder "${targetFolder}" removed`, "info");
+              renderAiKnowledgeUI();
+            } catch (err) {
+              showToast(err.message, "error");
+            }
+          }
+        };
+      });
+    }
+
+    // 3. Render files list
+    const listContainer = box.querySelector("#aiFilesListContainer");
+    if (listContainer) {
+      const filteredFiles = activeFolderFilter === "all"
+        ? files
+        : files.filter(f => f.folder === activeFolderFilter);
+
+      if (filteredFiles.length === 0) {
+        listContainer.innerHTML = `
+          <div class="ai-kb-empty-state">
+            <div style="font-size: 26px; margin-bottom: 6px;">📂</div>
+            <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">No files found ${activeFolderFilter !== 'all' ? `in "${escapeHtml(activeFolderFilter)}"` : ''}</div>
+            <div style="font-size: 11.5px; color: #94a3b8;">Upload presentations (.pptx), PDFs, JSON, or configs. Maximum 20 files.</div>
+          </div>
+        `;
+        return;
+      }
+
+      listContainer.innerHTML = filteredFiles.map(file => {
+        const fileExt = (file.type || "file").toLowerCase();
+        let badgeColor = "#64748b";
+        if (fileExt === "pptx") badgeColor = "#ea580c";
+        else if (fileExt === "pdf") badgeColor = "#dc2626";
+        else if (fileExt === "json") badgeColor = "#0284c7";
+        else if (fileExt === "txt" || fileExt === "log") badgeColor = "#059669";
+        else if (fileExt === "doc" || fileExt === "docx") badgeColor = "#4f46e5";
+
+        return `
+          <div class="ai-file-card" data-fid="${file.id}">
+            <div class="ai-file-card-main">
+              <div class="ai-file-icon-col">
+                <span class="ai-type-badge" style="background: ${badgeColor}25; color: ${badgeColor}; border: 1px solid ${badgeColor}50;">
+                  ${escapeHtml(fileExt.toUpperCase())}
+                </span>
+              </div>
+              <div class="ai-file-info-col">
+                <div class="ai-file-title-row">
+                  <span class="ai-file-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</span>
+                  <select class="ai-file-folder-select" data-fid="${file.id}" title="Change folder">
+                    ${folders.map(f => `<option value="${escapeHtml(f)}" ${file.folder === f ? 'selected' : ''}>${escapeHtml(f)}</option>`).join("")}
+                  </select>
+                </div>
+                <div class="ai-file-meta-row">
+                  <span class="ai-file-size">${escapeHtml(file.size)}</span>
+                  <span class="ai-meta-dot">•</span>
+                  <span class="ai-file-time">${escapeHtml(file.uploadedAt)}</span>
+                  ${file.isDefault ? `<span class="ai-default-pill">Pre-loaded</span>` : ""}
+                </div>
+                <div class="ai-file-summary-row">${escapeHtml(file.summary || "")}</div>
+              </div>
+            </div>
+            <div class="ai-file-card-actions">
+              <button class="btn btn-secondary btn-xs btn-update-file" data-fid="${file.id}" type="button" title="Replace file content or metadata">
+                🔄 Update
+              </button>
+              <button class="btn btn-danger btn-xs btn-del-file" data-fid="${file.id}" data-name="${escapeHtml(file.name)}" type="button" title="Delete file">
+                🗑️ Delete
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      // Bind folder selection dropdowns
+      listContainer.querySelectorAll(".ai-file-folder-select").forEach(sel => {
+        sel.onchange = () => {
+          const fid = sel.dataset.fid;
+          const newFolder = sel.value;
+          updateKnowledgeFile(fid, { folder: newFolder });
+          showToast(`Moved file to "${newFolder}"`, "info");
+          renderAiKnowledgeUI();
+        };
+      });
+
+      // Bind update/replace file button
+      listContainer.querySelectorAll(".btn-update-file").forEach(btn => {
+        btn.onclick = () => {
+          pendingReplaceFileId = btn.dataset.fid;
+          const replaceInput = box.querySelector("#aiReplaceFileInput");
+          if (replaceInput) {
+            replaceInput.value = "";
+            replaceInput.click();
+          }
+        };
+      });
+
+      // Bind delete file button
+      listContainer.querySelectorAll(".btn-del-file").forEach(btn => {
+        btn.onclick = () => {
+          const fid = btn.dataset.fid;
+          const fname = btn.dataset.name;
+          if (confirm(`Remove "${fname}" from AI Knowledge Base? The AI Assistant will no longer use it for grounding.`)) {
+            deleteKnowledgeFile(fid);
+            showToast(`Deleted ${fname}`, "info");
+            renderAiKnowledgeUI();
+          }
+        };
+      });
+    }
+  }
+
+  // Bind AI Toolbar actions (Upload, Replace, New Folder)
+  const btnAiUpload = box.querySelector("#btnAiUploadFile");
+  const aiFileInput = box.querySelector("#aiFileInput");
+  const aiReplaceFileInput = box.querySelector("#aiReplaceFileInput");
+  const btnAiAddFolder = box.querySelector("#btnAiAddFolder");
+
+  if (btnAiUpload && aiFileInput) {
+    btnAiUpload.onclick = () => {
+      const summary = getKnowledgeSummary();
+      if (summary.isFull) {
+        showToast("Storage quota reached: Maximum 20 knowledge files allowed. Delete existing files first.", "warning");
+        return;
+      }
+      aiFileInput.value = "";
+      aiFileInput.click();
+    };
+
+    aiFileInput.onchange = async () => {
+      const selected = Array.from(aiFileInput.files || []);
+      if (selected.length === 0) return;
+
+      const summary = getKnowledgeSummary();
+      const remainingQuota = summary.remaining;
+      if (remainingQuota <= 0) {
+        showToast("Knowledge storage limit reached: Maximum 20 files allowed.", "warning");
+        return;
+      }
+
+      const filesToProcess = selected.slice(0, remainingQuota);
+      if (selected.length > remainingQuota) {
+        showToast(`Only ${remainingQuota} file(s) uploaded to keep within the 20-file limit.`, "warning");
+      }
+
+      for (const file of filesToProcess) {
+        try {
+          const ext = (file.name.split('.').pop() || "txt").toLowerCase();
+          const isTextLike = ["txt", "json", "log", "md", "csv", "xml", "conf", "yaml", "yml"].includes(ext);
+          let content = "";
+          if (isTextLike) {
+            content = await file.text();
+          } else {
+            content = `[${ext.toUpperCase()} File: ${file.name}, Size: ${formatFileSize(file.size)}]`;
+          }
+
+          addKnowledgeFile({
+            name: file.name,
+            folder: activeFolderFilter !== "all" ? activeFolderFilter : "General",
+            type: ext,
+            size: formatFileSize(file.size),
+            sizeBytes: file.size,
+            content: content
+          });
+        } catch (err) {
+          console.error("Failed to read file:", file.name, err);
+        }
+      }
+
+      showToast(`Uploaded ${filesToProcess.length} file(s) to AI Knowledge Base`, "success");
+      renderAiKnowledgeUI();
+    };
+  }
+
+  if (aiReplaceFileInput) {
+    aiReplaceFileInput.onchange = async () => {
+      const file = aiReplaceFileInput.files?.[0];
+      if (!file || !pendingReplaceFileId) return;
+
+      try {
+        const ext = (file.name.split('.').pop() || "txt").toLowerCase();
+        const isTextLike = ["txt", "json", "log", "md", "csv", "xml", "conf", "yaml", "yml"].includes(ext);
+        let content = "";
+        if (isTextLike) {
+          content = await file.text();
+        } else {
+          content = `[${ext.toUpperCase()} File: ${file.name}, Size: ${formatFileSize(file.size)}]`;
+        }
+
+        updateKnowledgeFile(pendingReplaceFileId, {
+          name: file.name,
+          type: ext,
+          size: formatFileSize(file.size),
+          sizeBytes: file.size,
+          content: content
+        });
+        showToast(`Updated file with "${file.name}"`, "success");
+        pendingReplaceFileId = null;
+        renderAiKnowledgeUI();
+      } catch (err) {
+        showToast("Failed to update file: " + err.message, "error");
+      }
+    };
+  }
+
+  if (btnAiAddFolder) {
+    btnAiAddFolder.onclick = () => {
+      const name = prompt("Enter new folder name (e.g. Architecture, Presentations, Specs):");
+      if (name && name.trim()) {
+        try {
+          addFolder(name.trim());
+          activeFolderFilter = name.trim();
+          showToast(`Created folder "${name.trim()}"`, "success");
+          renderAiKnowledgeUI();
+        } catch (err) {
+          showToast(err.message, "error");
+        }
+      }
+    };
+  }
+
   // Tab switching inside modal
   box.querySelectorAll(".modal-tab-btn").forEach(btn => {
     btn.onclick = () => {
@@ -839,9 +1192,19 @@ export async function showSettingsDialog() {
         loadKnownHostsList();
       } else if (btn.dataset.tab === "tab-settings-audit") {
         loadAuditLogsList();
+      } else if (btn.dataset.tab === "tab-settings-ai") {
+        renderAiKnowledgeUI();
       }
     };
   });
+
+  // Activate requested initialTab if provided
+  if (initialTab && initialTab !== "tab-settings-term") {
+    const targetBtn = box.querySelector(`.modal-tab-btn[data-tab="${initialTab}"]`);
+    if (targetBtn) {
+      targetBtn.click();
+    }
+  }
 
   // Load Security Policy from Go backend
   if (window.go && window.go.main && window.go.main.App) {

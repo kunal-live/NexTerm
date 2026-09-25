@@ -885,8 +885,10 @@ html, body, #app {
 
 .saved-header-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  overflow: hidden;
   padding: 6px 10px;
   border-bottom: 1px solid var(--border-subtle);
   background: #1c212e;
@@ -899,9 +901,21 @@ html, body, #app {
   color: #94a3b8;
   display: flex;
   align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-tree-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
 .session-tree-tools button {
+  flex-shrink: 0;
   background: transparent;
   border: none;
   color: var(--text-muted);
@@ -1036,6 +1050,7 @@ html, body, #app {
 
 .tree-node-row .node-name {
   flex: 1;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2797,6 +2812,9 @@ html, body, #app {
   border-top: 1px solid #28282c;
   font-size: 11px;
   color: #a0a0aa;
+  overflow: hidden;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .moba-sftp-opt-label {
@@ -2805,6 +2823,15 @@ html, body, #app {
   gap: 6px;
   cursor: pointer;
   user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.moba-sftp-opt-label input[type="checkbox"],
+.moba-opt-icon {
+  flex-shrink: 0;
 }
 
 .moba-sftp-opt-label input[type="checkbox"] {

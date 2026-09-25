@@ -98,7 +98,7 @@ export namespace model {
 	    background?: string;
 	    cursorColor?: string;
 	    selectionColor?: string;
-	    ansiColors?: {[key: string]: string};
+	    ansiColors?: Record<string, string>;
 	    useJumpHost?: boolean;
 	    jumpHost?: string;
 	    jumpPort?: number;
@@ -272,6 +272,7 @@ export namespace model {
 		    return a;
 		}
 	}
+	
 	
 	export class TreeNode {
 	    id: string;
@@ -557,7 +558,7 @@ export namespace service {
 	    environment: string;
 	    selectedSource: string;
 	    customPath: string;
-	    context: {[key: string]: string};
+	    context: Record<string, string>;
 	
 	    static createFrom(source: any = {}) {
 	        return new BRMDiagnosisRequest(source);
@@ -618,12 +619,14 @@ export namespace service {
 	    component: string;
 	    error: string;
 	    confidence: string;
+	    directAnswer: string;
 	    evidence: BRMEvidenceItem[];
 	    likelyCauses: string[];
 	    checks: string[];
 	    resolution: string[];
 	    suggestedSources: BRMSourceOption[];
 	    actions: BRMAction[];
+	    knowledgeFilesUsed?: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new BRMDiagnosisResult(source);
@@ -637,12 +640,14 @@ export namespace service {
 	        this.component = source["component"];
 	        this.error = source["error"];
 	        this.confidence = source["confidence"];
+	        this.directAnswer = source["directAnswer"];
 	        this.evidence = this.convertValues(source["evidence"], BRMEvidenceItem);
 	        this.likelyCauses = source["likelyCauses"];
 	        this.checks = source["checks"];
 	        this.resolution = source["resolution"];
 	        this.suggestedSources = this.convertValues(source["suggestedSources"], BRMSourceOption);
 	        this.actions = this.convertValues(source["actions"], BRMAction);
+	        this.knowledgeFilesUsed = source["knowledgeFilesUsed"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -826,7 +831,7 @@ export namespace service {
 	    level: string;
 	    category: string;
 	    message: string;
-	    details?: {[key: string]: any};
+	    details?: Record<string, any>;
 	
 	    static createFrom(source: any = {}) {
 	        return new LogEntry(source);

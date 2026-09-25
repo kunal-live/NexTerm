@@ -1,0 +1,197 @@
+{
+  "error_locations": {
+    "PIN_ERRLOC_APP": {
+      "code": 1,
+      "location": "PIN_ERRLOC_APP",
+      "tier": "Client Application",
+      "meaning": "Invalid input data, nonexistent POID, or business policy rejection.",
+      "quick_check": "Inspect input flist for invalid fields or policy validation failure."
+    },
+    "PIN_ERRLOC_PCP": {
+      "code": 2,
+      "location": "PIN_ERRLOC_PCP",
+      "tier": "Network Transport",
+      "meaning": "Socket or network transport failure between client/CM/DM.",
+      "quick_check": "Verify target daemon is running and port is reachable."
+    },
+    "PIN_ERRLOC_PCM": {
+      "code": 3,
+      "location": "PIN_ERRLOC_PCM",
+      "tier": "Portal Context",
+      "meaning": "Context initialization or connection pool allocation failure.",
+      "quick_check": "Check CM connection limits and client pin.conf pointers."
+    },
+    "PIN_ERRLOC_CM": {
+      "code": 4,
+      "location": "PIN_ERRLOC_CM",
+      "tier": "Connection Manager",
+      "meaning": "Opcode routing failure: missing fm_module directive or missing routing POID.",
+      "quick_check": "Check sys/cm/pin.conf for fm_module registration."
+    },
+    "PIN_ERRLOC_FM": {
+      "code": 5,
+      "location": "PIN_ERRLOC_FM",
+      "tier": "Facility Module",
+      "meaning": "FList structure violates opcode specification (missing mandatory field).",
+      "quick_check": "Verify required fields on input flist before opcode call."
+    },
+    "PIN_ERRLOC_FLIST": {
+      "code": 6,
+      "location": "PIN_ERRLOC_FLIST",
+      "tier": "FList Engine",
+      "meaning": "Data type mismatch, NULL pointer, or out of memory in flist manipulation.",
+      "quick_check": "Check pin_flist_get/put data types and NULL checks."
+    },
+    "PIN_ERRLOC_POID": {
+      "code": 7,
+      "location": "PIN_ERRLOC_POID",
+      "tier": "POID Parsing",
+      "meaning": "Malformed POID string, invalid DB number, or unallocated ID.",
+      "quick_check": "Verify POID DB number (e.g. 0.0.0.1) and storable class name."
+    },
+    "PIN_ERRLOC_DM": {
+      "code": 8,
+      "location": "PIN_ERRLOC_DM",
+      "tier": "Data Manager / Database",
+      "meaning": "Database persistence failure or SQL constraint violation.",
+      "quick_check": "Inspect dm_oracle.pinlog for companion ORA- code."
+    }
+  },
+  "errors": {
+    "PIN_ERR_NOT_FOUND": {
+      "component": "FM / Storage",
+      "description": "Requested object, account, or field does not exist in database or flist.",
+      "likelyCauses": [
+        "POID reference points to a deleted or uncommitted record",
+        "Field requested via pin_flist_get is not present on the flist",
+        "Account or service search returned zero matches"
+      ],
+      "checks": [
+        "Verify target POID exists in DB: 'testnap -> read <poid>'",
+        "Check pin_flist_get calls use PIN_RET_NULL or verify field presence first",
+        "Check search flist criteria and filter flags"
+      ],
+      "resolutions": [
+        "Ensure prerequisite parent record exists before querying child objects.",
+        "Add fallback handling when optional flist fields are missing."
+      ]
+    },
+    "PIN_ERR_MISSING_ARG": {
+      "component": "FM Validation",
+      "description": "A required mandatory field is missing from the input flist.",
+      "likelyCauses": [
+        "Input flist did not include PIN_FLD_POID or required business field",
+        "Policy opcode stripped a required field during preprocessing",
+        "Client passed an empty or partially populated flist"
+      ],
+      "checks": [
+        "Log input flist prior to opcode call: 'pin_flist_print(flist_p, cm.log)'",
+        "Verify opcode specification for mandatory input fields",
+        "Check custom policy FMs for dropped fields"
+      ],
+      "resolutions": [
+        "Populate all mandatory fields on input flist before dispatching opcode."
+      ]
+    },
+    "PIN_ERR_BAD_ARG": {
+      "component": "FM Validation",
+      "description": "Field value is invalid, negative, or type does not match definition.",
+      "likelyCauses": [
+        "Data type mismatch (e.g. passing PIN_FLDT_STR instead of PIN_FLDT_DECIMAL)",
+        "Negative quantity passed to balance or rating opcode",
+        "Invalid enum constant or unmapped status code"
+      ],
+      "checks": [
+        "Check pin_flist_put field type against ops/pin_*.h definition",
+        "Verify numeric values are within valid operational range"
+      ],
+      "resolutions": [
+        "Correct data type and range validation in calling application."
+      ]
+    },
+    "PIN_ERR_DUPLICATE": {
+      "component": "DM / DB Storage",
+      "description": "Attempted to insert a duplicate record violating unique constraint.",
+      "likelyCauses": [
+        "Login name or account number already exists in BRM database",
+        "Concurrent batch jobs inserting duplicate transaction IDs",
+        "Sequence generator range exhausted or desynchronized"
+      ],
+      "checks": [
+        "Check dm_oracle.pinlog for matching ORA-00001 constraint name",
+        "Query database to check existing record with same key"
+      ],
+      "resolutions": [
+        "Check if transaction or account was already processed before retry.",
+        "Verify sequence generator values in /sequence storable class."
+      ]
+    },
+    "PIN_ERR_BAD_OPCODE": {
+      "component": "CM / Opcode Registry",
+      "description": "Opcode number received by CM is not mapped to any loaded FM module.",
+      "likelyCauses": [
+        "Missing 'fm_module' entry in sys/cm/pin.conf",
+        "Custom shared library (.so) failed to load during CM startup",
+        "CM not restarted after editing pin.conf",
+        "Client opcode header out of sync with server"
+      ],
+      "checks": [
+        "Check sys/cm/pin.conf for '- cm fm_module <lib> <init_func>'",
+        "Check cm.pinlog for dlopen / shared object errors",
+        "Verify client header numerical value matches server PCM_OP_*"
+      ],
+      "resolutions": [
+        "Add missing FM directive to pin.conf and restart CM ('stop_cm && start_cm')."
+      ]
+    },
+    "PIN_ERR_NAP_CONNECT_FAILED": {
+      "component": "CM / Network",
+      "description": "Client cannot establish TCP connection with Connection Manager.",
+      "likelyCauses": [
+        "CM process is stopped or crashed",
+        "Port mismatch between client pin.conf and CM pin.conf",
+        "CM max_cm_processes connection limit reached",
+        "Network firewall blocking TCP port"
+      ],
+      "checks": [
+        "Verify CM is running: 'ps -ef | grep cm' or Process Explorer",
+        "Verify CM port in sys/cm/pin.conf: '- cm cm_ports <port>'",
+        "Test connection: 'telnet <host> <port>'"
+      ],
+      "resolutions": [
+        "Start CM ('start_cm') or increase max_cm_processes in pin.conf."
+      ]
+    },
+    "PIN_ERR_STORAGE": {
+      "component": "DM / Oracle DB",
+      "description": "Data Manager encountered a database or SQL execution failure.",
+      "likelyCauses": [
+        "Database tablespace full or quota exceeded",
+        "Oracle listener down or database instance in restricted mode",
+        "Invalid schema credentials in sys/dm_oracle/pin.conf"
+      ],
+      "checks": [
+        "Inspect dm_oracle.pinlog to find companion ORA- code",
+        "Check Oracle alert log and tablespace free space"
+      ],
+      "resolutions": [
+        "Resolve underlying Oracle DB issue or tablespace allocation."
+      ]
+    },
+    "PIN_ERR_NO_MEM": {
+      "component": "Core / FList",
+      "description": "Process memory exhausted during flist manipulation or query execution.",
+      "likelyCauses": [
+        "Unbounded PCM_OP_SEARCH returning thousands of objects in memory",
+        "Memory leak in custom C/C++ FM module (unfreed flists)"
+      ],
+      "checks": [
+        "Check search flist flags: use PIN_SRCH_DISTINCT and limit result count",
+        "Verify pin_flist_destroy is called for all allocated flists"
+      ],
+      "resolutions": [
+        "Paginate large search queries and release flist memory using pin_flist_destroy."
+      ]
+    }
+  }
+}

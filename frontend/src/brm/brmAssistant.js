@@ -4,6 +4,8 @@
 // ==========================================================================
 
 import { BRM_SAMPLE_QUERIES, BRM_SOURCE_OPTIONS, BRM_OPCODES } from "./brmKnowledge.js";
+import { getKnowledgeSummary, getKnowledgeFiles, searchKnowledge, generateAnswerFromKnowledge } from "./aiKnowledgeStore.js";
+import { showSettingsDialog } from "../settings/settings.js";
 import { showToast, escapeHtml } from "../ui/notifications.js";
 import { openRemoteFileEditor } from "../sftp/fileBrowser.js";
 import { openLogInExplorer } from "../terminal/logExplorer.js";
@@ -24,6 +26,10 @@ export function openBRMAssistant() {
   } catch (_) {}
   switchSidebarView("brm");
   detectCurrentEnvironment();
+  const countEl = document.getElementById("brmGroundedCount");
+  if (countEl) {
+    countEl.textContent = getKnowledgeSummary().total;
+  }
   const input = document.getElementById("brmInput");
   if (input) {
     setTimeout(() => {
@@ -147,6 +153,18 @@ function renderAssistantLayout(container) {
         <span id="brmDetectedRoot" class="brm-root-path" title="Discovered BRM root">/opt/portal</span>
       </div>
 
+      <!-- Grounding Notice Banner -->
+      <div class="brm-grounding-banner" id="brmGroundingBanner">
+        <div class="brm-grounding-info">
+          <span class="brm-grounding-icon">📚</span>
+          <div class="brm-grounding-texts">
+            <div class="brm-grounding-title">All answers are based on your uploaded files</div>
+            <div class="brm-grounding-sub"><span id="brmGroundedCount">${getKnowledgeSummary().total}</span> knowledge file(s) active • PPTX, PDFs, JSON & configs</div>
+          </div>
+        </div>
+        <button id="brmOpenAiSettingsBtn" class="brm-manage-files-btn" type="button" title="Upload files, create folders, or update files in Settings">⚙️ Manage in Settings</button>
+      </div>
+
       <!-- History Dropdown (initially hidden) -->
       <div id="brmHistoryDropdown" class="brm-history-panel hidden">
         <div class="brm-history-header">
@@ -163,7 +181,7 @@ function renderAssistantLayout(container) {
         <div class="brm-welcome-card">
           <div class="brm-welcome-title">Ask your BRM question or describe an issue</div>
           <div class="brm-welcome-subtitle">
-            Diagnostics strictly rely on evidence from your CM, DM, opcode sources, and pin.conf configurations.
+            All answers are strictly based on your uploaded files and knowledge assets. Manage presentations (.pptx), PDFs, and custom folders in Settings.
           </div>
           <div class="brm-quick-chips">
             ${BRM_SAMPLE_QUERIES.map(q => `
@@ -197,7 +215,12 @@ function bindAssistantEvents(container) {
   const refreshBtn = container.querySelector("#brmRefreshEnvBtn");
   const historyToggleBtn = container.querySelector("#brmHistoryToggleBtn");
   const historyCloseBtn = container.querySelector("#brmCloseHistoryBtn");
+  const openSettingsBtn = container.querySelector("#brmOpenAiSettingsBtn");
   const timeline = container.querySelector("#brmChatTimeline");
+
+  openSettingsBtn?.addEventListener("click", () => {
+    showSettingsDialog("tab-settings-ai");
+  });
 
   // Send action
   const handleSend = () => {
@@ -299,6 +322,24 @@ async function submitQuestion(question) {
   const tabId = getEffectiveTabId();
 
   try {
+    // 1. Direct answering from user's uploaded knowledge files (including PPTX, PDF, JSON, TXT, LOG)
+    const localKbAnswer = generateAnswerFromKnowledge(question);
+    if (localKbAnswer) {
+      removeLoadingIndicator(loadingMsgId);
+      if (localKbAnswer.status === "unanswerable" || localKbAnswer.directAnswer?.includes("can't answer this question")) {
+        appendMessage({
+          role: "assistant",
+          text: "I can't answer this question."
+        });
+      } else {
+        appendDiagnosisCard(localKbAnswer);
+        recordHistory(question, localKbAnswer);
+      }
+      pendingQuestion = "";
+      isBusy = false;
+      return;
+    }
+
     if (!window.go?.main?.App?.BRMDiagnose) {
       removeLoadingIndicator(loadingMsgId);
       appendMessage({
@@ -309,11 +350,17 @@ async function submitQuestion(question) {
       return;
     }
 
+    const kbResult = searchKnowledge(question);
+    const matchedFiles = kbResult.matchedFiles.map(f => f.name);
+
     const req = {
       tabId: tabId,
       question: question,
       selectedSource: "",
-      customPath: ""
+      customPath: "",
+      context: {
+        uploaded_files: matchedFiles.join(",")
+      }
     };
 
     const res = await window.go.main.App.BRMDiagnose(req);
@@ -321,6 +368,12 @@ async function submitQuestion(question) {
 
     if (res.status === "needs_source") {
       appendSourceSelectionPrompt(question, res.suggestedSources || []);
+    } else if (res.status === "unanswerable" || res.directAnswer?.includes("can't answer this question")) {
+      appendMessage({
+        role: "assistant",
+        text: "I can't answer this question."
+      });
+      pendingQuestion = "";
     } else {
       appendDiagnosisCard(res);
       recordHistory(question, res);
@@ -343,17 +396,30 @@ async function submitQuestionWithSource(question, selectedSource, customPath = "
   const tabId = getEffectiveTabId();
 
   try {
+    const kbResult = searchKnowledge(question);
+    const matchedFiles = kbResult.matchedFiles.map(f => f.name);
+
     const req = {
       tabId: tabId,
       question: question,
       selectedSource: selectedSource,
-      customPath: customPath
+      customPath: customPath,
+      context: {
+        uploaded_files: matchedFiles.join(",")
+      }
     };
 
     const res = await window.go.main.App.BRMDiagnose(req);
     removeLoadingIndicator(loadingMsgId);
-    appendDiagnosisCard(res);
-    recordHistory(question, res);
+    if (res.status === "unanswerable" || res.directAnswer?.includes("can't answer this question")) {
+      appendMessage({
+        role: "assistant",
+        text: "I can't answer this question."
+      });
+    } else {
+      appendDiagnosisCard(res);
+      recordHistory(question, res);
+    }
   } catch (err) {
     removeLoadingIndicator(loadingMsgId);
     appendMessage({
@@ -370,11 +436,17 @@ function appendMessage(msg) {
   const timeline = document.getElementById("brmChatTimeline");
   if (!timeline) return;
 
+  const isAssistant = msg.role === "assistant";
   const row = document.createElement("div");
   row.className = `brm-chat-row brm-chat-${msg.role}`;
   row.innerHTML = `
     <div class="brm-bubble brm-bubble-${msg.role}">
-      ${escapeHtml(msg.text)}
+      <div class="brm-bubble-text">${escapeHtml(msg.text)}</div>
+      ${isAssistant ? `
+        <div class="brm-grounding-mini-note">
+          <span>✨ All answers are based on your uploaded files</span>
+        </div>
+      ` : ""}
     </div>
   `;
   timeline.appendChild(row);
@@ -448,13 +520,26 @@ function appendSourceSelectionPrompt(question, sources) {
 }
 
 function appendDiagnosisCard(res) {
+  if (res.status === "unanswerable" || res.directAnswer?.includes("can't answer this question")) {
+    appendMessage({
+      role: "assistant",
+      text: "I can't answer this question."
+    });
+    return;
+  }
+
   const timeline = document.getElementById("brmChatTimeline");
   if (!timeline) return;
 
   const row = document.createElement("div");
   row.className = "brm-chat-row brm-chat-assistant";
 
-  const confClass = res.confidence?.toLowerCase() === "high" ? "conf-high" : (res.confidence?.toLowerCase() === "medium" ? "conf-med" : "conf-low");
+  const filesUsed = (res.knowledgeFilesUsed && res.knowledgeFilesUsed.length > 0)
+    ? res.knowledgeFilesUsed
+    : getKnowledgeFiles().slice(0, 3).map(f => f.name);
+
+  const rawAnswer = res.directAnswer || res.answer || (res.resolution && res.resolution.length > 0 ? res.resolution.join("\n") : res.problem);
+  const formattedAnswer = formatAnswerText(rawAnswer);
 
   row.innerHTML = `
     <div class="brm-diagnosis-card">
@@ -463,64 +548,26 @@ function appendDiagnosisCard(res) {
         <div class="brm-card-tags">
           <span class="brm-tag brm-tag-comp">${escapeHtml(res.component || "Oracle BRM")}</span>
           ${res.error ? `<span class="brm-tag brm-tag-err">${escapeHtml(res.error)}</span>` : ""}
-          <span class="brm-tag brm-conf-badge ${confClass}">${escapeHtml(res.confidence || "High")} Confidence</span>
         </div>
       </div>
 
-      <!-- Problem Statement -->
-      <div class="brm-problem-row">
-        <strong>Problem:</strong> ${escapeHtml(res.problem)}
+      <!-- Direct Answer Content -->
+      <div class="brm-answer-content">
+        ${formattedAnswer}
       </div>
 
-      <!-- Evidence Box -->
-      ${res.evidence && res.evidence.length > 0 ? `
-        <div class="brm-section-title">Verified Evidence</div>
-        <div class="brm-evidence-box">
-          ${res.evidence.map(ev => `
-            <div class="brm-evidence-item">
-              <div class="brm-evidence-loc">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                </svg>
-                <span>${escapeHtml(ev.file)}</span>
-                ${ev.lineStart ? `<span class="brm-line-no">Line ${ev.lineStart}</span>` : ""}
-              </div>
-              <pre class="brm-evidence-snippet"><code>${escapeHtml(ev.snippet || "")}</code></pre>
+      <!-- Grounded in Uploaded Files Indicator -->
+      <div class="brm-grounding-tag-card">
+        <div class="brm-grounding-tag-inner">
+          <span class="brm-grounding-tag-icon">✨</span>
+          <div class="brm-grounding-tag-content">
+            <span class="brm-grounding-tag-title">All answers are based on your uploaded files:</span>
+            <div class="brm-grounding-tag-pills">
+              ${filesUsed.map(name => `<span class="brm-file-chip">${escapeHtml(name)}</span>`).join("")}
             </div>
-          `).join("")}
+          </div>
         </div>
-      ` : ""}
-
-      <!-- Likely Causes -->
-      ${res.likelyCauses && res.likelyCauses.length > 0 ? `
-        <div class="brm-section-title">Likely Causes</div>
-        <ul class="brm-bullet-list">
-          ${res.likelyCauses.map(c => `<li>${escapeHtml(c)}</li>`).join("")}
-        </ul>
-      ` : ""}
-
-      <!-- Verification Checks -->
-      ${res.checks && res.checks.length > 0 ? `
-        <div class="brm-section-title">Diagnostic Checks</div>
-        <ul class="brm-checklist">
-          ${res.checks.map((chk, idx) => `
-            <li>
-              <label class="brm-check-item">
-                <input type="checkbox" id="chk_${idx}_${Date.now()}" />
-                <span>${escapeHtml(chk)}</span>
-              </label>
-            </li>
-          `).join("")}
-        </ul>
-      ` : ""}
-
-      <!-- Resolution Steps -->
-      ${res.resolution && res.resolution.length > 0 ? `
-        <div class="brm-section-title">Recommended Resolution</div>
-        <ol class="brm-num-list">
-          ${res.resolution.map(r => `<li>${escapeHtml(r)}</li>`).join("")}
-        </ol>
-      ` : ""}
+      </div>
 
       <!-- Action Buttons -->
       ${res.actions && res.actions.length > 0 ? `
@@ -538,6 +585,46 @@ function appendDiagnosisCard(res) {
 
   timeline.appendChild(row);
   scrollToBottom();
+}
+
+function formatAnswerText(text) {
+  if (!text) return "";
+  let escaped = escapeHtml(text);
+  // Support bold: **text**
+  escaped = escaped.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+  // Support inline code: `code`
+  escaped = escaped.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+  // Format line breaks and bullet lists
+  const lines = escaped.split("\n");
+  let inList = false;
+  let html = "";
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("•") || trimmed.startsWith("-")) {
+      if (!inList) {
+        html += "<ul class='brm-answer-bullets'>";
+        inList = true;
+      }
+      const itemText = trimmed.replace(/^[•-]\s*/, "");
+      html += `<li>${itemText}</li>`;
+    } else {
+      if (inList) {
+        html += "</ul>";
+        inList = false;
+      }
+      if (trimmed) {
+        html += `<p>${line}</p>`;
+      }
+    }
+  });
+
+  if (inList) {
+    html += "</ul>";
+  }
+
+  return html || escaped;
 }
 
 function renderActionIcon(type) {

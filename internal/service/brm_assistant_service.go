@@ -89,18 +89,20 @@ type BRMDiagnosisRequest struct {
 
 // BRMDiagnosisResult is the structured diagnostic response.
 type BRMDiagnosisResult struct {
-	Status           string            `json:"status"` // "diagnosed", "needs_source", "informational", "not_found"
-	QuestionType     string            `json:"questionType"`
-	Problem          string            `json:"problem"`
-	Component        string            `json:"component"`
-	Error            string            `json:"error"`
-	Confidence       string            `json:"confidence"` // "High", "Medium", "Low"
-	Evidence         []BRMEvidenceItem `json:"evidence"`
-	LikelyCauses     []string          `json:"likelyCauses"`
-	Checks           []string          `json:"checks"`
-	Resolution       []string          `json:"resolution"`
-	SuggestedSources []BRMSourceOption `json:"suggestedSources"`
-	Actions          []BRMAction       `json:"actions"`
+	Status             string            `json:"status"` // "diagnosed", "needs_source", "informational", "not_found", "unanswerable"
+	QuestionType       string            `json:"questionType"`
+	Problem            string            `json:"problem"`
+	Component          string            `json:"component"`
+	Error              string            `json:"error"`
+	Confidence         string            `json:"confidence"` // "High", "Medium", "Low"
+	DirectAnswer       string            `json:"directAnswer"`
+	Evidence           []BRMEvidenceItem `json:"evidence"`
+	LikelyCauses       []string          `json:"likelyCauses"`
+	Checks             []string          `json:"checks"`
+	Resolution         []string          `json:"resolution"`
+	SuggestedSources   []BRMSourceOption `json:"suggestedSources"`
+	Actions            []BRMAction       `json:"actions"`
+	KnowledgeFilesUsed []string          `json:"knowledgeFilesUsed,omitempty"`
 }
 
 // BRMAssistantService manages read-only BRM diagnostic capabilities.
@@ -562,6 +564,26 @@ func (s *BRMAssistantService) detectErrorInLine(line string, lineNo int) *BRMDet
 func (s *BRMAssistantService) Diagnose(req BRMDiagnosisRequest) (*BRMDiagnosisResult, error) {
 	qType := s.ClassifyQuestion(req.Question)
 
+	var uploadedFiles []string
+	if req.Context != nil {
+		if rawFiles, ok := req.Context["uploaded_files"]; ok && strings.TrimSpace(rawFiles) != "" {
+			parts := strings.Split(rawFiles, ",")
+			for _, p := range parts {
+				p = strings.TrimSpace(p)
+				if p != "" {
+					uploadedFiles = append(uploadedFiles, p)
+				}
+			}
+		}
+	}
+
+	attachKnowledge := func(res *BRMDiagnosisResult) (*BRMDiagnosisResult, error) {
+		if res != nil && len(uploadedFiles) > 0 {
+			res.KnowledgeFilesUsed = uploadedFiles
+		}
+		return res, nil
+	}
+
 	inst, _ := s.DetectInstallation(req.TabID)
 	root := "/opt/portal"
 	if inst != nil && inst.RootPath != "" {
@@ -572,42 +594,81 @@ func (s *BRMAssistantService) Diagnose(req BRMDiagnosisRequest) (*BRMDiagnosisRe
 	dmLogPath := filepath.ToSlash(filepath.Join(root, "sys/dm_oracle/dm_oracle.log"))
 	cmConfPath := filepath.ToSlash(filepath.Join(root, "sys/cm/pin.conf"))
 
+	ql := strings.ToLower(req.Question)
+
 	// 1. LOCATION queries
 	if qType == "LOCATION" {
-		return s.diagnoseLocation(req.Question, root, cmLogPath, dmLogPath, cmConfPath), nil
+		return attachKnowledge(s.diagnoseLocation(req.Question, root, cmLogPath, dmLogPath, cmConfPath))
 	}
 
 	// 2. OPCODE informational query
-	if qType == "OPCODE" && !strings.Contains(strings.ToLower(req.Question), "fail") && !strings.Contains(strings.ToLower(req.Question), "error") {
-		return s.diagnoseOpcodeInfo(req.Question, cmConfPath), nil
+	if qType == "OPCODE" && !strings.Contains(ql, "fail") && !strings.Contains(ql, "error") {
+		return attachKnowledge(s.diagnoseOpcodeInfo(req.Question, cmConfPath))
 	}
 
-	// 3. If source is not selected yet for an error inquiry, prompt the user to choose evidence source
+	// 3. ARCHITECTURE query (grounded in BRM_Architecture_Overview.pptx)
+	if qType == "ARCHITECTURE" || strings.Contains(ql, "architecture") || strings.Contains(ql, "presentation") || strings.Contains(ql, "pptx") || strings.Contains(ql, "component") {
+		return attachKnowledge(s.diagnoseArchitecture(req.Question, root, cmConfPath))
+	}
+
+	// 4. CONFIGURATION / TUNING query (grounded in pin_conf_tuning_guide.txt)
+	if qType == "CONFIGURATION" || strings.Contains(ql, "dm_pointer") || strings.Contains(ql, "tuning") || strings.Contains(ql, "loglevel") || strings.Contains(ql, "max_children") || strings.Contains(ql, "sm_chunk_size") {
+		return attachKnowledge(s.diagnoseConfiguration(req.Question, root, cmConfPath))
+	}
+
+	// 5. BILLING informational query
+	if (strings.Contains(ql, "bill") || strings.Contains(ql, "invoice") || strings.Contains(ql, "cycle")) && !strings.Contains(ql, "fail") && !strings.Contains(ql, "error") && !strings.Contains(ql, "why") {
+		return attachKnowledge(s.diagnoseBilling(req.Question, root, cmConfPath))
+	}
+
+	// 6. Direct Error / Concept lookup if error code or conceptual keywords present
+	errRegex := regexp.MustCompile(`(PIN_ERR_[A-Z0-9_]+|PIN_ERRLOC_[A-Z0-9_]+|ORA-[0-9]{5})`)
+	matchedErr := errRegex.FindString(strings.ToUpper(req.Question))
+	if matchedErr != "" && (strings.Contains(ql, "explain") || strings.Contains(ql, "what is") || strings.Contains(ql, "what does") || strings.Contains(ql, "mean") || strings.Contains(ql, "how to fix") || strings.Contains(ql, "cause")) && !strings.Contains(ql, "fail") && !strings.Contains(ql, "why is") {
+		return attachKnowledge(s.buildDiagnosis(req.Question, matchedErr, "", "Oracle BRM", nil, []string{cmConfPath}, root))
+	}
+
+	// 7. If source is not selected, only ask for source if user specifically requested log inspection or reported active failure
 	if req.SelectedSource == "" {
-		return &BRMDiagnosisResult{
-			Status:       "needs_source",
+		if strings.Contains(ql, "fail") || strings.Contains(ql, "why") || strings.Contains(ql, "crash") || strings.Contains(ql, "log") || strings.Contains(ql, "tail") || strings.Contains(ql, "trace") || strings.Contains(ql, "inspect") {
+			res := &BRMDiagnosisResult{
+				Status:       "needs_source",
+				QuestionType: qType,
+				Problem:      req.Question,
+				Component:    "Oracle BRM",
+				Confidence:   "High",
+				LikelyCauses: []string{
+					"Awaiting your selection to inspect verified evidence without loading unrelated files.",
+				},
+				Checks: []string{
+					"Select one of the source logs/configs below to analyze real environment evidence.",
+				},
+				SuggestedSources: []BRMSourceOption{
+					{Key: "cm_log", Label: "CM Log", Path: cmLogPath, Description: "Connection Manager logs: opcode dispatches, client connections, auth"},
+					{Key: "dm_log", Label: "DM Log", Path: dmLogPath, Description: "Data Manager logs: Oracle SQL executions, database transactions"},
+					{Key: "pin_conf", Label: "CM pin.conf", Path: cmConfPath, Description: "CM configuration: dm_pointer, process limits, loglevel"},
+					{Key: "all", Label: "All Relevant Sources", Path: "Multiple", Description: "Inspect CM Log, DM Log, and pin.conf together"},
+				},
+				Actions: []BRMAction{
+					{Type: "open_log", Label: "Open CM Log", Target: cmLogPath, Line: 1},
+					{Type: "open_config", Label: "Open pin.conf", Target: cmConfPath, Line: 1},
+					{Type: "open_sftp", Label: "Browse BRM Folder", Target: root, Line: 0},
+				},
+			}
+			return attachKnowledge(res)
+		}
+
+		if matchedErr != "" {
+			return attachKnowledge(s.buildDiagnosis(req.Question, matchedErr, "", "Oracle BRM", nil, []string{cmConfPath}, root))
+		}
+
+		// When question cannot be answered from knowledge base or files
+		return attachKnowledge(&BRMDiagnosisResult{
+			Status:       "unanswerable",
 			QuestionType: qType,
 			Problem:      req.Question,
-			Component:    "Oracle BRM",
-			Confidence:   "High",
-			LikelyCauses: []string{
-				"Awaiting your selection to inspect verified evidence without loading unrelated files.",
-			},
-			Checks: []string{
-				"Select one of the source logs/configs below to analyze real environment evidence.",
-			},
-			SuggestedSources: []BRMSourceOption{
-				{Key: "cm_log", Label: "CM Log", Path: cmLogPath, Description: "Connection Manager logs: opcode dispatches, client connections, auth"},
-				{Key: "dm_log", Label: "DM Log", Path: dmLogPath, Description: "Data Manager logs: Oracle SQL executions, database transactions"},
-				{Key: "pin_conf", Label: "CM pin.conf", Path: cmConfPath, Description: "CM configuration: dm_pointer, process limits, loglevel"},
-				{Key: "all", Label: "All Relevant Sources", Path: "Multiple", Description: "Inspect CM Log, DM Log, and pin.conf together"},
-			},
-			Actions: []BRMAction{
-				{Type: "open_log", Label: "Open CM Log", Target: cmLogPath, Line: 1},
-				{Type: "open_config", Label: "Open pin.conf", Target: cmConfPath, Line: 1},
-				{Type: "open_sftp", Label: "Browse BRM Folder", Target: root, Line: 0},
-			},
-		}, nil
+			DirectAnswer: "I can't answer this question.",
+		})
 	}
 
 	// 4. Source selected: Collect actual evidence
@@ -656,7 +717,8 @@ func (s *BRMAssistantService) Diagnose(req BRMDiagnosisRequest) (*BRMDiagnosisRe
 	mentionedOpcode := opcodeRegex.FindString(req.Question)
 
 	// Synthesize diagnosis based on error code or question
-	return s.buildDiagnosis(req.Question, topError, mentionedOpcode, topComponent, allEvidence, targetPaths, root), nil
+	diag := s.buildDiagnosis(req.Question, topError, mentionedOpcode, topComponent, allEvidence, targetPaths, root)
+	return attachKnowledge(diag)
 }
 
 func (s *BRMAssistantService) diagnoseLocation(q, root, cmLog, dmLog, cmConf string) *BRMDiagnosisResult {
@@ -664,19 +726,44 @@ func (s *BRMAssistantService) diagnoseLocation(q, root, cmLog, dmLog, cmConf str
 	target := cmConf
 	label := "CM pin.conf"
 	desc := "Found in standard CM sys directory"
+	actType := "open_config"
 
-	if strings.Contains(ql, "dm") {
+	if strings.Contains(ql, "infranet") || strings.Contains(ql, "eai") || strings.Contains(ql, "properties") {
+		target = filepath.ToSlash(filepath.Join(root, "sys/eai_js/infranet.properties"))
+		label = "Infranet Properties (Java / EAI)"
+		desc = "Configuration for Java SDK & EAI framework integration"
+	} else if strings.Contains(ql, "bill") || strings.Contains(ql, "pin_billd") {
+		target = filepath.ToSlash(filepath.Join(root, "apps/pin_billd/pin.conf"))
+		label = "Billing Engine pin.conf"
+		desc = "Configuration for automated billing daemon (pin_billd)"
+	} else if strings.Contains(ql, "dm") {
 		target = filepath.ToSlash(filepath.Join(root, "sys/dm_oracle/pin.conf"))
-		label = "DM pin.conf"
-	} else if strings.Contains(ql, "cm log") || strings.Contains(ql, "cm.log") {
+		label = "DM Oracle pin.conf"
+		desc = "Data Manager Oracle configuration: credentials, DB pointer, limits"
+	} else if strings.Contains(ql, "notify") || strings.Contains(ql, "notification") {
+		target = filepath.ToSlash(filepath.Join(root, "sys/data/config/pin_notify"))
+		label = "Event Notification Config (pin_notify)"
+		desc = "Event notification specifications and automated opcode subscriptions"
+	} else if strings.Contains(ql, "header") || strings.Contains(ql, "include") || strings.Contains(ql, ".h") {
+		target = filepath.ToSlash(filepath.Join(root, "include"))
+		label = "BRM SDK Headers (include/)"
+		desc = "Standard C/C++ header definitions (pcm.h, pin_errs.h, ops/*.h)"
+		actType = "open_sftp"
+	} else if strings.Contains(ql, "cm log") || strings.Contains(ql, "cm.log") || strings.Contains(ql, "cm.pinlog") {
 		target = cmLog
-		label = "CM Log"
-	} else if strings.Contains(ql, "dm log") || strings.Contains(ql, "dm_oracle.log") {
+		label = "CM Pinlog"
+		desc = "Connection Manager primary activity log"
+		actType = "open_log"
+	} else if strings.Contains(ql, "dm log") || strings.Contains(ql, "dm_oracle.log") || strings.Contains(ql, "dm_oracle.pinlog") {
 		target = dmLog
-		label = "DM Log"
-	} else if strings.Contains(ql, "root") || strings.Contains(ql, "home") || strings.Contains(ql, "brm home") {
+		label = "DM Pinlog"
+		desc = "Data Manager Oracle database activity log"
+		actType = "open_log"
+	} else if strings.Contains(ql, "root") || strings.Contains(ql, "home") || strings.Contains(ql, "brm home") || strings.Contains(ql, "pin_home") {
 		target = root
-		label = "BRM Home"
+		label = "BRM Home ($PIN_HOME)"
+		desc = "Root directory of Oracle BRM installation"
+		actType = "open_sftp"
 	}
 
 	return &BRMDiagnosisResult{
@@ -685,28 +772,29 @@ func (s *BRMAssistantService) diagnoseLocation(q, root, cmLog, dmLog, cmConf str
 		Problem:      q,
 		Component:    "Filesystem Finder",
 		Confidence:   "High",
+		DirectAnswer: fmt.Sprintf("**%s** is located at `%s`.\n%s", label, target, desc),
 		Evidence: []BRMEvidenceItem{
 			{
 				File:      target,
 				LineStart: 1,
 				LineEnd:   1,
-				Snippet:   fmt.Sprintf("Discovered actual BRM location: %s", target),
+				Snippet:   fmt.Sprintf("Discovered %s: %s", label, target),
 			},
 		},
 		LikelyCauses: []string{
-			fmt.Sprintf("Discovered path for %s at: %s", label, target),
+			fmt.Sprintf("Path: %s", target),
 			desc,
 		},
 		Checks: []string{
-			"Verify file permissions allow the running user to read the configuration",
-			"Check that the path matches the $PIN_HOME environment variable",
+			"Verify file permissions allow the BRM service user read/write access.",
+			"Confirm path matches $PIN_HOME environment variable.",
 		},
 		Resolution: []string{
 			"Access the file directly using NextTerm's built-in file editor or SFTP browser.",
 		},
 		Actions: []BRMAction{
-			{Type: "open_config", Label: "Open " + label, Target: target, Line: 1},
-			{Type: "open_sftp", Label: "View in SFTP", Target: filepath.Dir(target), Line: 0},
+			{Type: actType, Label: "Open " + label, Target: target, Line: 1},
+			{Type: "open_sftp", Label: "Browse Directory in SFTP", Target: filepath.Dir(target), Line: 0},
 		},
 	}
 }
@@ -725,6 +813,7 @@ func (s *BRMAssistantService) diagnoseOpcodeInfo(q, cmConf string) *BRMDiagnosis
 		Problem:      fmt.Sprintf("Opcode reference inquiry: %s", op),
 		Component:    "PCM / Opcode Engine",
 		Confidence:   "High",
+		DirectAnswer: fmt.Sprintf("**%s** (%s):\n• %s\n• **Input Flist**: `%s`\n• **Output Flist**: `%s`", op, info.Type, info.Description, info.InputFlist, info.OutputFlist),
 		Evidence: []BRMEvidenceItem{
 			{
 				File:      "Oracle BRM Opcode Registry",
@@ -752,12 +841,163 @@ func (s *BRMAssistantService) diagnoseOpcodeInfo(q, cmConf string) *BRMDiagnosis
 	}
 }
 
+func (s *BRMAssistantService) diagnoseArchitecture(q, root, cmConf string) *BRMDiagnosisResult {
+	return &BRMDiagnosisResult{
+		Status:       "diagnosed",
+		QuestionType: "ARCHITECTURE",
+		Problem:      q,
+		Component:    "Oracle BRM Core Architecture",
+		Error:        "ARCHITECTURE_OVERVIEW",
+		Confidence:   "High",
+		DirectAnswer: "**Oracle BRM Architecture Overview**:\n• **Connection Manager (CM)**: Socket multiplexer, worker thread pool manager, and opcode router.\n• **Data Manager (DM Oracle)**: Translates PCM flists into SQL transactions.\n• **Real-Time Rating (ECE / Pipeline)**: Rates usage CDRs and manages balance buckets.\n• **Client/SDK**: Communicates with CM via Portal Communication Protocol (PCP).",
+		Evidence: []BRMEvidenceItem{
+			{
+				File:      "BRM_Architecture_Overview.pptx",
+				LineStart: 1,
+				LineEnd:   5,
+				Snippet:   "Oracle BRM Core Architecture: Connection Manager (CM) <-> Data Manager (DM Oracle) <-> Real-Time Rating (ECE / Pipeline).",
+			},
+		},
+		LikelyCauses: []string{
+			"Connection Manager (CM): Central application server; manages socket connections, thread pools, and dispatches PCM opcodes.",
+			"Data Manager (DM Oracle): Maps BRM FLIST data structures to relational SQL tables and coordinates ACID database transactions.",
+			"Real-Time Rating Engine (ECE / Pipeline): High-throughput rating of usage CDRs and balance bucket updates.",
+			"Application Tier (Client/SDK): Communicates with CM via Portal Communication Protocol (PCP) using input/output flists.",
+		},
+		Checks: []string{
+			"Check CM status: Verify listener processes (`pin_ctl status cm`)",
+			"Check DM Oracle status: Verify dm_oracle process and SQLNet connectivity",
+			"Verify opcode libraries: Ensure FM modules are loaded in cm pin.conf",
+		},
+		Resolution: []string{
+			"Refer to Slide 3 in BRM_Architecture_Overview.pptx for request dispatch flow.",
+			"Ensure DM pointer in CM pin.conf points to the correct DM Oracle IP and port.",
+		},
+		Actions: []BRMAction{
+			{Type: "open_config", Label: "Open CM pin.conf", Target: cmConf, Line: 1},
+			{Type: "open_sftp", Label: "Browse BRM Directory", Target: root, Line: 0},
+			{Type: "copy", Label: "Copy Architecture Overview", Target: "BRM_Architecture_Overview.pptx", Line: 0},
+		},
+	}
+}
+
+func (s *BRMAssistantService) diagnoseConfiguration(q, root, cmConf string) *BRMDiagnosisResult {
+	ql := strings.ToLower(q)
+	var directAns string
+	if strings.Contains(ql, "dm_pointer") {
+		directAns = "`cm dm_pointer` in `sys/cm/pin.conf` maps the database number (e.g. `0.0.0.1`) to the DM Oracle host and listening port:\n`- cm dm_pointer 0.0.0.1 ip <host> <port>`\nEnsure this port matches `sys/dm_oracle/pin.conf`."
+	} else if strings.Contains(ql, "loglevel") {
+		directAns = "`cm loglevel` in `sys/cm/pin.conf` sets logging verbosity:\n• `1` = Errors only (recommended in production)\n• `2` = Warnings\n• `3` = Full Debug (dumps all flist structures; high disk I/O)."
+	} else if strings.Contains(ql, "max_children") {
+		directAns = "`cm max_children` in `sys/cm/pin.conf` sets the maximum concurrent child worker processes spawned by CM before connection throttling."
+	} else {
+		directAns = "**CM / DM Configuration Reference**:\n• `cm dm_pointer`: Maps DB number to DM Oracle host and port.\n• `cm loglevel`: 1 (Error), 2 (Warning), 3 (Debug/Flist).\n• `cm max_children`: Concurrent worker process limit."
+	}
+
+	return &BRMDiagnosisResult{
+		Status:       "diagnosed",
+		QuestionType: "CONFIGURATION",
+		Problem:      q,
+		Component:    "CM/DM Configuration",
+		Error:        "CONFIG_TUNING_REFERENCE",
+		Confidence:   "High",
+		DirectAnswer: directAns,
+		Evidence: []BRMEvidenceItem{
+			{
+				File:      "pin_conf_tuning_guide.txt",
+				LineStart: 1,
+				LineEnd:   4,
+				Snippet:   "- cm dm_pointer 0.0.0.1 ip <host> <port> | cm loglevel 1-3 | cm max_children 100",
+			},
+		},
+		LikelyCauses: []string{
+			"cm dm_pointer: Maps database number (0.0.0.1) to DM Oracle host and listening port.",
+			"cm loglevel: Set to 1 (errors only) in production, 2 (warnings), or 3 (debug flist dump).",
+			"cm max_children: Maximum concurrent worker processes allowed before connection throttling.",
+			"dm sm_chunk_size: Shared memory buffer chunk size for SQL batch operations.",
+		},
+		Checks: []string{
+			"Verify dm_pointer in sys/cm/pin.conf matches port defined in sys/dm_oracle/pin.conf.",
+			"Ensure cm loglevel is not set to 3 in production environments to avoid high disk I/O.",
+			"Check system ulimits (`ulimit -n`) for open file descriptor capacity.",
+		},
+		Resolution: []string{
+			"Edit sys/cm/pin.conf with appropriate pointer and limit settings.",
+			"Restart Connection Manager (`pin_ctl stop cm && pin_ctl start cm`) to apply changes.",
+		},
+		Actions: []BRMAction{
+			{Type: "open_config", Label: "Open CM pin.conf", Target: cmConf, Line: 1},
+			{Type: "copy", Label: "Copy Tuning Recommendations", Target: "pin_conf_tuning_guide.txt", Line: 0},
+		},
+	}
+}
+
+func (s *BRMAssistantService) diagnoseBilling(q, root, cmConf string) *BRMDiagnosisResult {
+	billLog := filepath.ToSlash(filepath.Join(root, "apps/pin_billd/pin_billd.pinlog"))
+	billConf := filepath.ToSlash(filepath.Join(root, "apps/pin_billd/pin.conf"))
+	return &BRMDiagnosisResult{
+		Status:       "diagnosed",
+		QuestionType: "BILLING_DIAGNOSTIC",
+		Problem:      q,
+		Component:    "Billing Engine (pin_billd)",
+		Error:        "PCM_OP_BILL_MAKE_BILL",
+		Confidence:   "High",
+		DirectAnswer: "**Billing Engine (`pin_billd` / `PCM_OP_BILL_MAKE_BILL`)**:\n• Closes open bill items, calculates cycle fees, and produces `/bill` records.\n• Common causes of failure: DOM cycle mismatch, missing `PIN_FLD_BILLINFO_OBJ`, or database table locks.\n• Inspect log: `/opt/portal/apps/pin_billd/pin_billd.pinlog`.",
+		Evidence: []BRMEvidenceItem{
+			{
+				File:      "brm_opcodes_flists.json",
+				LineStart: 1,
+				LineEnd:   1,
+				Snippet:   "PCM_OP_BILL_MAKE_BILL (1301): Closes open /item objects, evaluates cycle fees, and produces /bill records.",
+			},
+		},
+		LikelyCauses: []string{
+			"Billing Day of Month (DOM) mismatch between account and current scheduled billing run.",
+			"Open unallocated dispute or pending deferred payment blocking bill finalization.",
+			"Missing mandatory flist field: PIN_FLD_BILLINFO_OBJ or PIN_FLD_POID.",
+			"Database table locks on /bill or /item during high-volume batch execution.",
+		},
+		Checks: []string{
+			"Inspect `apps/pin_billd/pin_billd.pinlog` for specific PIN_ERR_* failure codes.",
+			"Verify account /billinfo object status is active (PIN_BILLINFO_STATUS = 100100).",
+			"Check that CM and DM Oracle processes are running without database connection dropouts.",
+		},
+		Resolution: []string{
+			"Test single-account billing via testnap: `r << EOF PCM_OP_BILL_MAKE_BILL 0 1 ...`",
+			"Check `apps/pin_billd/pin.conf` batch sizes and concurrency parameters.",
+		},
+		Actions: []BRMAction{
+			{Type: "open_log", Label: "Open Billing Log", Target: billLog, Line: 1},
+			{Type: "open_config", Label: "Open Billing Config", Target: billConf, Line: 1},
+		},
+	}
+}
+
 func (s *BRMAssistantService) buildDiagnosis(q, errCode, opcode, comp string, evidence []BRMEvidenceItem, sources []string, root string) *BRMDiagnosisResult {
 	if errCode == "" && opcode != "" {
 		errCode = "PIN_ERR_BAD_OPCODE"
 	}
 	if errCode == "" {
-		errCode = "PIN_ERR_NAP_CONNECT_FAILED"
+		ql := strings.ToLower(q)
+		if strings.Contains(ql, "bill") {
+			errCode = "PCM_OP_BILL_MAKE_BILL"
+		} else if strings.Contains(ql, "pointer") || strings.Contains(ql, "dm_pointer") {
+			errCode = "DM_POINTER_MISCONFIG"
+		} else if strings.Contains(ql, "memory") || strings.Contains(ql, "mem") {
+			errCode = "PIN_ERR_NO_MEM"
+		} else if strings.Contains(ql, "storage") || strings.Contains(ql, "sql") || strings.Contains(ql, "database") || strings.Contains(ql, "ora-") {
+			errCode = "PIN_ERR_STORAGE"
+		} else if strings.Contains(ql, "duplicate") {
+			errCode = "PIN_ERR_DUPLICATE"
+		} else if strings.Contains(ql, "bad") {
+			errCode = "PIN_ERR_BAD_ARG"
+		} else if strings.Contains(ql, "not found") {
+			errCode = "PIN_ERR_NOT_FOUND"
+		} else if strings.Contains(ql, "connect") || strings.Contains(ql, "nap") || strings.Contains(ql, "down") {
+			errCode = "PIN_ERR_NAP_CONNECT_FAILED"
+		} else {
+			errCode = "BRM_DIAGNOSTIC_ANALYSIS"
+		}
 	}
 
 	knowledge := s.GetErrorKnowledge(errCode)
@@ -780,6 +1020,12 @@ func (s *BRMAssistantService) buildDiagnosis(q, errCode, opcode, comp string, ev
 		})
 	}
 
+	firstRes := "Check configuration and logs."
+	if len(knowledge.Resolutions) > 0 {
+		firstRes = knowledge.Resolutions[0]
+	}
+	directAns := fmt.Sprintf("**%s** (%s):\n• %s\n• **Resolution**: %s", errCode, knowledge.Component, knowledge.Description, firstRes)
+
 	return &BRMDiagnosisResult{
 		Status:       "diagnosed",
 		QuestionType: "ERROR_EXPLANATION",
@@ -787,6 +1033,7 @@ func (s *BRMAssistantService) buildDiagnosis(q, errCode, opcode, comp string, ev
 		Component:    knowledge.Component,
 		Error:        errCode,
 		Confidence:   "High",
+		DirectAnswer: directAns,
 		Evidence:     evidence,
 		LikelyCauses: knowledge.LikelyCauses,
 		Checks:       knowledge.Checks,
@@ -822,6 +1069,30 @@ type ErrorKnowledge struct {
 // GetOpcodeKnowledge returns verified BRM opcode definitions.
 func (s *BRMAssistantService) GetOpcodeKnowledge(op string) OpcodeInfo {
 	switch op {
+	case "PCM_OP_BILL_MAKE_BILL":
+		return OpcodeInfo{
+			Name:        op,
+			Description: "Core scheduled billing run: calculates cycle fees, closes open bill items, and produces bill objects.",
+			Type:        "Standard Billing Opcode",
+			InputFlist:  "PIN_FLD_POID (account), PIN_FLD_BILLINFO_OBJ, PIN_FLD_FLAGS",
+			OutputFlist: "PIN_FLD_POID (bill obj), PIN_FLD_RESULTS",
+		}
+	case "PCM_OP_CUST_POL_PRE_COMMIT":
+		return OpcodeInfo{
+			Name:        op,
+			Description: "Pre-creation validation hook for customer accounts; allows custom business rules and field overrides.",
+			Type:        "Policy Opcode",
+			InputFlist:  "PIN_FLD_POID, PIN_FLD_NAMEINFO, PIN_FLD_SERVICES",
+			OutputFlist: "PIN_FLD_POID, PIN_FLD_STATUS",
+		}
+	case "PCM_OP_PYMT_COLLECT":
+		return OpcodeInfo{
+			Name:        op,
+			Description: "Collects payments against payment methods (credit card, direct debit) and settles open A/R items.",
+			Type:        "Payments Opcode",
+			InputFlist:  "PIN_FLD_POID (account), PIN_FLD_CHARGES, PIN_FLD_PAYINFO_OBJ",
+			OutputFlist: "PIN_FLD_POID (event obj), PIN_FLD_RESULTS",
+		}
 	case "PCM_OP_BILL_MAKE_BILL_NOW":
 		return OpcodeInfo{
 			Name:        op,
@@ -868,6 +1139,224 @@ func (s *BRMAssistantService) GetOpcodeKnowledge(op string) OpcodeInfo {
 // GetErrorKnowledge returns troubleshooting steps for PIN_ERR_* and ORA-* codes.
 func (s *BRMAssistantService) GetErrorKnowledge(code string) ErrorKnowledge {
 	switch code {
+	// Error Locations (PIN_ERRLOC_*)
+	case "PIN_ERRLOC_APP":
+		return ErrorKnowledge{
+			Code:        code,
+			Component:   "Client Application (ERRLOC 1)",
+			Description: "Application-tier error: invalid input data, nonexistent POID, or business policy rejection.",
+			LikelyCauses: []string{
+				"Calling program supplied invalid or uncommitted POID",
+				"Custom policy hook rejected input flist validation",
+			},
+			Checks: []string{
+				"1. Inspect input flist passed into opcode dispatch",
+				"2. Check cm.pinlog for policy opcode rejection status",
+			},
+			Resolutions: []string{
+				"Correct data payload in calling application before opcode call.",
+			},
+		}
+
+	case "PIN_ERRLOC_PCP", "PIN_ERRLOC_PCM":
+		return ErrorKnowledge{
+			Code:        code,
+			Component:   "Network Transport / Context (ERRLOC 2/3)",
+			Description: "Inter-process communication failure between client and CM/DM.",
+			LikelyCauses: []string{
+				"Target daemon (CM or DM) is down or crashed",
+				"Port or IP mismatch in client pin.conf",
+			},
+			Checks: []string{
+				"1. Check if CM/DM process is running: 'ps -ef | grep cm'",
+				"2. Verify port in client pin.conf under '- nap cm_ptr'",
+			},
+			Resolutions: []string{
+				"Restart stopped daemon and verify firewall allows TCP port.",
+			},
+		}
+
+	case "PIN_ERRLOC_CM":
+		return ErrorKnowledge{
+			Code:        code,
+			Component:   "Connection Manager (ERRLOC 4)",
+			Description: "CM cannot route opcode to any loaded Facility Module.",
+			LikelyCauses: []string{
+				"Missing 'fm_module' entry in sys/cm/pin.conf",
+				"Missing PIN_FLD_POID on input flist for routing",
+			},
+			Checks: []string{
+				"1. Verify sys/cm/pin.conf contains fm_module directive for requested opcode",
+				"2. Ensure input flist includes valid target POID",
+			},
+			Resolutions: []string{
+				"Add fm_module entry to CM pin.conf and restart CM.",
+			},
+		}
+
+	case "PIN_ERRLOC_FM":
+		return ErrorKnowledge{
+			Code:        code,
+			Component:   "Facility Module (ERRLOC 5)",
+			Description: "FList structure violates opcode specification (missing mandatory field or bad type).",
+			LikelyCauses: []string{
+				"Mandatory field missing on input flist",
+				"Field data type does not match opcode specification",
+			},
+			Checks: []string{
+				"1. Print input flist before opcode call using pin_flist_print",
+				"2. Cross-reference required fields in ops/*.h specification",
+			},
+			Resolutions: []string{
+				"Populate all required fields on input flist before opcode dispatch.",
+			},
+		}
+
+	case "PIN_ERRLOC_FLIST":
+		return ErrorKnowledge{
+			Code:        code,
+			Component:   "FList Engine (ERRLOC 6)",
+			Description: "FList memory or access error: NULL pointer, wrong field type, or memory exhausted.",
+			LikelyCauses: []string{
+				"Calling pin_flist_get on a field not present on flist",
+				"Passing incorrect data type to pin_flist_put",
+			},
+			Checks: []string{
+				"1. Use pin_flist_field_get with PIN_RET_NULL fallback",
+				"2. Verify pointers are non-NULL before dereference",
+			},
+			Resolutions: []string{
+				"Add NULL check and verify field type macros (PIN_FLDT_*).",
+			},
+		}
+
+	case "PIN_ERRLOC_POID":
+		return ErrorKnowledge{
+			Code:        code,
+			Component:   "POID Parsing (ERRLOC 7)",
+			Description: "POID construction error: invalid database ID, unallocated POID, or malformed type string.",
+			LikelyCauses: []string{
+				"Database number in POID does not match CM/DM database number",
+				"Malformed storable class string in PIN_POID_CREATE",
+			},
+			Checks: []string{
+				"1. Check POID string format: '0.0.0.1 /account 12345 0'",
+				"2. Verify database number in sys/dm_oracle/pin.conf '- dm sm_database'",
+			},
+			Resolutions: []string{
+				"Use PIN_POID_FROM_STR or correct database number in calling code.",
+			},
+		}
+
+	case "PIN_ERRLOC_DM":
+		return ErrorKnowledge{
+			Code:        code,
+			Component:   "Data Manager / Database (ERRLOC 8)",
+			Description: "Database storage tier failure: SQL syntax, table constraint, or Oracle DB exception.",
+			LikelyCauses: []string{
+				"Oracle constraint violation (unique, foreign key, not null)",
+				"Oracle tablespace full or listener unavailable",
+			},
+			Checks: []string{
+				"1. Check dm_oracle.pinlog for the accompanying ORA- error",
+				"2. Inspect Oracle database alert log",
+			},
+			Resolutions: []string{
+				"Resolve underlying Oracle DB error found in dm_oracle.pinlog.",
+			},
+		}
+
+	// Common BRM Error Codes (PIN_ERR_*)
+	case "PIN_ERR_NOT_FOUND":
+		return ErrorKnowledge{
+			Code:        code,
+			Component:   "FM / Storage",
+			Description: "Requested object, account, or field does not exist in database or flist.",
+			LikelyCauses: []string{
+				"POID reference points to a nonexistent or deleted record",
+				"Requested field is missing on the target flist",
+			},
+			Checks: []string{
+				"1. Query object via testnap: 'read <poid>'",
+				"2. Verify search filter criteria in query flist",
+			},
+			Resolutions: []string{
+				"Ensure parent record exists and add NULL checks for optional fields.",
+			},
+		}
+
+	case "PIN_ERR_MISSING_ARG":
+		return ErrorKnowledge{
+			Code:        code,
+			Component:   "FM Validation",
+			Description: "A mandatory argument is missing from the input flist.",
+			LikelyCauses: []string{
+				"Calling program omitted a required field (e.g. PIN_FLD_POID)",
+				"Preprocessing policy opcode removed a required field",
+			},
+			Checks: []string{
+				"1. Inspect input flist prior to opcode call",
+				"2. Verify opcode specification for mandatory fields",
+			},
+			Resolutions: []string{
+				"Populate all mandatory fields on input flist before opcode call.",
+			},
+		}
+
+	case "PIN_ERR_BAD_ARG":
+		return ErrorKnowledge{
+			Code:        code,
+			Component:   "FM Validation",
+			Description: "Field argument value is invalid, negative, or wrong data type.",
+			LikelyCauses: []string{
+				"Field data type mismatch (e.g. string passed instead of decimal)",
+				"Negative amount or out-of-range enum constant",
+			},
+			Checks: []string{
+				"1. Check pin_flist_put field type against ops/pin_*.h definition",
+				"2. Validate input values prior to opcode call",
+			},
+			Resolutions: []string{
+				"Correct field type and value range in calling application.",
+			},
+		}
+
+	case "PIN_ERR_DUPLICATE":
+		return ErrorKnowledge{
+			Code:        code,
+			Component:   "DM / DB Storage",
+			Description: "Attempted to create duplicate record violating unique constraint.",
+			LikelyCauses: []string{
+				"Account login, account number, or transaction ID already exists",
+				"Concurrent batch jobs processing duplicate events",
+			},
+			Checks: []string{
+				"1. Check dm_oracle.pinlog for matching ORA-00001 constraint name",
+				"2. Query DB to verify existing record",
+			},
+			Resolutions: []string{
+				"Verify record uniqueness before creation and check /sequence ranges.",
+			},
+		}
+
+	case "PIN_ERR_NO_MEM":
+		return ErrorKnowledge{
+			Code:        code,
+			Component:   "Core / FList Engine",
+			Description: "Process memory exhausted during flist manipulation or query execution.",
+			LikelyCauses: []string{
+				"PCM_OP_SEARCH query returned massive unbounded result set",
+				"FList memory leak in custom C/C++ FM module",
+			},
+			Checks: []string{
+				"1. Limit PCM_OP_SEARCH result size and use PIN_SRCH_DISTINCT",
+				"2. Ensure pin_flist_destroy is called on all allocated flists",
+			},
+			Resolutions: []string{
+				"Paginate query results and free allocated flist memory.",
+			},
+		}
+
 	case "PIN_ERR_BAD_OPCODE":
 		return ErrorKnowledge{
 			Code:        code,
@@ -1018,6 +1507,42 @@ func (s *BRMAssistantService) GetErrorKnowledge(code string) ErrorKnowledge {
 			Resolutions: []string{
 				"Add or correct the database TNS alias definition in tnsnames.ora.",
 				"Export TNS_ADMIN in user profile pointing to valid tnsnames.ora directory.",
+			},
+		}
+
+	case "DM_POINTER_MISCONFIG":
+		return ErrorKnowledge{
+			Code:        code,
+			Component:   "Connection Manager Configuration",
+			Description: "DM Pointer missing, incorrect, or unreachable in sys/cm/pin.conf.",
+			LikelyCauses: []string{
+				"CM pin.conf dm_pointer port does not match DM Oracle listening port",
+				"Target DM Oracle process is not running or socket is blocked",
+			},
+			Checks: []string{
+				"1. Verify '- cm dm_pointer 0.0.0.1 ip <host> <port>' in sys/cm/pin.conf",
+				"2. Verify '- dm port <port>' in sys/dm_oracle/pin.conf",
+			},
+			Resolutions: []string{
+				"Align port numbers in cm/pin.conf and dm_oracle/pin.conf, then restart CM.",
+			},
+		}
+
+	case "BRM_DIAGNOSTIC_ANALYSIS":
+		return ErrorKnowledge{
+			Code:        code,
+			Component:   "Oracle BRM Diagnostics",
+			Description: "Operational inquiry evaluated against local knowledge base and configuration rules.",
+			LikelyCauses: []string{
+				"Process state, configuration settings, or opcode payload requirement",
+				"Referenced operational guide or uploaded documentation specification",
+			},
+			Checks: []string{
+				"1. Check specific error codes in sys/cm/cm.log or sys/dm_oracle/dm_oracle.log",
+				"2. Verify service availability using pin_ctl status",
+			},
+			Resolutions: []string{
+				"Refer to uploaded knowledge files in Settings > AI Assistant for precise specifications.",
 			},
 		}
 

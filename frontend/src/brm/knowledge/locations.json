@@ -1,0 +1,68 @@
+{
+  "locations": [
+    {
+      "key": "pin_home",
+      "name": "BRM System Home ($PIN_HOME)",
+      "default_paths": ["/opt/portal/12.X", "/opt/portal/7.5", "/opt/portal"],
+      "description": "Base installation directory for all Oracle BRM daemons, configurations, and tools."
+    },
+    {
+      "key": "cm_conf",
+      "name": "CM Configuration (pin.conf)",
+      "rel_path": "sys/cm/pin.conf",
+      "description": "Connection Manager daemon config: port bindings, max connections, dm_pointer, fm_module shared libraries.",
+      "component": "CM"
+    },
+    {
+      "key": "dm_conf",
+      "name": "DM Oracle Configuration (pin.conf)",
+      "rel_path": "sys/dm_oracle/pin.conf",
+      "description": "Data Manager config: database TNS alias, database credentials (sm_pw), max DB connections, transaction limits.",
+      "component": "DM"
+    },
+    {
+      "key": "infranet_properties",
+      "name": "Infranet Properties (infranet.properties)",
+      "rel_path": "sys/eai_js/infranet.properties",
+      "description": "Java SDK & EAI Framework properties: JNDI bindings, CM connection pool, logging levels.",
+      "component": "Java/EAI"
+    },
+    {
+      "key": "billing_conf",
+      "name": "Billing Engine Config (pin_billd/pin.conf)",
+      "rel_path": "apps/pin_billd/pin.conf",
+      "description": "Automated billing daemon: billing dates, batch sizes, multi-threading partitions.",
+      "component": "Billing"
+    },
+    {
+      "key": "cm_log",
+      "name": "CM Pinlog (cm.pinlog)",
+      "rel_path": "var/cm/cm.pinlog",
+      "alt_rel_path": "sys/cm/cm.log",
+      "description": "Connection Manager activity log: opcode dispatches, client connection events, flist errors.",
+      "component": "CM"
+    },
+    {
+      "key": "dm_log",
+      "name": "DM Oracle Pinlog (dm_oracle.pinlog)",
+      "rel_path": "var/dm_oracle/dm_oracle.pinlog",
+      "alt_rel_path": "sys/dm_oracle/dm_oracle.log",
+      "description": "Data Manager activity log: Oracle SQL statements, database constraint violations, ORA- errors.",
+      "component": "DM"
+    },
+    {
+      "key": "pin_notify",
+      "name": "Event Notification Config (pin_notify)",
+      "rel_path": "sys/data/config/pin_notify",
+      "description": "Maps system and business events to automatic opcode trigger subscriptions.",
+      "component": "Notification"
+    },
+    {
+      "key": "headers",
+      "name": "BRM Header Files (*.h)",
+      "rel_path": "include/",
+      "description": "C/C++ headers defining PIN_FLD_*, PCM_OP_*, PIN_ERR_*, and storable classes.",
+      "component": "SDK"
+    }
+  ]
+}

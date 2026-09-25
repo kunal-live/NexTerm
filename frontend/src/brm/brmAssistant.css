@@ -476,6 +476,49 @@
   line-height: 1.4;
 }
 
+.brm-answer-content {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #f1f5f9;
+}
+
+.brm-answer-content p {
+  margin: 0 0 6px 0;
+}
+
+.brm-answer-content p:last-child {
+  margin-bottom: 0;
+}
+
+.brm-answer-content strong {
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.brm-answer-content code {
+  background: rgba(0, 0, 0, 0.4);
+  color: #7dd3fc;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: Consolas, monospace;
+  font-size: 11px;
+}
+
+.brm-answer-bullets {
+  margin: 4px 0 8px 18px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.brm-answer-bullets li {
+  color: #e2e8f0;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
 .brm-section-title {
   font-size: 10px;
   text-transform: uppercase;
@@ -794,5 +837,499 @@
 #tbmBRM .moba-tb-ico {
   color: #38bdf8;
   filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.6));
+}
+
+/* ==========================================================================
+   AI Grounding Banner & Tag Card Styles
+   ========================================================================== */
+
+.brm-grounding-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.15), rgba(56, 189, 248, 0.08));
+  border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+  font-size: 11px;
+}
+
+.brm-grounding-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.brm-grounding-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.brm-grounding-texts {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.brm-grounding-title {
+  font-weight: 700;
+  color: #38bdf8;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brm-grounding-sub {
+  font-size: 10px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brm-manage-files-btn {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.brm-manage-files-btn:hover {
+  background: rgba(56, 189, 248, 0.28);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.brm-grounding-tag-card {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: rgba(2, 132, 199, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 6px;
+}
+
+.brm-grounding-tag-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.brm-grounding-tag-icon {
+  font-size: 13px;
+  color: #38bdf8;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.brm-grounding-tag-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.brm-grounding-tag-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.brm-grounding-tag-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.brm-file-chip {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  color: #cbd5e1;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.brm-grounding-mini-note {
+  font-size: 9.5px;
+  color: #38bdf8;
+  margin-top: 4px;
+  opacity: 0.85;
+}
+
+/* Light mode for Grounding Banner & Tags */
+:root[data-theme="light-modern"] .brm-grounding-banner {
+  background: linear-gradient(135deg, #e0f2fe, #f0f9ff);
+  border-bottom: 1px solid #bae6fd;
+}
+
+:root[data-theme="light-modern"] .brm-grounding-title {
+  color: #0284c7;
+}
+
+:root[data-theme="light-modern"] .brm-grounding-sub {
+  color: #64748b;
+}
+
+:root[data-theme="light-modern"] .brm-manage-files-btn {
+  background: #ffffff;
+  border-color: #0284c7;
+  color: #0284c7;
+}
+
+:root[data-theme="light-modern"] .brm-manage-files-btn:hover {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+:root[data-theme="light-modern"] .brm-grounding-tag-card {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
+:root[data-theme="light-modern"] .brm-grounding-tag-title {
+  color: #0369a1;
+}
+
+:root[data-theme="light-modern"] .brm-file-chip {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+:root[data-theme="light-modern"] .brm-answer-content {
+  color: #1e293b;
+}
+
+:root[data-theme="light-modern"] .brm-answer-content strong {
+  color: #0284c7;
+}
+
+:root[data-theme="light-modern"] .brm-answer-content code {
+  background: rgba(0, 0, 0, 0.05);
+  color: #0369a1;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+:root[data-theme="light-modern"] .brm-answer-bullets li {
+  color: #334155;
+}
+
+/* ==========================================================================
+   AI Assistant Settings Tab Styles
+   ========================================================================== */
+
+.ai-kb-header-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  background: #151923;
+  border: 1px solid #232733;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.ai-kb-header-info {
+  flex: 1;
+}
+
+.ai-grounded-pill {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.ai-quota-card {
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #0d1017;
+  padding: 6px 10px;
+  border: 1px solid #232733;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+
+.ai-quota-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.ai-quota-lbl {
+  color: #94a3b8;
+  font-size: 10px;
+}
+
+.ai-quota-bar-track {
+  width: 100%;
+  height: 5px;
+  background: #1e2433;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ai-quota-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0284c7, #38bdf8);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.ai-kb-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.ai-folder-chips-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ai-folder-chip-wrap {
+  display: flex;
+  align-items: center;
+  background: #181d29;
+  border: 1px solid #283042;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ai-folder-chip {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.ai-folder-chip.active {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+}
+
+.ai-chip-count {
+  font-size: 9.5px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1px 5px;
+  border-radius: 10px;
+}
+
+.ai-del-folder-btn {
+  background: transparent;
+  border: none;
+  border-left: 1px solid #283042;
+  color: #ef4444;
+  font-size: 12px;
+  padding: 4px 6px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.ai-del-folder-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.ai-kb-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ai-files-list-container {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+}
+
+.ai-file-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #131722;
+  border: 1px solid #202636;
+  border-radius: 5px;
+  transition: border-color 0.15s ease;
+}
+
+.ai-file-card:hover {
+  border-color: #38bdf840;
+}
+
+.ai-file-card-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.ai-type-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 3px;
+  min-width: 44px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.ai-file-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  flex: 1;
+}
+
+.ai-file-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-file-name {
+  font-weight: 600;
+  font-size: 12px;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-file-folder-select {
+  font-size: 10px;
+  background: #1e2433;
+  color: #94a3b8;
+  border: 1px solid #2d374d;
+  border-radius: 3px;
+  padding: 1px 4px;
+  cursor: pointer;
+}
+
+.ai-file-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: #64748b;
+}
+
+.ai-meta-dot {
+  opacity: 0.5;
+}
+
+.ai-default-pill {
+  font-size: 9px;
+  font-weight: 600;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  padding: 0 4px;
+  border-radius: 3px;
+}
+
+.ai-file-summary-row {
+  font-size: 10.5px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-file-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.ai-kb-empty-state {
+  text-align: center;
+  padding: 30px 16px;
+  background: #11141c;
+  border: 1px dashed #283042;
+  border-radius: 6px;
+}
+
+/* Light mode for AI Settings Tab */
+:root[data-theme="light-modern"] .ai-kb-header-card {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+:root[data-theme="light-modern"] .ai-quota-card {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+:root[data-theme="light-modern"] .ai-folder-chip-wrap {
+  background: #ffffff;
+  border-color: #cbd5e1;
+}
+
+:root[data-theme="light-modern"] .ai-folder-chip {
+  color: #475569;
+}
+
+:root[data-theme="light-modern"] .ai-folder-chip.active {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+:root[data-theme="light-modern"] .ai-file-card {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+:root[data-theme="light-modern"] .ai-file-name {
+  color: #0f172a;
+}
+
+:root[data-theme="light-modern"] .ai-file-folder-select {
+  background: #f1f5f9;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+:root[data-theme="light-modern"] .ai-kb-empty-state {
+  background: #f8fafc;
+  border-color: #cbd5e1;
 }
 

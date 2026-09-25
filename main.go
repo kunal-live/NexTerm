@@ -25,9 +25,12 @@ func main() {
 	}
 
 	err = wails.Run(&options.App{
-		Title:  "Nexterm - SSH & Terminal Manager",
-		Width:  1280,
-		Height: 820,
+		Title:            "Nexterm - SSH & Terminal Manager",
+		Width:            1280,
+		Height:           820,
+		MinWidth:         1024,
+		MinHeight:        640,
+		WindowStartState: options.Maximised,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},

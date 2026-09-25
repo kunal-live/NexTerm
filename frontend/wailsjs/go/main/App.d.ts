@@ -42,7 +42,7 @@ export function CancelAuthChallenge(arg1:string):Promise<void>;
 
 export function CancelBroadcast(arg1:string):Promise<void>;
 
-export function CheckSSHAgent():Promise<{[key: string]: any}>;
+export function CheckSSHAgent():Promise<Record<string, any>>;
 
 export function ClassifyConnectionError(arg1:string):Promise<sshsession.ClassifiedError>;
 
@@ -136,7 +136,7 @@ export function MoveWorkspaceTab(arg1:string,arg2:string,arg3:number):Promise<mo
 
 export function NetCalculateHash(arg1:string,arg2:string):Promise<string>;
 
-export function NetLookupDNS(arg1:string):Promise<{[key: string]: Array<string>}>;
+export function NetLookupDNS(arg1:string):Promise<Record<string, Array<string>>>;
 
 export function NetPing(arg1:string):Promise<string>;
 
