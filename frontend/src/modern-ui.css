@@ -642,7 +642,7 @@ html {
   overflow-y: auto !important;
 }
 
-/* Starfield overlay — tiled points of light for the space vibe */
+/* Starfield overlay — subtle distant depth */
 .welcome-dashboard::before {
   content: '';
   position: absolute;
@@ -658,20 +658,20 @@ html {
   background-size: 360px 220px;
   background-repeat: repeat;
   pointer-events: none;
-  opacity: 0.7;
-  animation: nxTwinkle 6s ease-in-out infinite;
+  opacity: 0.18;
 }
 
-@keyframes nxTwinkle {
-
-  0%,
-  100% {
-    opacity: 0.55;
-  }
-
-  50% {
-    opacity: 0.85;
-  }
+/* Dynamic Moving Celestial Universe Canvas */
+.universe-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.95;
+  will-change: transform;
 }
 
 .welcome-content {

@@ -64,6 +64,7 @@ import { showLogExplorer } from './terminal/logExplorer.js';
 import { showCommandIntel } from './terminal/commandIntel.js';
 import { showShortcutsOverlay } from './ui/shortcutsHelp.js';
 import { showDocumentation } from './ui/docs.js';
+import { initUniverseAnimation } from './ui/universeAnimation.js';
 import { toggleSessionLogging, isAutoLogEnabled, setAutoLog } from './terminal/terminalManager.js';
 import { showNewSessionDialog, showFolderDialog } from './sessions/sessionDialog.js';
 import { showMultiServerConnectDialog } from './sessions/multiServerConnect.js';
@@ -1370,6 +1371,9 @@ export async function init() {
 
   // Initialize Oracle BRM Assistant
   try { initBRMAssistant(); } catch (e) { console.warn("Failed to init BRM Assistant:", e); }
+
+  // Initialize dynamic cosmic universe particle engine for Home dashboard
+  try { initUniverseAnimation(); } catch (e) { console.warn("Failed to init Universe Animation:", e); }
 }
 
 // Auto-run on DOMContentLoaded
