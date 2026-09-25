@@ -306,21 +306,160 @@ export const THEMES = {
     brightMagenta: "#f43f5e",
     brightCyan: "#67e8f9",
     brightWhite: "#ffffff"
+  },
+  "tokyo-night": {
+    background: "#1a1b26",
+    foreground: "#a9b1d6",
+    cursor: "#7aa2f7",
+    cursorAccent: "#1a1b26",
+    selectionBackground: "rgba(122, 162, 247, 0.3)",
+    black: "#15161e",
+    red: "#f7768e",
+    green: "#9ece6a",
+    yellow: "#e0af68",
+    blue: "#7aa2f7",
+    magenta: "#bb9af7",
+    cyan: "#7dcfff",
+    white: "#c0caf5",
+    brightBlack: "#414868",
+    brightRed: "#f7768e",
+    brightGreen: "#9ece6a",
+    brightYellow: "#e0af68",
+    brightBlue: "#7aa2f7",
+    brightMagenta: "#bb9af7",
+    brightCyan: "#7dcfff",
+    brightWhite: "#c0caf5"
+  },
+  "catppuccin-mocha": {
+    background: "#1e1e2e",
+    foreground: "#cdd6f4",
+    cursor: "#f5e0dc",
+    cursorAccent: "#1e1e2e",
+    selectionBackground: "rgba(203, 166, 247, 0.3)",
+    black: "#45475a",
+    red: "#f38ba8",
+    green: "#a6e3a1",
+    yellow: "#f9e2af",
+    blue: "#89b4fa",
+    magenta: "#cba6f7",
+    cyan: "#94e2d5",
+    white: "#bac2de",
+    brightBlack: "#585b70",
+    brightRed: "#f38ba8",
+    brightGreen: "#a6e3a1",
+    brightYellow: "#f9e2af",
+    brightBlue: "#89b4fa",
+    brightMagenta: "#cba6f7",
+    brightCyan: "#94e2d5",
+    brightWhite: "#a6adc8"
+  },
+  "gruvbox-dark": {
+    background: "#282828",
+    foreground: "#ebdbb2",
+    cursor: "#fe8019",
+    cursorAccent: "#282828",
+    selectionBackground: "rgba(254, 128, 25, 0.3)",
+    black: "#1d2021",
+    red: "#cc241d",
+    green: "#98971a",
+    yellow: "#d79921",
+    blue: "#458588",
+    magenta: "#b16286",
+    cyan: "#689d6a",
+    white: "#a89984",
+    brightBlack: "#928374",
+    brightRed: "#fb4934",
+    brightGreen: "#b8bb26",
+    brightYellow: "#fabd2f",
+    brightBlue: "#83a598",
+    brightMagenta: "#d3869b",
+    brightCyan: "#8ec07c",
+    brightWhite: "#ebdbb2"
+  },
+  "rose-pine": {
+    background: "#191724",
+    foreground: "#e0def4",
+    cursor: "#ebbcba",
+    cursorAccent: "#191724",
+    selectionBackground: "rgba(235, 188, 186, 0.25)",
+    black: "#26233a",
+    red: "#eb6f92",
+    green: "#31748f",
+    yellow: "#f6c177",
+    blue: "#9ccfd8",
+    magenta: "#c4a7e7",
+    cyan: "#ebbcba",
+    white: "#e0def4",
+    brightBlack: "#6e6a86",
+    brightRed: "#eb6f92",
+    brightGreen: "#31748f",
+    brightYellow: "#f6c177",
+    brightBlue: "#9ccfd8",
+    brightMagenta: "#c4a7e7",
+    brightCyan: "#ebbcba",
+    brightWhite: "#e0def4"
+  },
+  "github-dark": {
+    background: "#0d1117",
+    foreground: "#c9d1d9",
+    cursor: "#58a6ff",
+    cursorAccent: "#0d1117",
+    selectionBackground: "rgba(56, 139, 253, 0.3)",
+    black: "#161b22",
+    red: "#ff7b72",
+    green: "#3fb950",
+    yellow: "#d29922",
+    blue: "#58a6ff",
+    magenta: "#bc8cff",
+    cyan: "#39c5cf",
+    white: "#b1bac4",
+    brightBlack: "#484f58",
+    brightRed: "#ffa198",
+    brightGreen: "#56d364",
+    brightYellow: "#e3b341",
+    brightBlue: "#79c0ff",
+    brightMagenta: "#d2a8ff",
+    brightCyan: "#56d4dd",
+    brightWhite: "#f0f6fc"
   }
 };
 
 export const THEME_METADATA = {
-  "slack-dark": {
-    name: "Slack Theme Dark Mode",
-    desc: "Slack dark code theme by Felipe Mendes with iconic cyan, amber, coral, and emerald highlights",
-    icon: "💬",
-    swatches: ["#222222", "#1b1d21", "#36c5f0", "#ecb22e", "#e01e5a"]
-  },
   "dark-modern": {
     name: "Dark Modern",
     desc: "Nexterm professional compact dark theme with slate and azure accents",
     icon: "🌌",
     swatches: ["#1a1c23", "#232733", "#3b82f6", "#10b981", "#06b6d4"]
+  },
+  "tokyo-night": {
+    name: "Tokyo Night",
+    desc: "Iconic Japanese cyberpunk dark theme with deep twilight indigo, electric neon blue, and vivid purple",
+    icon: "🌸",
+    swatches: ["#1a1b26", "#16161e", "#7aa2f7", "#bb9af7", "#7dcfff"]
+  },
+  "catppuccin-mocha": {
+    name: "Catppuccin Mocha",
+    desc: "Soothing pastel-warm dark aesthetic with soft lavender, mauve, sapphire, and peach accents",
+    icon: "☕",
+    swatches: ["#1e1e2e", "#181825", "#cba6f7", "#89b4fa", "#a6e3a1"]
+  },
+  "gruvbox-dark": {
+    name: "Gruvbox Dark",
+    desc: "Retro warm espresso palette with rich terracotta, warm amber, and golden olive accents",
+    icon: "🪵",
+    swatches: ["#282828", "#1d2021", "#fe8019", "#fabd2f", "#b8bb26"]
+  },
+  "rose-pine": {
+    name: "Rosé Pine",
+    desc: "Ethereal twilight atmosphere with soothing warm rose, dusky pine, and soft gold",
+    icon: "🌹",
+    swatches: ["#191724", "#1f1d2e", "#ebbcba", "#f6c177", "#9ccfd8"]
+  },
+  "github-dark": {
+    name: "GitHub Dark",
+    desc: "Official GitHub high-contrast dark theme with crisp sky blue, charcoal, and emerald accents",
+    icon: "🐙",
+    swatches: ["#0d1117", "#161b22", "#58a6ff", "#3fb950", "#bc8cff"]
   },
   "nord": {
     name: "Nordic Frost",
@@ -370,6 +509,12 @@ export const THEME_METADATA = {
     icon: "⚓",
     swatches: ["#0b1528", "#0f1f3d", "#38bdf8", "#4ade80", "#f8fafc"]
   },
+  "slack-dark": {
+    name: "Slack Theme Dark Mode",
+    desc: "Slack dark code theme by Felipe Mendes with iconic cyan, amber, coral, and emerald highlights",
+    icon: "💬",
+    swatches: ["#222222", "#1b1d21", "#36c5f0", "#ecb22e", "#e01e5a"]
+  },
   "light-modern": {
     name: "Modern Light",
     desc: "Clean porcelain white with high-contrast text and crisp cyan highlights",
@@ -385,6 +530,19 @@ export function applyUITheme(themeKey, persist = true) {
 
   document.documentElement.setAttribute("data-theme", themeKey);
   document.body.setAttribute("data-theme", themeKey);
+
+  // Sync toolbar sun/moon toggle icon immediately
+  const icon = document.getElementById("tbThemeToggleIcon");
+  const btn = document.getElementById("tbThemeToggleBtn");
+  if (icon) {
+    if (themeKey === "light-modern") {
+      icon.innerHTML = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
+      if (btn) btn.title = "Light mode — click for Dark";
+    } else {
+      icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+      if (btn) btn.title = "Dark mode — click for Light";
+    }
+  }
 
   if (persist) {
     saveSettings();
@@ -488,19 +646,24 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
       <!-- 1. Terminal & UI Settings Tab -->
       <div id="tab-settings-term" class="tab-content">
         <div class="form-group">
-          <label>Terminal Color Scheme</label>
+          <label>Application & Workspace UI Theme</label>
           <select id="cfgTheme">
-            <option value="slack-dark" ${userSettings.theme === 'slack-dark' ? 'selected' : ''}>Slack Theme Dark Mode</option>
-            <option value="dark-modern" ${userSettings.theme === 'dark-modern' ? 'selected' : ''}>Dark Modern (Nexterm Default)</option>
-            <option value="solarized-dark" ${userSettings.theme === 'solarized-dark' ? 'selected' : ''}>Solarized Dark</option>
-            <option value="monokai" ${userSettings.theme === 'monokai' ? 'selected' : ''}>Monokai Pro</option>
-            <option value="nord" ${userSettings.theme === 'nord' ? 'selected' : ''}>Nordic Frost</option>
-            <option value="dracula" ${userSettings.theme === 'dracula' ? 'selected' : ''}>Dracula</option>
-            <option value="one-dark" ${userSettings.theme === 'one-dark' ? 'selected' : ''}>Atom One Dark</option>
-            <option value="matrix" ${userSettings.theme === 'matrix' ? 'selected' : ''}>Matrix Green CRT</option>
-            <option value="cyberpunk" ${userSettings.theme === 'cyberpunk' ? 'selected' : ''}>Cyberpunk Neon</option>
-            <option value="avisys-navy" ${userSettings.theme === 'avisys-navy' ? 'selected' : ''}>Avisys Corporate Navy</option>
-            <option value="light-modern" ${userSettings.theme === 'light-modern' ? 'selected' : ''}>Modern Light</option>
+            <option value="dark-modern" ${userSettings.theme === 'dark-modern' ? 'selected' : ''}>🌌 Dark Modern (Nexterm Default)</option>
+            <option value="tokyo-night" ${userSettings.theme === 'tokyo-night' ? 'selected' : ''}>🌸 Tokyo Night (Cyberpunk Twilight)</option>
+            <option value="catppuccin-mocha" ${userSettings.theme === 'catppuccin-mocha' ? 'selected' : ''}>☕ Catppuccin Mocha (Pastel Warm Dark)</option>
+            <option value="gruvbox-dark" ${userSettings.theme === 'gruvbox-dark' ? 'selected' : ''}>🪵 Gruvbox Dark (Warm Retro Espresso)</option>
+            <option value="rose-pine" ${userSettings.theme === 'rose-pine' ? 'selected' : ''}>🌹 Rosé Pine (Ethereal Dusky Rose)</option>
+            <option value="github-dark" ${userSettings.theme === 'github-dark' ? 'selected' : ''}>🐙 GitHub Dark (Executive Charcoal)</option>
+            <option value="nord" ${userSettings.theme === 'nord' ? 'selected' : ''}>❄️ Nordic Frost (Arctic Polar Ice)</option>
+            <option value="dracula" ${userSettings.theme === 'dracula' ? 'selected' : ''}>🧛 Dracula (Midnight Purple & Neon Pink)</option>
+            <option value="cyberpunk" ${userSettings.theme === 'cyberpunk' ? 'selected' : ''}>🌆 Cyberpunk Neon (Synthwave Cyan & Magenta)</option>
+            <option value="monokai" ${userSettings.theme === 'monokai' ? 'selected' : ''}>🍃 Monokai Pro (Warm Charcoal & Lime)</option>
+            <option value="solarized-dark" ${userSettings.theme === 'solarized-dark' ? 'selected' : ''}>🌊 Solarized Dark (Oceanic Teal & Amber)</option>
+            <option value="matrix" ${userSettings.theme === 'matrix' ? 'selected' : ''}>🟩 Matrix Green CRT (Hacker Phosphor)</option>
+            <option value="one-dark" ${userSettings.theme === 'one-dark' ? 'selected' : ''}>⚛️ Atom One Dark (Refined Slate & Cornflower)</option>
+            <option value="avisys-navy" ${userSettings.theme === 'avisys-navy' ? 'selected' : ''}>⚓ Avisys Corporate Navy (Midnight Enterprise)</option>
+            <option value="slack-dark" ${userSettings.theme === 'slack-dark' ? 'selected' : ''}>💬 Slack Theme Dark Mode (Classic Aubergine & Cyan)</option>
+            <option value="light-modern" ${userSettings.theme === 'light-modern' ? 'selected' : ''}>☀️ Modern Light (Clean Porcelain White)</option>
           </select>
         </div>
         <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -854,11 +1017,22 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
           <div class="form-group">
             <label>Default Theme</label>
             <select id="custDefaultTheme">
-              <option value="dark-modern">Dark Modern</option>
-              <option value="solarized-dark">Solarized Dark</option>
-              <option value="monokai">Monokai Pro</option>
-              <option value="dracula">Dracula</option>
-              <option value="nord">Nordic Frost</option>
+              <option value="dark-modern">🌌 Dark Modern (Nexterm Default)</option>
+              <option value="tokyo-night">🌸 Tokyo Night (Cyberpunk Twilight)</option>
+              <option value="catppuccin-mocha">☕ Catppuccin Mocha (Pastel Warm Dark)</option>
+              <option value="gruvbox-dark">🪵 Gruvbox Dark (Warm Retro Espresso)</option>
+              <option value="rose-pine">🌹 Rosé Pine (Ethereal Dusky Rose)</option>
+              <option value="github-dark">🐙 GitHub Dark (Executive Charcoal)</option>
+              <option value="nord">❄️ Nordic Frost (Arctic Polar Ice)</option>
+              <option value="dracula">🧛 Dracula (Midnight Purple & Neon Pink)</option>
+              <option value="cyberpunk">🌆 Cyberpunk Neon (Synthwave Cyan & Magenta)</option>
+              <option value="monokai">🍃 Monokai Pro (Warm Charcoal & Lime)</option>
+              <option value="solarized-dark">🌊 Solarized Dark (Oceanic Teal & Amber)</option>
+              <option value="matrix">🟩 Matrix Green CRT (Hacker Phosphor)</option>
+              <option value="one-dark">⚛️ Atom One Dark (Refined Slate & Cornflower)</option>
+              <option value="avisys-navy">⚓ Avisys Corporate Navy (Midnight Enterprise)</option>
+              <option value="slack-dark">💬 Slack Theme Dark Mode (Classic Aubergine & Cyan)</option>
+              <option value="light-modern">☀️ Modern Light (Clean Porcelain White)</option>
             </select>
           </div>
         </div>
@@ -2202,9 +2376,19 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
   refreshVaultView();
   triggerGeneratePassword();
 
+  const initialTheme = userSettings.uiTheme || userSettings.theme || "dark-modern";
+  const themeSelect = box.querySelector("#cfgTheme");
+  if (themeSelect) {
+    themeSelect.onchange = (e) => {
+      applyUITheme(e.target.value, false);
+    };
+  }
+
   box.querySelector("#cfgSave").onclick = async () => {
     // 1. Terminal & UI Preferences
-    userSettings.theme = box.querySelector("#cfgTheme").value || "dark-modern";
+    const chosenTheme = box.querySelector("#cfgTheme").value || "dark-modern";
+    userSettings.theme = chosenTheme;
+    userSettings.uiTheme = chosenTheme;
     userSettings.fontSize = parseInt(box.querySelector("#cfgFontSize").value, 10) || 13;
     userSettings.cursorStyle = box.querySelector("#cfgCursor").value || "block";
     userSettings.fontFamily = box.querySelector("#cfgFont").value.trim() || "Cascadia Mono, Consolas, Fira Code, monospace";
@@ -2217,7 +2401,7 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
     userSettings.reconnectDelay = parseInt(box.querySelector("#cfgReconnectDelay")?.value, 10) || 2;
     userSettings.notificationLevel = box.querySelector("#cfgNotifLevel") ? box.querySelector("#cfgNotifLevel").value : "minimal";
 
-    saveSettings();
+    applyUITheme(chosenTheme, true);
 
     // 2. Security Policy to Go backend
     if (window.go && window.go.main && window.go.main.App) {
@@ -2280,6 +2464,10 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
     showToast("Settings and enterprise preferences saved successfully", "success");
   };
 
-  box.querySelector("#modalCancel").onclick = hideModal;
-  box.querySelector("#modalClose").onclick = hideModal;
+  const handleCancelSettings = () => {
+    applyUITheme(initialTheme, false);
+    hideModal();
+  };
+  box.querySelector("#modalCancel").onclick = handleCancelSettings;
+  box.querySelector("#modalClose").onclick = handleCancelSettings;
 }

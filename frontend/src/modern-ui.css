@@ -7445,6 +7445,7 @@ html {
 }
 
 /* Strict visibility overrides to guarantee locked vault hides credentials list */
+/* Strict visibility overrides to guarantee locked vault hides credentials list */
 .hidden,
 #vaultContentSection.hidden,
 #vaultLockGate.hidden,
@@ -7455,6 +7456,595 @@ html {
 .tab-content.hidden {
   display: none !important;
 }
+
+/* ==========================================================================
+   Comprehensive Global UI Theme Engine (Full-Workspace Dynamic Theming)
+   Propagates active theme palette across all components:
+   Menubar, Topbar, Main Toolbar, Sidebar & Nav Rail, Bento Dashboard,
+   Tabs, Statusbar, Modals, Inputs & Notifications
+   ========================================================================== */
+
+/* Universal Dynamic Theming via CSS Tokens */
+[data-theme] body,
+[data-theme] html,
+[data-theme] #app {
+  background-color: var(--bg-app) !important;
+  color: var(--text-primary) !important;
+}
+
+/* 1. Menubar & Dropdowns */
+[data-theme] #menuBar,
+[data-theme] .menubar {
+  background: var(--bg-menubar) !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+[data-theme] .menu-item {
+  color: var(--text-muted) !important;
+}
+
+[data-theme] .menu-item:hover,
+[data-theme] .menu-item.active {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .menu-item:hover::after,
+[data-theme] .menu-item.active::after {
+  background: var(--accent-cyan) !important;
+  box-shadow: 0 0 8px var(--accent-cyan) !important;
+}
+
+[data-theme] .dropdown-menu {
+  background: var(--bg-topbar) !important;
+  border: 1px solid var(--border-active) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme] .menu-option {
+  color: var(--text-muted) !important;
+}
+
+[data-theme] .menu-option:hover {
+  background: var(--accent-blue) !important;
+  color: #ffffff !important;
+}
+
+[data-theme] .menu-separator {
+  background: var(--border-subtle) !important;
+}
+
+/* 2. Topbar & Brand Header */
+[data-theme] .nx-topbar {
+  background: var(--bg-topbar) !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+[data-theme] .nx-topbar-brand {
+  border-right: 1px solid var(--border-subtle) !important;
+}
+
+[data-theme] .nx-brand-name .nb-nex {
+  color: var(--accent-cyan) !important;
+}
+
+[data-theme] .nx-brand-name .nb-term {
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .nx-topbar-search {
+  background: var(--bg-input) !important;
+  border-color: var(--bg-input-border) !important;
+}
+
+[data-theme] .nx-topbar-search input {
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .nx-top-icon {
+  color: var(--text-muted) !important;
+}
+
+[data-theme] .nx-top-icon:hover {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+/* 3. Main Workstation Toolbar */
+[data-theme] .main-toolbar {
+  background: var(--bg-toolbar) !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+[data-theme] .tb-icon {
+  background: var(--bg-card) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-muted) !important;
+}
+
+[data-theme] .tb-label {
+  color: var(--text-muted) !important;
+}
+
+[data-theme] .tb-btn:hover {
+  background: var(--bg-card-hover) !important;
+  border-color: var(--border-active) !important;
+}
+
+[data-theme] .tb-btn:hover .tb-label {
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .tb-btn:hover .tb-icon {
+  background: var(--bg-card-hover) !important;
+  border-color: var(--accent-cyan) !important;
+  color: var(--accent-cyan) !important;
+}
+
+[data-theme] .tb-sep {
+  background: var(--border-subtle) !important;
+}
+
+[data-theme] .quick-connect-box {
+  background: var(--bg-input) !important;
+  border-color: var(--bg-input-border) !important;
+}
+
+[data-theme] .quick-connect-input {
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .quick-connect-btn {
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan)) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 4. Left Sidebar & Vertical Navigation Strip */
+[data-theme] #sidebar,
+[data-theme] .sidebar {
+  background: var(--bg-sidebar) !important;
+  border-right: 1px solid var(--border-subtle) !important;
+}
+
+[data-theme] .vertical-nav-strip,
+[data-theme] .nav-rail {
+  background: var(--bg-sidebar-strip) !important;
+  border-right: 1px solid var(--border-subtle) !important;
+}
+
+[data-theme] .nav-strip-btn,
+[data-theme] .nav-rail-btn {
+  color: var(--text-dim) !important;
+}
+
+[data-theme] .nav-strip-btn:hover,
+[data-theme] .nav-rail-btn:hover {
+  background: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .nav-strip-btn.active,
+[data-theme] .nav-rail-btn.active {
+  background: var(--bg-card-hover) !important;
+  color: var(--accent-cyan) !important;
+  border-color: var(--border-active) !important;
+}
+
+[data-theme] .sidebar-quick-connect,
+[data-theme] .connected-section,
+[data-theme] .connected-header,
+[data-theme] .saved-header-row {
+  background: var(--bg-topbar) !important;
+  border-color: var(--border-subtle) !important;
+}
+
+[data-theme] .sidebar-quick-connect input {
+  background: var(--bg-input) !important;
+  border-color: var(--bg-input-border) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .section-title-text,
+[data-theme] .sessions-root-label {
+  color: var(--text-muted) !important;
+}
+
+[data-theme] .session-tree-tools button {
+  background: var(--bg-card) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-muted) !important;
+}
+
+[data-theme] .session-tree-tools button:hover {
+  background: var(--bg-card-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+/* 5. Tabs & Tabbar */
+[data-theme] #tabBar,
+[data-theme] .tabbar-container {
+  background: var(--bg-menubar) !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+}
+
+[data-theme] .tab-item,
+[data-theme] .tab {
+  background: var(--bg-app) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-muted) !important;
+}
+
+[data-theme] .tab-item:hover,
+[data-theme] .tab:hover {
+  background: var(--bg-card-hover) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .tab-item.active,
+[data-theme] .tab.active {
+  background: var(--bg-card) !important;
+  border-color: var(--border-active) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+}
+
+[data-theme] .tab-add-icon-btn,
+[data-theme] .tab-tool-icon-btn {
+  background: var(--bg-card) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-muted) !important;
+}
+
+/* 6. Bento Grid, Hero, Cards & Options Panels */
+[data-theme] .bento-card,
+[data-theme] .recent-session-card,
+[data-theme] .home-options-panel,
+[data-theme] .home-tool-card,
+[data-theme] .nx-feature-card,
+[data-theme] .nx-panel {
+  background: var(--bg-card) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .bento-card:hover,
+[data-theme] .recent-session-card:hover,
+[data-theme] .home-tool-card:hover,
+[data-theme] .nx-feature-card:hover {
+  background: var(--bg-card-hover) !important;
+  border-color: var(--border-active) !important;
+}
+
+[data-theme] .nexterm-hero-title,
+[data-theme] .home-panel-title,
+[data-theme] .card-name,
+[data-theme] .bento-card-title,
+[data-theme] .tool-card-title,
+[data-theme] .nx-feat-title,
+[data-theme] .nx-panel-title,
+[data-theme] .nx-hero-h1 {
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .nexterm-hero-desc,
+[data-theme] .bento-card-sub,
+[data-theme] .tool-card-desc,
+[data-theme] .card-host,
+[data-theme] .nx-feat-desc,
+[data-theme] .nx-hero-sub {
+  color: var(--text-muted) !important;
+}
+
+[data-theme] .bento-kbd,
+[data-theme] .spotlight-kbd,
+[data-theme] .bento-tag {
+  background: var(--bg-input) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-muted) !important;
+}
+
+/* 7. Status Bar & Footer */
+[data-theme] #statusBar,
+[data-theme] .statusbar {
+  background: var(--bg-menubar) !important;
+  border-top: 1px solid var(--border-subtle) !important;
+  color: var(--text-muted) !important;
+}
+
+[data-theme] .status-item {
+  color: var(--text-muted) !important;
+}
+
+/* 8. Modals, Inputs & Theme Picker */
+[data-theme] .modal-card,
+[data-theme] .modal-box {
+  background: var(--bg-topbar) !important;
+  border: 1px solid var(--border-active) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .modal-header,
+[data-theme] .modal-footer {
+  border-color: var(--border-subtle) !important;
+}
+
+[data-theme] .modal-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .modal-tab-btn {
+  color: var(--text-muted) !important;
+  border-bottom: 2px solid transparent !important;
+}
+
+[data-theme] .modal-tab-btn:hover {
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .modal-tab-btn.active {
+  color: var(--accent-cyan) !important;
+  border-bottom-color: var(--accent-cyan) !important;
+}
+
+[data-theme] .form-group input,
+[data-theme] .form-group select,
+[data-theme] .form-group textarea,
+[data-theme] .cfg-input {
+  background: var(--bg-input) !important;
+  border: 1px solid var(--bg-input-border) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .theme-card {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .theme-card:hover {
+  background: var(--bg-card-hover) !important;
+  border-color: var(--border-active) !important;
+}
+
+[data-theme] .theme-card.active {
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.25) !important;
+}
+
+/* 9. Notifications Drawer */
+[data-theme] .notif-panel {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-active) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme] .notif-title {
+  color: var(--text-primary) !important;
+}
+
+[data-theme] .notif-head {
+  border-color: var(--border-subtle) !important;
+}
+
+[data-theme] .notif-msg {
+  color: var(--text-muted) !important;
+}
+
+/* ==========================================================================
+   Atmospheric Welcome Dashboard Overrides for Each Specific Theme
+   ========================================================================== */
+
+/* 1. Tokyo Night */
+[data-theme="tokyo-night"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(187, 154, 247, 0.22) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(122, 162, 247, 0.22) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(125, 207, 255, 0.12) 0%, transparent 55%),
+    linear-gradient(180deg, #1a1b26 0%, #16161e 60%, #13141c 100%) !important;
+}
+[data-theme="tokyo-night"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(122, 162, 247, 0.85), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(187, 154, 247, 0.75), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(125, 207, 255, 0.85), transparent);
+}
+
+/* 2. Catppuccin Mocha */
+[data-theme="catppuccin-mocha"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(203, 166, 247, 0.2) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(137, 180, 250, 0.2) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(166, 227, 161, 0.1) 0%, transparent 55%),
+    linear-gradient(180deg, #1e1e2e 0%, #181825 60%, #11111b 100%) !important;
+}
+[data-theme="catppuccin-mocha"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(203, 166, 247, 0.8), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(137, 180, 250, 0.7), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(249, 226, 175, 0.8), transparent);
+}
+
+/* 3. Gruvbox Dark */
+[data-theme="gruvbox-dark"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(254, 128, 25, 0.2) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(250, 189, 47, 0.16) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(184, 187, 38, 0.12) 0%, transparent 55%),
+    linear-gradient(180deg, #282828 0%, #1d2021 60%, #141617 100%) !important;
+}
+[data-theme="gruvbox-dark"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(254, 128, 25, 0.8), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(250, 189, 47, 0.7), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(142, 192, 124, 0.8), transparent);
+}
+
+/* 4. Rosé Pine */
+[data-theme="rose-pine"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(235, 188, 186, 0.22) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(196, 167, 231, 0.18) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(156, 207, 216, 0.14) 0%, transparent 55%),
+    linear-gradient(180deg, #191724 0%, #1f1d2e 60%, #14131d 100%) !important;
+}
+[data-theme="rose-pine"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(235, 188, 186, 0.85), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(246, 193, 119, 0.75), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(196, 167, 231, 0.85), transparent);
+}
+
+/* 5. GitHub Dark */
+[data-theme="github-dark"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(88, 166, 255, 0.18) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(63, 185, 80, 0.12) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(188, 140, 255, 0.1) 0%, transparent 55%),
+    linear-gradient(180deg, #0d1117 0%, #161b22 60%, #090d13 100%) !important;
+}
+[data-theme="github-dark"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(88, 166, 255, 0.8), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(63, 185, 80, 0.7), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(240, 246, 252, 0.8), transparent);
+}
+
+/* 6. Nordic Frost */
+[data-theme="nord"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(136, 192, 208, 0.22) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(129, 161, 193, 0.18) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(163, 190, 140, 0.12) 0%, transparent 55%),
+    linear-gradient(180deg, #2e3440 0%, #3b4252 60%, #242933 100%) !important;
+}
+[data-theme="nord"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(136, 192, 208, 0.85), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(129, 161, 193, 0.75), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(163, 190, 140, 0.85), transparent);
+}
+
+/* 7. Dracula */
+[data-theme="dracula"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(189, 147, 249, 0.24) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(255, 121, 198, 0.18) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(80, 250, 123, 0.1) 0%, transparent 55%),
+    linear-gradient(180deg, #282a36 0%, #21222c 60%, #191a21 100%) !important;
+}
+[data-theme="dracula"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(189, 147, 249, 0.85), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(255, 121, 198, 0.75), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(139, 233, 253, 0.85), transparent);
+}
+
+/* 8. Cyberpunk Neon */
+[data-theme="cyberpunk"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(255, 0, 127, 0.28) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(0, 240, 255, 0.25) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(255, 230, 0, 0.12) 0%, transparent 55%),
+    linear-gradient(180deg, #0f051d 0%, #1a0b2e 60%, #080210 100%) !important;
+}
+[data-theme="cyberpunk"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(0, 240, 255, 0.9), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(255, 0, 127, 0.85), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(255, 230, 0, 0.9), transparent);
+}
+
+/* 9. Monokai Pro */
+[data-theme="monokai"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(166, 226, 46, 0.18) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(249, 38, 114, 0.18) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(102, 217, 239, 0.12) 0%, transparent 55%),
+    linear-gradient(180deg, #272822 0%, #1e1f1c 60%, #171814 100%) !important;
+}
+[data-theme="monokai"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(166, 226, 46, 0.85), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(249, 38, 114, 0.75), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(102, 217, 239, 0.85), transparent);
+}
+
+/* 10. Solarized Dark */
+[data-theme="solarized-dark"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(38, 139, 210, 0.2) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(42, 161, 152, 0.2) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(181, 137, 0, 0.12) 0%, transparent 55%),
+    linear-gradient(180deg, #002b36 0%, #073642 60%, #00212b 100%) !important;
+}
+[data-theme="solarized-dark"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(38, 139, 210, 0.85), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(42, 161, 152, 0.75), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(181, 137, 0, 0.85), transparent);
+}
+
+/* 11. Matrix Green CRT */
+[data-theme="matrix"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(0, 255, 65, 0.25) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(0, 204, 51, 0.18) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(34, 235, 79, 0.12) 0%, transparent 55%),
+    linear-gradient(180deg, #031105 0%, #051c09 60%, #010802 100%) !important;
+}
+[data-theme="matrix"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(0, 255, 65, 0.9), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(0, 204, 51, 0.8), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(34, 235, 79, 0.9), transparent);
+}
+
+/* 12. Atom One Dark */
+[data-theme="one-dark"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(97, 175, 239, 0.2) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(198, 120, 221, 0.15) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(152, 195, 121, 0.1) 0%, transparent 55%),
+    linear-gradient(180deg, #21252b 0%, #282c34 60%, #1b1d23 100%) !important;
+}
+[data-theme="one-dark"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(97, 175, 239, 0.85), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(198, 120, 221, 0.75), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(152, 195, 121, 0.85), transparent);
+}
+
+/* 13. Avisys Corporate Navy */
+[data-theme="avisys-navy"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(56, 189, 248, 0.22) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(74, 222, 128, 0.12) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(37, 99, 235, 0.18) 0%, transparent 55%),
+    linear-gradient(180deg, #0b1528 0%, #0f1f3d 60%, #070d1a 100%) !important;
+}
+[data-theme="avisys-navy"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(56, 189, 248, 0.85), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(74, 222, 128, 0.75), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(37, 99, 235, 0.85), transparent);
+}
+
+/* 14. Slack Theme Dark Mode */
+[data-theme="slack-dark"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(54, 197, 240, 0.18) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(236, 178, 46, 0.15) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(224, 30, 90, 0.12) 0%, transparent 55%),
+    linear-gradient(180deg, #222222 0%, #1b1d21 60%, #16181b 100%) !important;
+}
+[data-theme="slack-dark"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(54, 197, 240, 0.85), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(236, 178, 46, 0.75), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(46, 182, 125, 0.85), transparent);
+}
+
 
 
 
