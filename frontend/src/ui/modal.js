@@ -816,7 +816,7 @@ export function showNewTunnelWizard() {
     <div class="modal-body">
       <div class="form-group">
         <label>Tunnel Name</label>
-        <input type="text" id="tunName" placeholder="e.g. Oracle Database Forwarding" value="My SSH Tunnel" />
+        <input type="text" id="tunName" placeholder="e.g. Database Port Forwarding" value="My SSH Tunnel" />
       </div>
       <div class="form-group">
         <label>Forwarding Type</label>

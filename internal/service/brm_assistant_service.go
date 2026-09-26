@@ -489,9 +489,20 @@ func (s *BRMAssistantService) inspectLocalSource(sourcePath, filterQuery string,
 	defer f.Close()
 
 	var allLines []string
+	filterQueryLower := strings.ToLower(filterQuery)
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		allLines = append(allLines, scanner.Text())
+		line := scanner.Text()
+		if filterQueryLower != "" && !strings.Contains(strings.ToLower(line), filterQueryLower) {
+			continue
+		}
+		allLines = append(allLines, line)
+	}
+	if err := scanner.Err(); err != nil && len(allLines) == 0 {
+		return &BRMSourceInspection{
+			SourcePath: sourcePath,
+			Lines:      []string{fmt.Sprintf("Error reading source file: %v", err)},
+		}, nil
 	}
 
 	total := len(allLines)
@@ -875,7 +886,7 @@ func (s *BRMAssistantService) diagnoseArchitecture(q, root, cmConf string) *BRMD
 		},
 		Actions: []BRMAction{
 			{Type: "open_config", Label: "Open CM pin.conf", Target: cmConf, Line: 1},
-			{Type: "open_sftp", Label: "Browse BRM Directory", Target: root, Line: 0},
+			{Type: "open_sftp", Label: "Browse Directory", Target: root, Line: 0},
 			{Type: "copy", Label: "Copy Architecture Overview", Target: "BRM_Architecture_Overview.pptx", Line: 0},
 		},
 	}
@@ -927,6 +938,7 @@ func (s *BRMAssistantService) diagnoseConfiguration(q, root, cmConf string) *BRM
 		},
 		Actions: []BRMAction{
 			{Type: "open_config", Label: "Open CM pin.conf", Target: cmConf, Line: 1},
+			{Type: "open_sftp", Label: "Browse Directory", Target: root, Line: 0},
 			{Type: "copy", Label: "Copy Tuning Recommendations", Target: "pin_conf_tuning_guide.txt", Line: 0},
 		},
 	}
@@ -969,6 +981,7 @@ func (s *BRMAssistantService) diagnoseBilling(q, root, cmConf string) *BRMDiagno
 		Actions: []BRMAction{
 			{Type: "open_log", Label: "Open Billing Log", Target: billLog, Line: 1},
 			{Type: "open_config", Label: "Open Billing Config", Target: billConf, Line: 1},
+			{Type: "open_config", Label: "Open CM pin.conf", Target: cmConf, Line: 1},
 		},
 	}
 }
@@ -1024,13 +1037,20 @@ func (s *BRMAssistantService) buildDiagnosis(q, errCode, opcode, comp string, ev
 	if len(knowledge.Resolutions) > 0 {
 		firstRes = knowledge.Resolutions[0]
 	}
-	directAns := fmt.Sprintf("**%s** (%s):\n• %s\n• **Resolution**: %s", errCode, knowledge.Component, knowledge.Description, firstRes)
+	component := knowledge.Component
+	if comp != "" && (component == "" || component == "System Diagnostics" || component == "BRM System" || component == "Oracle BRM Diagnostics") {
+		component = comp
+	}
+	if component == "" {
+		component = "System Diagnostics"
+	}
+	directAns := fmt.Sprintf("**%s** (%s):\n• %s\n• **Resolution**: %s", errCode, component, knowledge.Description, firstRes)
 
 	return &BRMDiagnosisResult{
 		Status:       "diagnosed",
 		QuestionType: "ERROR_EXPLANATION",
 		Problem:      q,
-		Component:    knowledge.Component,
+		Component:    component,
 		Error:        errCode,
 		Confidence:   "High",
 		DirectAnswer: directAns,
@@ -1041,7 +1061,7 @@ func (s *BRMAssistantService) buildDiagnosis(q, errCode, opcode, comp string, ev
 		Actions: []BRMAction{
 			{Type: "open_log", Label: fmt.Sprintf("Open %s at Line %d", filepath.Base(primarySource), lineNo), Target: primarySource, Line: lineNo},
 			{Type: "open_config", Label: "Open CM pin.conf", Target: filepath.ToSlash(filepath.Join(root, "sys/cm/pin.conf")), Line: 1},
-			{Type: "open_sftp", Label: "Browse BRM Directory", Target: root, Line: 0},
+			{Type: "open_sftp", Label: "Browse Directory", Target: root, Line: 0},
 			{Type: "copy", Label: "Copy Diagnosis Summary", Target: errCode, Line: 0},
 		},
 	}
@@ -1531,15 +1551,15 @@ func (s *BRMAssistantService) GetErrorKnowledge(code string) ErrorKnowledge {
 	case "BRM_DIAGNOSTIC_ANALYSIS":
 		return ErrorKnowledge{
 			Code:        code,
-			Component:   "Oracle BRM Diagnostics",
+			Component:   "System Diagnostics",
 			Description: "Operational inquiry evaluated against local knowledge base and configuration rules.",
 			LikelyCauses: []string{
-				"Process state, configuration settings, or opcode payload requirement",
+				"Process state, configuration settings, or system requirement",
 				"Referenced operational guide or uploaded documentation specification",
 			},
 			Checks: []string{
-				"1. Check specific error codes in sys/cm/cm.log or sys/dm_oracle/dm_oracle.log",
-				"2. Verify service availability using pin_ctl status",
+				"1. Check specific error codes in logs",
+				"2. Verify service availability and process status",
 			},
 			Resolutions: []string{
 				"Refer to uploaded knowledge files in Settings > AI Assistant for precise specifications.",
@@ -1549,10 +1569,10 @@ func (s *BRMAssistantService) GetErrorKnowledge(code string) ErrorKnowledge {
 	default:
 		return ErrorKnowledge{
 			Code:        code,
-			Component:   "BRM System",
-			Description: fmt.Sprintf("Error pattern %s identified in BRM logs.", code),
+			Component:   "System Diagnostics",
+			Description: fmt.Sprintf("Error pattern %s identified in system logs.", code),
 			LikelyCauses: []string{
-				"Configuration inconsistency between CM and DM processes",
+				"Configuration inconsistency between service processes",
 				"Subsystem communication timeout or abnormal process exit",
 			},
 			Checks: []string{
@@ -1560,7 +1580,7 @@ func (s *BRMAssistantService) GetErrorKnowledge(code string) ErrorKnowledge {
 				"2. Verify system processes are running normally",
 			},
 			Resolutions: []string{
-				"Inspect companion component logs (e.g. DM if CM failed, or Oracle alert log if DM failed).",
+				"Inspect companion component logs and process status.",
 			},
 		}
 	}

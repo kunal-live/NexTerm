@@ -213,7 +213,8 @@ func (tm *TunnelManager) handleConnections(rt *runningTunnel, client *ssh.Client
 
 		go func(c net.Conn) {
 			defer c.Close()
-			if rt.config.Type == TunnelRemote {
+			switch rt.config.Type {
+			case TunnelRemote:
 				// Forward to local target
 				localTarget := fmt.Sprintf("127.0.0.1:%d", rt.config.LocalPort)
 				target, err := net.Dial("tcp", localTarget)
@@ -222,7 +223,7 @@ func (tm *TunnelManager) handleConnections(rt *runningTunnel, client *ssh.Client
 				}
 				defer target.Close()
 				pipe(c, target)
-			} else if rt.config.Type == TunnelLocal {
+			case TunnelLocal:
 				// Forward to remote target via SSH
 				remoteTarget := fmt.Sprintf("%s:%d", rt.config.RemoteHost, rt.config.RemotePort)
 				target, err := client.Dial("tcp", remoteTarget)

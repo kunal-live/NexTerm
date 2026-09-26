@@ -120,7 +120,7 @@ function renderAssistantLayout(container) {
               <path d="M10 18h4"></path>
               <path d="M11 21h2"></path>
             </svg>
-            Oracle BRM Assistant
+            Assistant
           </span>
           <span class="brm-readonly-pill" title="Read-only assistant: never modifies files or restarts services">READ-ONLY</span>
         </div>
@@ -150,7 +150,7 @@ function renderAssistantLayout(container) {
       <!-- Environment Info Strip -->
       <div class="brm-env-strip">
         <span id="brmTargetBadge" class="brm-badge brm-badge-local">Local Environment</span>
-        <span id="brmDetectedRoot" class="brm-root-path" title="Discovered BRM root">/opt/portal</span>
+        <span id="brmDetectedRoot" class="brm-root-path" title="Session Environment">Workspace</span>
       </div>
 
       <!-- Grounding Notice Banner -->
@@ -179,9 +179,9 @@ function renderAssistantLayout(container) {
       <!-- 2. Chat Timeline -->
       <div id="brmChatTimeline" class="brm-timeline">
         <div class="brm-welcome-card">
-          <div class="brm-welcome-title">Ask your BRM question or describe an issue</div>
+          <div class="brm-welcome-title">Ask a question or describe an issue</div>
           <div class="brm-welcome-subtitle">
-            All answers are strictly based on your uploaded files and knowledge assets. Manage presentations (.pptx), PDFs, and custom folders in Settings.
+            All answers are based on your uploaded files, system intelligence, and diagnostics. Manage presentations (.pptx), PDFs, and custom knowledge in Settings.
           </div>
           <div class="brm-quick-chips">
             ${BRM_SAMPLE_QUERIES.map(q => `
@@ -194,7 +194,7 @@ function renderAssistantLayout(container) {
       <!-- 3. Query Input Bar -->
       <div class="brm-input-section">
         <div class="brm-input-row">
-          <textarea id="brmInput" class="brm-input" placeholder="Ask BRM question (e.g. Why is billing failing? Where is pin.conf?)..." rows="1"></textarea>
+          <textarea id="brmInput" class="brm-input" placeholder="Ask a question or describe an issue (e.g. diagnose port conflict, inspect error logs)..." rows="1"></textarea>
           <button id="brmSendBtn" class="brm-send-btn" title="Send (Enter)">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -255,7 +255,7 @@ function bindAssistantEvents(container) {
 
   refreshBtn?.addEventListener("click", () => {
     detectCurrentEnvironment();
-    showToast("Refreshed BRM environment discovery", "info");
+    showToast("Refreshed environment discovery", "info");
   });
 
   historyToggleBtn?.addEventListener("click", () => {
@@ -344,7 +344,7 @@ async function submitQuestion(question) {
       removeLoadingIndicator(loadingMsgId);
       appendMessage({
         role: "assistant",
-        text: "BRM Assistant backend service is currently initializing or unavailable."
+        text: "Assistant backend service is currently initializing or unavailable."
       });
       isBusy = false;
       return;
@@ -464,7 +464,7 @@ function appendLoadingIndicator() {
   row.innerHTML = `
     <div class="brm-loading-bubble">
       <span class="brm-spinner"></span>
-      <span>Performing read-only inspection of BRM evidence...</span>
+      <span>Performing read-only diagnostic inspection...</span>
     </div>
   `;
   timeline.appendChild(row);
@@ -546,7 +546,7 @@ function appendDiagnosisCard(res) {
       <!-- Card Header -->
       <div class="brm-card-header">
         <div class="brm-card-tags">
-          <span class="brm-tag brm-tag-comp">${escapeHtml(res.component || "Oracle BRM")}</span>
+          <span class="brm-tag brm-tag-comp">${escapeHtml(res.component || "System Diagnostics")}</span>
           ${res.error ? `<span class="brm-tag brm-tag-err">${escapeHtml(res.error)}</span>` : ""}
         </div>
       </div>
@@ -710,7 +710,7 @@ function updateHistoryDropdown() {
       <div class="brm-hist-time">${escapeHtml(h.time)}</div>
       <div class="brm-hist-q">${escapeHtml(h.question)}</div>
       <div class="brm-hist-meta">
-        <span class="brm-tag brm-tag-comp">${escapeHtml(h.component || "BRM")}</span>
+        <span class="brm-tag brm-tag-comp">${escapeHtml(h.component || "Diagnostics")}</span>
         ${h.error ? `<span class="brm-tag brm-tag-err">${escapeHtml(h.error)}</span>` : ""}
       </div>
     </div>

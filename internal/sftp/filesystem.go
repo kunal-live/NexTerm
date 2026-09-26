@@ -301,11 +301,12 @@ func GetLocalDrives() ([]string, error) {
 			roots = append(roots, home)
 		}
 		roots = append(roots, "/")
-		if runtime.GOOS == "darwin" {
+		switch runtime.GOOS {
+		case "darwin":
 			if _, err := os.Stat("/Volumes"); err == nil {
 				roots = append(roots, "/Volumes")
 			}
-		} else if runtime.GOOS == "linux" {
+		case "linux":
 			if _, err := os.Stat("/media"); err == nil {
 				roots = append(roots, "/media")
 			}

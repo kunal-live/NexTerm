@@ -1176,7 +1176,7 @@ func (a *App) SaveTerminalOutput(suggestedFilename, content string) (string, err
 }
 
 // =========================================================================
-// Oracle BRM Assistant
+// Assistant Diagnostic API
 // =========================================================================
 
 func (a *App) BRMDetectInstallation(tabID string) (*service.BRMInstallation, error) {

@@ -239,7 +239,7 @@ export async function showNewSessionDialog(parentFolderId = "", editProfile = nu
           <div class="sess-form-group">
             <label>Session Name *</label>
             <div style="display: flex; gap: 8px;">
-              <input type="text" id="sName" value="${escapeHtml(p.name)}" placeholder="e.g. Oracle BRM Production 01" autocomplete="off" style="flex: 1;" />
+              <input type="text" id="sName" value="${escapeHtml(p.name)}" placeholder="e.g. Ubuntu Production Server 01" autocomplete="off" style="flex: 1;" />
               <button type="button" id="sAutoNameBtn" class="btn-action" title="Auto-generate name from user@host:port" style="padding: 0 12px; font-size: 11px; white-space: nowrap; font-weight: 600; display: flex; align-items: center; gap: 4px;">⚡ Auto-Name</button>
             </div>
           </div>
@@ -587,7 +587,7 @@ export async function showNewSessionDialog(parentFolderId = "", editProfile = nu
 
           <div class="sess-form-group">
             <label>Startup Command (Automatically executed upon connection)</label>
-            <input type="text" id="sStartup" value="${escapeHtml(p.startupCommand || '')}" placeholder="e.g. cd /opt/brm && ./pin_ctl status" />
+            <input type="text" id="sStartup" value="${escapeHtml(p.startupCommand || '')}" placeholder="e.g. uptime && free -m" />
             <div style="font-size: 10.5px; color: var(--text-dim); margin-top: 4px;">
               Command will be transmitted directly to the remote shell session once connected.
             </div>

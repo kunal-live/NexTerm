@@ -123,6 +123,14 @@ D 09/22 10:00:02:789 cm:1234 pcm_op.c:120 cleanup completed
 	if inspection.ErrorsFound[0].ErrorCode != "PIN_ERR_BAD_OPCODE" {
 		t.Errorf("expected PIN_ERR_BAD_OPCODE, got %s", inspection.ErrorsFound[0].ErrorCode)
 	}
+
+	filteredInspection, err := svc.InspectSource("local", logFile, "PIN_ERR", 100)
+	if err != nil {
+		t.Fatalf("InspectSource with filter failed: %v", err)
+	}
+	if filteredInspection.TotalLines != 1 {
+		t.Errorf("expected 1 filtered line, got %d", filteredInspection.TotalLines)
+	}
 }
 
 func TestBRMAssistant_Diagnose_Flows(t *testing.T) {

@@ -1,28 +1,28 @@
 // ==========================================================================
-// NextTerm — Oracle BRM Knowledge Base & Fast Reference Definitions
+// NextTerm — Diagnostic Knowledge Base & Fast Reference Definitions
 // Provides verified client-side lookups for errors, locations, and opcodes.
 // ==========================================================================
 
 export const BRM_SAMPLE_QUERIES = [
-  { label: "Billing Failure", text: "Why is PCM_OP_BILL_MAKE_BILL_NOW failing?" },
-  { label: "Find pin.conf", text: "Where is my CM pin.conf located?" },
-  { label: "Find DM pin.conf", text: "Where is the DM Oracle pin.conf located?" },
-  { label: "Find infranet.properties", text: "Where is infranet.properties located?" },
-  { label: "Explain PIN_ERR_NOT_FOUND", text: "Explain error PIN_ERR_NOT_FOUND and how to fix it" },
-  { label: "Explain PIN_ERR_MISSING_ARG", text: "Explain error PIN_ERR_MISSING_ARG" },
-  { label: "Explain PIN_ERR_BAD_OPCODE", text: "Explain error PIN_ERR_BAD_OPCODE and how to fix it" },
-  { label: "Explain PIN_ERRLOC_APP", text: "What does location PIN_ERRLOC_APP mean?" },
-  { label: "Explain PIN_ERRLOC_DM", text: "What does location PIN_ERRLOC_DM mean?" },
-  { label: "Explain ORA-00001", text: "Why am I getting ORA-00001 unique constraint violated?" },
-  { label: "Customer Commit", text: "What does PCM_OP_CUST_COMMIT_CUSTOMER do?" },
-  { label: "NAP Connect Error", text: "Why is client getting PIN_ERR_NAP_CONNECT_FAILED?" }
+  { label: "Check System Logs", text: "How do I check recent errors and warnings in system logs?" },
+  { label: "Port Conflicts", text: "How to check which process is listening on or conflicting with a port?" },
+  { label: "High Memory Usage", text: "Find processes consuming high memory or CPU" },
+  { label: "SSH Connection Refused", text: "Why is SSH connection refused or timing out?" },
+  { label: "Disk Space Full", text: "How to check disk usage and locate large log files?" },
+  { label: "Service Failed to Start", text: "How to inspect and diagnose a failed service or daemon?" },
+  { label: "Network Connectivity", text: "Test network route, DNS resolution, and TCP reachability" },
+  { label: "Permission Denied", text: "Troubleshoot permission denied on file or directory" },
+  { label: "Docker Container Crash", text: "How to inspect logs of an exited or crashing container?" },
+  { label: "Database Connection", text: "How to verify database listener and client connectivity?" },
+  { label: "Explain ORA-00001", text: "Why am I getting database unique constraint error ORA-00001?" },
+  { label: "Explain Error Code", text: "Explain error PIN_ERR_BAD_OPCODE and how to resolve it" }
 ];
 
 export const BRM_SOURCE_OPTIONS = [
-  { key: "cm_log", label: "CM Log", icon: "📄", desc: "Connection Manager logs: opcode execution, client sessions, auth" },
-  { key: "dm_log", label: "DM Log", icon: "🗄️", desc: "Data Manager logs: Oracle SQL statements, DB transaction errors" },
-  { key: "pin_conf", label: "CM pin.conf", icon: "⚙️", desc: "CM configuration: dm_pointer, process limits, loglevels" },
-  { key: "all", label: "All Relevant", icon: "🔍", desc: "Inspect CM Log, DM Log, and pin.conf simultaneously" }
+  { key: "system_log", label: "System Logs", icon: "📄", desc: "Inspect /var/log/syslog, messages, or systemd journal" },
+  { key: "service_log", label: "Service Logs", icon: "🗄️", desc: "Daemon, container, or application runtime logs" },
+  { key: "config_file", label: "Config Files", icon: "⚙️", desc: "Inspect configuration files and environment definitions" },
+  { key: "all", label: "All Relevant", icon: "🔍", desc: "Inspect available logs and configuration files simultaneously" }
 ];
 
 export const BRM_ERROR_LOCATIONS = {
