@@ -44,3 +44,8 @@ Claude outputs/
 
 # Generated architecture docs & visual evidence
 docs/
+
+# Launch videos & brag outputs
+brag-output/
+brag-output*/
+*.mp4

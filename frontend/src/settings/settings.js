@@ -641,6 +641,7 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
       <button class="modal-tab-btn" data-tab="tab-settings-knownhosts">🛡️ Known Hosts</button>
       <button class="modal-tab-btn" data-tab="tab-settings-audit">📜 Audit Log</button>
       <button class="modal-tab-btn" data-tab="tab-settings-ai">🤖 AI Assistant</button>
+      <button class="modal-tab-btn" data-tab="tab-settings-privacy">🔒 Privacy & Compliance</button>
     </div>
     <div class="modal-body" style="max-height: 480px; overflow-y: auto;">
       <!-- 1. Terminal & UI Settings Tab -->
@@ -1112,6 +1113,51 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
         <!-- Files list container -->
         <div id="aiFilesListContainer" class="ai-files-list-container">
           <div style="color: #94a3b8; padding: 20px; text-align: center;">Loading uploaded files...</div>
+        </div>
+      </div>
+
+      <!-- 8. Privacy & Compliance Tab -->
+      <div id="tab-settings-privacy" class="tab-content hidden">
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; padding: 12px; margin-bottom: 14px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 16px;">🛡️</span>
+            <strong style="color: #34d399; font-size: 13px;">100% Local-First & Zero External Telemetry</strong>
+          </div>
+          <p style="margin: 6px 0 0; color: #cbd5e1; font-size: 12px; line-height: 1.5;">
+            NexTerm is designed as a private, local-first desktop application. It does not collect, track, or transmit any user telemetry, crash metrics, or server destinations. All configurations, keys, and session logs reside solely on your local workstation.
+          </p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+          <div style="background: #11141e; border: 1px solid #1e2433; border-radius: 6px; padding: 12px;">
+            <div style="font-weight: 600; font-size: 12.5px; color: #f8fafc; margin-bottom: 4px;">🔑 Credential Protection</div>
+            <div style="font-size: 11.5px; color: #94a3b8; line-height: 1.4;">
+              Passwords and passphrases are encrypted using native OS hardware-bound vaults (Windows DPAPI, macOS Keychain, Linux Secret Service).
+            </div>
+          </div>
+          <div style="background: #11141e; border: 1px solid #1e2433; border-radius: 6px; padding: 12px;">
+            <div style="font-weight: 600; font-size: 12.5px; color: #f8fafc; margin-bottom: 4px;">🍪 Cookie & Storage Policy</div>
+            <div style="font-size: 11.5px; color: #94a3b8; line-height: 1.4;">
+              Zero HTTP or tracking cookies. Browser localStorage is used strictly for storing your local UI themes and layout preferences.
+            </div>
+          </div>
+        </div>
+
+        <div style="background: #11141e; border: 1px solid #1e2433; border-radius: 6px; padding: 12px; margin-bottom: 14px;">
+          <div style="font-weight: 600; font-size: 12.5px; color: #f8fafc; margin-bottom: 6px;">📂 Local Data Storage Locations</div>
+          <div style="font-family: monospace; font-size: 11px; color: #38bdf8; background: #080a10; padding: 8px 10px; border-radius: 4px; border: 1px solid #1a2030; line-height: 1.6;">
+            <div>• Sessions: %APPDATA%\Nexterm\sessions.json</div>
+            <div>• Tunnels: %APPDATA%\Nexterm\tunnels.json</div>
+            <div>• Known Hosts: %APPDATA%\Nexterm\known_hosts</div>
+            <div>• Local Logs: %APPDATA%\Nexterm\logs\</div>
+          </div>
+        </div>
+
+        <div style="font-size: 11.5px; color: #94a3b8; line-height: 1.5; padding: 4px 2px;">
+          Complete open-source legal documentation available in repository root:
+          <div style="margin-top: 6px; font-weight: 500; color: #38bdf8;">
+            📄 <b>PRIVACY.md</b> &nbsp;|&nbsp; 📋 <b>TERMS.md</b> &nbsp;|&nbsp; 🍪 <b>COOKIE_POLICY.md</b>
+          </div>
         </div>
       </div>
     </div>

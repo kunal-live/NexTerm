@@ -6,13 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nexterm — Professional Desktop SSH Client & Terminal Workspace</title>
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Segoe+UI:wght@400;600;700&display=swap"
-    rel="stylesheet">
-
+  <!-- Local System Font Stacks: Offline & Privacy-Preserving (Zero External Embeds) -->
   <!-- xterm.js local assets -->
   <link rel="stylesheet" href="vendor/xterm.css" />
   <link rel="stylesheet" href="src/style.css" />
@@ -225,7 +219,7 @@
     <!-- 2. Top Bar: Brand · Global Search · Utilities · Window Controls -->
     <header id="mainToolbar" class="main-toolbar nx-topbar">
       <div class="nx-topbar-lead">
-        <button id="topMenuToggle" class="nx-menu-toggle" type="button" title="Menu">
+        <button id="topMenuToggle" class="nx-menu-toggle" type="button" title="Menu" aria-label="Toggle Navigation Menu">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
             <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -234,7 +228,7 @@
           </svg>
         </button>
         <div class="nx-topbar-brand" id="topBrandHome" title="Home">
-          <div class="nx-brand-logo"><img src="src/assets/nexterm-logo.png" alt="NexTerm" /></div>
+          <div class="nx-brand-logo"><img src="src/assets/nexterm-logo.png" alt="NexTerm — Professional Desktop SSH Client Logo" width="28" height="28" /></div>
           <div class="nx-brand-text">
             <span class="nx-brand-name"><span class="nb-nex">Nex</span><span class="nb-term">Term</span></span>
             <span class="nx-brand-tag">CONNECT BEYOND LIMITS</span>
@@ -255,7 +249,7 @@
 
       <div class="toolbar-right nx-topbar-right">
         <button id="tbXServerBtn" class="nx-top-icon"
-          title="X Server — start a local X server so remote Linux GUI apps display here (X11 forwarding)">
+          title="X Server — start a local X server so remote Linux GUI apps display here (X11 forwarding)" aria-label="X Server configuration">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" y="3" width="20" height="14" rx="2"></rect>
@@ -265,13 +259,13 @@
             <path d="M13 14h4"></path>
           </svg>
         </button>
-        <button id="tbThemeToggleBtn" class="nx-top-icon" title="Toggle Light / Dark Theme">
+        <button id="tbThemeToggleBtn" class="nx-top-icon" title="Toggle Light / Dark Theme" aria-label="Toggle Light or Dark Theme">
           <svg id="tbThemeToggleIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
           </svg>
         </button>
-        <button id="tbNotifBtn" class="nx-top-icon" title="Notifications">
+        <button id="tbNotifBtn" class="nx-top-icon" title="Notifications" aria-label="Notifications">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -279,7 +273,7 @@
           </svg>
           <span id="tbNotifBadge" class="tb-notif-badge" style="display:none">0</span>
         </button>
-        <button id="tbSettingsBtn" class="nx-top-icon" title="Settings">
+        <button id="tbSettingsBtn" class="nx-top-icon" title="Settings" aria-label="Open Settings">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
@@ -298,14 +292,14 @@
         placeholder="Type command to send simultaneously to ALL active terminal tabs..." autocomplete="off" />
       <button id="multiExecSendBtn" class="btn-action primary">Broadcast (Enter)</button>
       <button id="multiExecMatrixBtn" class="btn-action" title="Open Multi-Execution Matrix View">⊞ Matrix View</button>
-      <button id="multiExecCloseBtn" class="btn-action">&times;</button>
+      <button id="multiExecCloseBtn" class="btn-action" title="Close MultiExec Bar" aria-label="Close MultiExec Bar">&times;</button>
     </div>
 
     <!-- 3. Central Application Split: Nav Rail + Left Panel + Main Workspace -->
     <div id="mainLayout" class="main-layout">
       <!-- Primary Navigation Rail (Stage 1 redesign) -->
       <nav id="navRail" class="nav-rail">
-        <button class="nav-rail-pin" id="navRailPin" type="button" title="Expand / pin menu">
+        <button class="nav-rail-pin" id="navRailPin" type="button" title="Expand / pin menu" aria-label="Expand or pin navigation rail">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round">
             <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -867,7 +861,7 @@
                   <input type="text" id="sftpPathInput" value="/" placeholder="/remote/path..." spellcheck="false"
                     autocomplete="off" />
                   <button type="button" id="sftpPathDropdownBtn" class="moba-sftp-dropdown-arrow"
-                    title="Select Path / Recent Paths">
+                    title="Select Path / Recent Paths" aria-label="Select Path or Recent Paths">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
                       <polyline points="6 9 12 15 18 9"></polyline>
                     </svg>
@@ -1281,7 +1275,7 @@
                       </svg>
                       <span>Saved Sessions</span>
                     </div>
-                    <button id="homeAddServerBtn" class="nx-panel-add" type="button" title="Add New Session">
+                    <button id="homeAddServerBtn" class="nx-panel-add" type="button" title="Add New Session" aria-label="Add New Session">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -1297,7 +1291,7 @@
                     </svg>
                     <input type="text" id="welcomeSearchInput" placeholder="Search sessions..." autocomplete="off"
                       spellcheck="false" />
-                    <button class="nx-saved-filter" id="welcomeSearchFilterBtn" type="button" title="Filter options">
+                    <button class="nx-saved-filter" id="welcomeSearchFilterBtn" type="button" title="Filter options" aria-label="Filter options">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>

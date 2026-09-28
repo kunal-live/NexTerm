@@ -346,11 +346,14 @@ export async function showNewSessionDialog(parentFolderId = "", editProfile = nu
             <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font-size: 11px; color: var(--text-dim);">
               <label class="checkbox-label" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
                 <input type="checkbox" id="sSavePasswordCheck" checked />
-                <span>Remember credentials in Secure Vault</span>
+                <span>Save credentials locally in Secure Vault</span>
               </label>
               <span style="color: var(--text-muted);">
                 For SSH Keys, 2FA, or Proxy, see <a href="#" id="linkToAuthTab" style="color: #38bdf8; text-decoration: none;">🔐 Authentication</a>
               </span>
+            </div>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+              <span>🔒 Zero external transmission. Credentials are encrypted in OS hardware vault (DPAPI / Keychain) and used solely to authenticate with your specified server.</span>
             </div>
           </div>
 
@@ -474,7 +477,7 @@ export async function showNewSessionDialog(parentFolderId = "", editProfile = nu
                 <button type="button" class="sess-password-toggle" id="toggleKeyPassBtn" title="Toggle visibility">👁️</button>
               </div>
               <div style="font-size: 10.5px; color: var(--text-dim); margin-top: 4px;">
-                🔐 Encrypted in platform credential vault. Never stored in plaintext.
+                🔐 Encrypted in platform credential vault (DPAPI/Keychain). Never stored in plaintext or transmitted externally.
               </div>
             </div>
             <div class="sess-form-group" style="margin-top: 8px;">

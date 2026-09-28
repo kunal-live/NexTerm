@@ -292,6 +292,13 @@ wails build -platform linux/amd64 -clean
 | `Ctrl + Shift + C` | Copy Selected Terminal Text |
 | `Ctrl + Shift + V` / `Right Click` | Paste into Terminal |
 
+## 🔒 Security, Privacy & Compliance
+
+NexTerm is engineered around **local-first privacy and complete data sovereignty**:
+- **[Privacy Policy](PRIVACY.md)**: Full disclosure on local data storage, zero telemetry, and platform credential vault security.
+- **[Terms & Conditions](TERMS.md)**: Open-source usage guidelines, acceptable use for remote systems, and limitation of liability.
+- **[Cookie Policy](COOKIE_POLICY.md)**: Verification of zero HTTP/tracking cookies, local browser storage usage, and X11 Magic Cookie clarification.
+
 ---
 
 ## 📄 License
