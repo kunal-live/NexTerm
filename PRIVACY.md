@@ -46,6 +46,11 @@ Because NexTerm is a desktop client for managing remote systems (SSH, SFTP, Tunn
 - **What is handled:** Active theme (e.g. Dark Modern, Tokyo Night), terminal font size, cursor styles, and UI layout dimensions.
 - **Where it is stored:** Saved locally in your desktop WebView's `localStorage`.
 
+### E. AI Assistant & Knowledge Base Documents
+- **What is handled:** Diagnostic questions, system queries, and user-uploaded reference documents (e.g. PDFs, PPTX architecture slides, JSON configuration schemas).
+- **Where it is stored:** Knowledge documents and chat states are kept locally in client-side storage (`localStorage` / IndexedDB).
+- **Zero Cloud AI Transmission:** NexTerm does NOT send your diagnostic queries, commands, or uploaded files to external LLM providers (such as OpenAI, Anthropic, or remote cloud servers). The embedded assistant runs strictly on-device using local rule logic and local knowledge indexing.
+
 ---
 
 ## 3. What User Data We DO NOT Collect

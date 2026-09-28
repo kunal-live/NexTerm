@@ -23,6 +23,7 @@ To deliver a responsive, personalized desktop user experience, NexTerm uses stan
 | :--- | :--- | :--- | :--- | :--- |
 | **`localStorage`** | `nexterm_settings` | Stores your UI layout choices, selected theme (e.g. Dark Modern, Tokyo Night), terminal font size, cursor styles, and notification level. | Persistent until manually cleared | Local machine only |
 | **`localStorage`** | `nexterm_ui_state` | Stores sidebar collapsed state, split pane positions, and recent view preferences. | Persistent until manually cleared | Local machine only |
+| **`localStorage`** | `nexterm_consent_acknowledged` | Records user acknowledgment of local storage and privacy disclosures. | Persistent until manually cleared | Local machine only |
 | **In-Memory** | Tab & Terminal State | Holds active PTY buffers, current tab titles, and active process pointers. | Duration of application run | RAM only |
 
 **Important:** None of the data saved in `localStorage` is ever transmitted over the network or shared with any external entity.

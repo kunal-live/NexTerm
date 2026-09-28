@@ -65,6 +65,7 @@ import { showCommandIntel } from './terminal/commandIntel.js';
 import { showShortcutsOverlay } from './ui/shortcutsHelp.js';
 import { showDocumentation } from './ui/docs.js';
 import { initUniverseAnimation } from './ui/universeAnimation.js';
+import { initConsentBanner } from './ui/consentBanner.js';
 import { toggleSessionLogging, isAutoLogEnabled, setAutoLog } from './terminal/terminalManager.js';
 import { showNewSessionDialog, showFolderDialog } from './sessions/sessionDialog.js';
 import { showMultiServerConnectDialog } from './sessions/multiServerConnect.js';
@@ -1374,6 +1375,9 @@ export async function init() {
 
   // Initialize dynamic cosmic universe particle engine for Home dashboard
   try { initUniverseAnimation(); } catch (e) { console.warn("Failed to init Universe Animation:", e); }
+
+  // Privacy, Cookie & Local Storage Transparency Banner
+  try { initConsentBanner(); } catch (e) { console.warn("Failed to init Consent Banner:", e); }
 }
 
 // Auto-run on DOMContentLoaded

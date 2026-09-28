@@ -96,7 +96,7 @@
 
     <!-- 1b. Quick-Access Icon Toolbar (MobaXterm-style) -->
     <div id="mobaToolbar" class="moba-toolbar" role="toolbar" aria-label="Quick actions">
-      <button class="moba-tb-btn active" id="tbmSession" type="button" title="New SSH Session (Ctrl+N)">
+      <button class="moba-tb-btn active" id="tbmSession" type="button" title="New SSH Session (Ctrl+N)" aria-label="New SSH Session (Ctrl+N)">
         <span class="moba-tb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M20 10.5V7a2 2 0 0 0-2-2h-6.8a2 2 0 0 1-1.6-.8L8.6 3A2 2 0 0 0 7 2.4H4a2 2 0 0 0-2 2v13.6a2 2 0 0 0 2 2h7"></path>
@@ -106,7 +106,7 @@
           </svg></span>
         <span class="moba-tb-label">Session <svg class="moba-tb-chevron" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l4 4 4-4"></path></svg></span>
       </button>
-      <button class="moba-tb-btn" id="tbmLocal" type="button" title="New Local Terminal">
+      <button class="moba-tb-btn" id="tbmLocal" type="button" title="New Local Terminal" aria-label="New Local Terminal">
         <span class="moba-tb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
             stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3.5" width="18" height="12" rx="2"></rect>
@@ -115,7 +115,7 @@
           </svg></span>
         <span class="moba-tb-label">Local <svg class="moba-tb-chevron" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l4 4 4-4"></path></svg></span>
       </button>
-      <button class="moba-tb-btn" id="tbmServers" type="button" title="Saved Servers (Home)">
+      <button class="moba-tb-btn" id="tbmServers" type="button" title="Saved Servers (Home)" aria-label="Saved Servers (Home)">
         <span class="moba-tb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
             stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3.5" width="18" height="4.5" rx="1.5"></rect>
@@ -131,7 +131,7 @@
         <span class="moba-tb-label">Servers <svg class="moba-tb-chevron" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l4 4 4-4"></path></svg></span>
       </button>
       <span class="moba-tb-sep"></span>
-      <button class="moba-tb-btn" id="tbmSplit" type="button" title="Split Terminal">
+      <button class="moba-tb-btn" id="tbmSplit" type="button" title="Split Terminal" aria-label="Split Terminal">
         <span class="moba-tb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
             stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="7.5" height="16" rx="2"></rect>
@@ -139,7 +139,7 @@
           </svg></span>
         <span class="moba-tb-label">Split</span>
       </button>
-      <button class="moba-tb-btn" id="tbmMultiExec" type="button" title="MultiExec — send keystrokes to all terminals">
+      <button class="moba-tb-btn" id="tbmMultiExec" type="button" title="MultiExec — send keystrokes to all terminals" aria-label="MultiExec — send keystrokes to all terminals">
         <span class="moba-tb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
             stroke-linecap="round" stroke-linejoin="round">
             <polygon points="5 4.5 15 11.5 5 18.5 5 4.5" stroke-linejoin="round"></polygon>
@@ -147,7 +147,7 @@
           </svg></span>
         <span class="moba-tb-label">MultiExec</span>
       </button>
-      <button class="moba-tb-btn" id="tbmBroadcast" type="button" title="Broadcast a command to connected servers">
+      <button class="moba-tb-btn" id="tbmBroadcast" type="button" title="Broadcast a command to connected servers" aria-label="Broadcast a command to connected servers">
         <span class="moba-tb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
             stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="5" r="2.8" fill="currentColor"></circle>
@@ -159,7 +159,7 @@
         <span class="moba-tb-label">Broadcast</span>
       </button>
       <span class="moba-tb-sep"></span>
-      <button class="moba-tb-btn" id="tbmMonitor" type="button" title="Server Monitoring">
+      <button class="moba-tb-btn" id="tbmMonitor" type="button" title="Server Monitoring" aria-label="Server Monitoring">
         <span class="moba-tb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
             stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="16" rx="3"></rect>
@@ -167,7 +167,7 @@
           </svg></span>
         <span class="moba-tb-label">Monitor</span>
       </button>
-      <button class="moba-tb-btn" id="tbmTunneling" type="button" title="SSH Tunnel Manager">
+      <button class="moba-tb-btn" id="tbmTunneling" type="button" title="SSH Tunnel Manager" aria-label="SSH Tunnel Manager">
         <span class="moba-tb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 8h13M13 5l4 3-4 3"></path>
@@ -175,7 +175,7 @@
           </svg></span>
         <span class="moba-tb-label">Tunneling</span>
       </button>
-      <button class="moba-tb-btn" id="tbmPackages" type="button" title="Package Manager">
+      <button class="moba-tb-btn" id="tbmPackages" type="button" title="Package Manager" aria-label="Package Manager">
         <span class="moba-tb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
             stroke-linecap="round" stroke-linejoin="round">
             <polygon points="12 2.5 20.5 7.5 12 12.5 3.5 7.5 12 2.5" stroke-linejoin="round"></polygon>
@@ -184,7 +184,7 @@
           </svg></span>
         <span class="moba-tb-label">Packages</span>
       </button>
-      <button class="moba-tb-btn" id="tbmBRM" type="button" title="Chat with Assistant (Alt+A)">
+      <button class="moba-tb-btn" id="tbmBRM" type="button" title="Chat with Assistant (Alt+A)" aria-label="Chat with Assistant (Alt+A)">
         <span class="moba-tb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
             stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5v1.5h-4v-1.5c-1.2-.7-2-2-2-3.5a4 4 0 0 1 4-4z"></path>
@@ -195,7 +195,7 @@
         <span class="moba-tb-label">Assistant</span>
       </button>
       <span class="moba-tb-sep"></span>
-      <button class="moba-tb-btn" id="tbmSettings" type="button" title="Settings">
+      <button class="moba-tb-btn" id="tbmSettings" type="button" title="Settings" aria-label="Settings">
         <span class="moba-tb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
             stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
@@ -205,7 +205,7 @@
           </svg></span>
         <span class="moba-tb-label">Settings</span>
       </button>
-      <button class="moba-tb-btn" id="tbmHelp" type="button" title="Documentation &amp; Help">
+      <button class="moba-tb-btn" id="tbmHelp" type="button" title="Documentation &amp; Help" aria-label="Documentation &amp; Help">
         <span class="moba-tb-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
             stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="9.5"></circle>
@@ -291,7 +291,7 @@
       <input type="text" id="multiExecInput"
         placeholder="Type command to send simultaneously to ALL active terminal tabs..." autocomplete="off" />
       <button id="multiExecSendBtn" class="btn-action primary">Broadcast (Enter)</button>
-      <button id="multiExecMatrixBtn" class="btn-action" title="Open Multi-Execution Matrix View">⊞ Matrix View</button>
+      <button id="multiExecMatrixBtn" class="btn-action" title="Open Multi-Execution Matrix View" aria-label="Open Multi-Execution Matrix View">⊞ Matrix View</button>
       <button id="multiExecCloseBtn" class="btn-action" title="Close MultiExec Bar" aria-label="Close MultiExec Bar">&times;</button>
     </div>
 
@@ -308,7 +308,7 @@
           </svg>
         </button>
         <div class="nav-rail-items">
-          <button class="nav-rail-btn active" id="navRailHomeBtn" data-nav="home" title="Home">
+          <button class="nav-rail-btn active" id="navRailHomeBtn" data-nav="home" title="Home" aria-label="Home">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -316,7 +316,7 @@
             </svg>
             <span>Home</span>
           </button>
-          <button class="nav-rail-btn" id="navRailTerminal" data-nav="terminal" title="New Local Terminal">
+          <button class="nav-rail-btn" id="navRailTerminal" data-nav="terminal" title="New Local Terminal" aria-label="New Local Terminal">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <polyline points="4 17 10 11 4 5"></polyline>
@@ -324,14 +324,14 @@
             </svg>
             <span>Terminal</span>
           </button>
-          <button class="nav-rail-btn" id="navRailSessions" data-nav="sessions" title="Saved Sessions">
+          <button class="nav-rail-btn" id="navRailSessions" data-nav="sessions" title="Saved Sessions" aria-label="Saved Sessions">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
             </svg>
             <span>Sessions</span>
           </button>
-          <button class="nav-rail-btn" id="navRailServers" data-nav="servers" title="All Servers">
+          <button class="nav-rail-btn" id="navRailServers" data-nav="servers" title="All Servers" aria-label="All Servers">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <rect x="2" y="2" width="20" height="8" rx="2"></rect>
@@ -341,14 +341,14 @@
             </svg>
             <span>Servers</span>
           </button>
-          <button class="nav-rail-btn" id="navRailSFTP" data-nav="sftp" title="SFTP File Browser">
+          <button class="nav-rail-btn" id="navRailSFTP" data-nav="sftp" title="SFTP File Browser" aria-label="SFTP File Browser">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <path d="M4 4h6l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path>
             </svg>
             <span>SFTP</span>
           </button>
-          <button class="nav-rail-btn" id="navRailTools" data-nav="tools" title="Tools & Utilities">
+          <button class="nav-rail-btn" id="navRailTools" data-nav="tools" title="Tools & Utilities" aria-label="Tools & Utilities">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <path
@@ -357,7 +357,7 @@
             </svg>
             <span>Tools</span>
           </button>
-          <button class="nav-rail-btn" id="navRailTunneling" data-nav="tunneling" title="SSH Tunnel Manager">
+          <button class="nav-rail-btn" id="navRailTunneling" data-nav="tunneling" title="SSH Tunnel Manager" aria-label="SSH Tunnel Manager">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
@@ -366,7 +366,7 @@
             </svg>
             <span>Tunneling</span>
           </button>
-          <button class="nav-rail-btn" id="navRailMacros" data-nav="macros" title="Terminal Macros">
+          <button class="nav-rail-btn" id="navRailMacros" data-nav="macros" title="Terminal Macros" aria-label="Terminal Macros">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <polyline points="16 18 22 12 16 6"></polyline>
@@ -374,7 +374,7 @@
             </svg>
             <span>Macros</span>
           </button>
-          <button class="nav-rail-btn" id="navRailBroadcast" data-nav="broadcast" title="Broadcast Command">
+          <button class="nav-rail-btn" id="navRailBroadcast" data-nav="broadcast" title="Broadcast Command" aria-label="Broadcast Command">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <circle cx="12" cy="12" r="2"></circle>
@@ -382,7 +382,7 @@
             </svg>
             <span>Broadcast</span>
           </button>
-          <button class="nav-rail-btn" id="navRailMonitor" data-nav="monitor" title="Server Monitoring">
+          <button class="nav-rail-btn" id="navRailMonitor" data-nav="monitor" title="Server Monitoring" aria-label="Server Monitoring">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <path d="M3 3v18h18"></path>
@@ -390,7 +390,7 @@
             </svg>
             <span>Monitor</span>
           </button>
-          <button class="nav-rail-btn" id="navRailFollowTerm" data-nav="followterm" title="Follow Terminal Folder">
+          <button class="nav-rail-btn" id="navRailFollowTerm" data-nav="followterm" title="Follow Terminal Folder" aria-label="Follow Terminal Folder">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
@@ -399,7 +399,7 @@
             <span>Follow Term</span>
           </button>
           <button class="nav-rail-btn" id="navRailRecorder" data-nav="recorder"
-            title="Session Recorder — record &amp; replay command procedures">
+            title="Session Recorder — record &amp; replay command procedures" aria-label="Session Recorder — record &amp; replay command procedures">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <circle cx="12" cy="12" r="9"></circle>
@@ -408,7 +408,7 @@
             <span>Recorder</span>
           </button>
           <button class="nav-rail-btn" id="navRailScheduler" data-nav="scheduler"
-            title="Command Scheduler — auto-run commands on a timer">
+            title="Command Scheduler — auto-run commands on a timer" aria-label="Command Scheduler — auto-run commands on a timer">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <circle cx="12" cy="12" r="9"></circle>
@@ -417,7 +417,7 @@
             <span>Scheduler</span>
           </button>
           <button class="nav-rail-btn" id="navRailHistory" data-nav="history"
-            title="Command History — search &amp; re-run past commands">
+            title="Command History — search &amp; re-run past commands" aria-label="Command History — search &amp; re-run past commands">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <path d="M3 3v5h5"></path>
@@ -427,7 +427,7 @@
             <span>History</span>
           </button>
           <button class="nav-rail-btn" id="navRailServerTools" data-nav="servertools"
-            title="Server Tools — notes, quick commands, startup commands">
+            title="Server Tools — notes, quick commands, startup commands" aria-label="Server Tools — notes, quick commands, startup commands">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <path d="M4 4h6l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path>
@@ -435,7 +435,7 @@
             <span>Server Tools</span>
           </button>
           <button class="nav-rail-btn" id="navRailProcesses" data-nav="processes"
-            title="Process Explorer — live processes, details &amp; kill">
+            title="Process Explorer — live processes, details &amp; kill" aria-label="Process Explorer — live processes, details &amp; kill">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <rect x="4" y="4" width="16" height="16" rx="2"></rect>
@@ -452,7 +452,7 @@
             <span>Processes</span>
           </button>
           <button class="nav-rail-btn" id="navRailPorts" data-nav="ports"
-            title="Ports &amp; Services — listening ports and their processes">
+            title="Ports &amp; Services — listening ports and their processes" aria-label="Ports &amp; Services — listening ports and their processes">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
@@ -463,7 +463,7 @@
             <span>Ports</span>
           </button>
           <button class="nav-rail-btn" id="navRailLogs" data-nav="logs"
-            title="Log Explorer — live tail with search &amp; filters">
+            title="Log Explorer — live tail with search &amp; filters" aria-label="Log Explorer — live tail with search &amp; filters">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -474,7 +474,7 @@
             <span>Logs</span>
           </button>
           <button class="nav-rail-btn" id="navRailCmdIntel" data-nav="cmdintel"
-            title="Command Intelligence — type an intent, get the command">
+            title="Command Intelligence — type an intent, get the command" aria-label="Command Intelligence — type an intent, get the command">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <path d="M12 2l2.4 7.4H22l-6 4.3 2.3 7.3L12 16.8 5.7 21l2.3-7.3-6-4.3h7.6z"></path>
@@ -486,7 +486,7 @@
         <div class="nav-rail-workspaces">
           <div class="nav-rail-ws-head">
             <span>Workspaces</span>
-            <button class="nav-rail-ws-add" id="navRailWorkspaces" type="button" title="Manage Workspaces / Groups">
+            <button class="nav-rail-ws-add" id="navRailWorkspaces" type="button" title="Manage Workspaces / Groups" aria-label="Manage Workspaces / Groups">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
                 stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -510,12 +510,12 @@
 
         <div class="nav-rail-bottom">
           <div class="nav-rail-mini">
-            <button class="nav-mini-btn" id="navRailSplit" type="button" title="Split Terminal"><svg viewBox="0 0 24 24"
+            <button class="nav-mini-btn" id="navRailSplit" type="button" title="Split Terminal" aria-label="Split Terminal"><svg viewBox="0 0 24 24"
                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2"></rect>
                 <line x1="12" y1="3" x2="12" y2="21"></line>
               </svg></button>
-            <button class="nav-mini-btn" id="navRailMultiExec" type="button" title="MultiExec Broadcast"><svg
+            <button class="nav-mini-btn" id="navRailMultiExec" type="button" title="MultiExec Broadcast" aria-label="MultiExec Broadcast"><svg
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                 stroke-linejoin="round">
                 <path d="M6 3v12"></path>
@@ -523,7 +523,7 @@
                 <path d="M6 9h12"></path>
                 <circle cx="12" cy="18" r="3"></circle>
               </svg></button>
-            <button class="nav-mini-btn" id="navRailPackages" type="button" title="Package Manager"><svg
+            <button class="nav-mini-btn" id="navRailPackages" type="button" title="Package Manager" aria-label="Package Manager"><svg
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                 stroke-linejoin="round">
                 <path
@@ -532,7 +532,7 @@
                 <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                 <line x1="12" y1="22.08" x2="12" y2="12"></line>
               </svg></button>
-            <button class="nav-mini-btn" id="navRailThemes" type="button" title="Themes"><svg viewBox="0 0 24 24"
+            <button class="nav-mini-btn" id="navRailThemes" type="button" title="Themes" aria-label="Themes"><svg viewBox="0 0 24 24"
                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="13.5" cy="6.5" r=".5"></circle>
                 <circle cx="17.5" cy="10.5" r=".5"></circle>
@@ -543,7 +543,7 @@
                 </path>
               </svg></button>
           </div>
-          <button class="nav-rail-btn" id="navRailSettings" data-nav="settings" title="Settings">
+          <button class="nav-rail-btn" id="navRailSettings" data-nav="settings" title="Settings" aria-label="Settings">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
               stroke-linejoin="round">
               <circle cx="12" cy="12" r="3"></circle>
@@ -569,7 +569,7 @@
         <div class="sidebar-body">
           <!-- Vertical Icon Strip on the Far Left -->
           <nav class="vertical-nav-strip">
-            <button class="nav-strip-btn active" id="navTabSessions" title="User Sessions">
+            <button class="nav-strip-btn active" id="navTabSessions" title="User Sessions" aria-label="User Sessions">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <polygon
@@ -577,20 +577,20 @@
                 </polygon>
               </svg>
             </button>
-            <button class="nav-strip-btn" id="navTabSFTP" title="Graphical SFTP Browser">
+            <button class="nav-strip-btn" id="navTabSFTP" title="Graphical SFTP Browser" aria-label="Graphical SFTP Browser">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
               </svg>
             </button>
-            <button class="nav-strip-btn" id="navTabMacros" title="Terminal Macros">
+            <button class="nav-strip-btn" id="navTabMacros" title="Terminal Macros" aria-label="Terminal Macros">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="4 17 10 11 4 5"></polyline>
                 <line x1="12" y1="19" x2="20" y2="19"></line>
               </svg>
             </button>
-            <button class="nav-strip-btn" id="navTabTunnel" title="Nexterm Tunnel Port Forwarding">
+            <button class="nav-strip-btn" id="navTabTunnel" title="Nexterm Tunnel Port Forwarding" aria-label="Nexterm Tunnel Port Forwarding">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="7.5" cy="15.5" r="5.5"></circle>
@@ -598,7 +598,7 @@
                 <path d="m15.5 7.5 3 3L22 7l-3-3"></path>
               </svg>
             </button>
-            <button class="nav-strip-btn" id="navTabTools" title="System & Network Tools">
+            <button class="nav-strip-btn" id="navTabTools" title="System & Network Tools" aria-label="System & Network Tools">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <path
@@ -606,20 +606,20 @@
                 </path>
               </svg>
             </button>
-            <button class="nav-strip-btn" id="navTabFollowTerm" title="Follow Terminal Folder">
+            <button class="nav-strip-btn" id="navTabFollowTerm" title="Follow Terminal Folder" aria-label="Follow Terminal Folder">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
                 <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
               </svg>
             </button>
-            <button class="nav-strip-btn" id="navTabMonitor" title="Remote Server Monitoring">
+            <button class="nav-strip-btn" id="navTabMonitor" title="Remote Server Monitoring" aria-label="Remote Server Monitoring">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
               </svg>
             </button>
-            <button class="nav-strip-btn" id="navTabBRM" title="Assistant (AI Diagnostics)">
+            <button class="nav-strip-btn" id="navTabBRM" title="Assistant (AI Diagnostics)" aria-label="Assistant (AI Diagnostics)">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 2a4 4 0 0 1 4 4c0 1.5-.8 2.8-2 3.5v1.5h-4v-1.5c-1.2-.7-2-2-2-3.5a4 4 0 0 1 4-4z"></path>
@@ -644,7 +644,7 @@
                   </div>
                   <div style="display:flex; align-items:center; gap:6px;">
                     <button id="connectedBroadcastBtn" class="connected-header-bcast-btn"
-                      title="Broadcast Command to All Connected (Alt+B)" type="button">
+                      title="Broadcast Command to All Connected (Alt+B)" aria-label="Broadcast Command to All Connected (Alt+B)" type="button">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="2"></circle>
@@ -684,39 +684,39 @@
                   </span>
                   <div class="session-tree-tools">
                     <button id="treeMultiConnectBtn" class="tree-multiconnect-btn"
-                      title="Multi-Server Connect & Broadcast" type="button">
+                      title="Multi-Server Connect & Broadcast" aria-label="Multi-Server Connect & Broadcast" type="button">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="2"></circle>
                         <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49"></path>
                       </svg>
                     </button>
-                    <button id="treeAddSessionBtn" title="New Session">
+                    <button id="treeAddSessionBtn" title="New Session" aria-label="New Session">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                       </svg>
                     </button>
-                    <button id="treeAddFolderBtn" title="New Folder">
+                    <button id="treeAddFolderBtn" title="New Folder" aria-label="New Folder">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                       </svg>
                     </button>
-                    <button id="treeExpandAllBtn" title="Expand All Folders">
+                    <button id="treeExpandAllBtn" title="Expand All Folders" aria-label="Expand All Folders">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="6 9 12 15 18 9"></polyline>
                       </svg>
                     </button>
-                    <button id="treeCollapseAllBtn" title="Collapse All Folders">
+                    <button id="treeCollapseAllBtn" title="Collapse All Folders" aria-label="Collapse All Folders">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="18 15 12 9 6 15"></polyline>
                       </svg>
                     </button>
-                    <button id="treeImportBtn" title="Import sessions from a JSON file">
+                    <button id="treeImportBtn" title="Import sessions from a JSON file" aria-label="Import sessions from a JSON file">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -724,7 +724,7 @@
                         <line x1="12" y1="15" x2="12" y2="3"></line>
                       </svg>
                     </button>
-                    <button id="treeExportBtn" title="Export all sessions to a JSON file">
+                    <button id="treeExportBtn" title="Export all sessions to a JSON file" aria-label="Export all sessions to a JSON file">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -732,7 +732,7 @@
                         <line x1="12" y1="3" x2="12" y2="15"></line>
                       </svg>
                     </button>
-                    <button id="treeRefreshBtn" title="Refresh">
+                    <button id="treeRefreshBtn" title="Refresh" aria-label="Refresh">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="23 4 23 10 17 10"></polyline>
@@ -778,14 +778,14 @@
 
               <!-- 1. SFTP Icon Toolbar -->
               <div class="moba-sftp-toolbar">
-                <button id="sftpFollowTermBtn" class="moba-sftp-btn" title="Follow Terminal Directory / Home">
+                <button id="sftpFollowTermBtn" class="moba-sftp-btn" title="Follow Terminal Directory / Home" aria-label="Follow Terminal Directory / Home">
                   <svg width="17" height="17" viewBox="0 0 24 24">
                     <rect x="2" y="3" width="20" height="18" rx="3" fill="#f59e0b" />
                     <rect x="4" y="5" width="16" height="14" rx="2" fill="#0f172a" /><text x="12" y="16" font-size="12"
                       font-family="sans-serif" font-weight="bold" fill="#38bdf8" text-anchor="middle">t</text>
                   </svg>
                 </button>
-                <button id="sftpDownloadBtn" class="moba-sftp-btn" title="Download selected file to local PC">
+                <button id="sftpDownloadBtn" class="moba-sftp-btn" title="Download selected file to local PC" aria-label="Download selected file to local PC">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
                     <path d="M12 3v10m0 0l-3.5-3.5m3.5 3.5l3.5-3.5" stroke="#38bdf8" stroke-width="2.5"
                       stroke-linecap="round" stroke-linejoin="round" />
@@ -793,7 +793,7 @@
                       stroke-linecap="round" />
                   </svg>
                 </button>
-                <button id="sftpUploadBtn" class="moba-sftp-btn" title="Upload local file to current folder">
+                <button id="sftpUploadBtn" class="moba-sftp-btn" title="Upload local file to current folder" aria-label="Upload local file to current folder">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
                     <path d="M12 14V4m0 0l-3.5 3.5m3.5-3.5l3.5 3.5" stroke="#22c55e" stroke-width="2.5"
                       stroke-linecap="round" stroke-linejoin="round" />
@@ -801,13 +801,13 @@
                       stroke-linecap="round" />
                   </svg>
                 </button>
-                <button id="sftpRefreshBtn" class="moba-sftp-btn" title="Refresh directory">
+                <button id="sftpRefreshBtn" class="moba-sftp-btn" title="Refresh directory" aria-label="Refresh directory">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
                     <path d="M21 3v5h-5M3 21v-5h5M21 8A9 9 0 0 0 4.5 6.5M3 16a9 9 0 0 0 16.5 1.5" stroke="#22c55e"
                       stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
                 </button>
-                <button id="sftpMkdirBtn" class="moba-sftp-btn" title="Create new directory">
+                <button id="sftpMkdirBtn" class="moba-sftp-btn" title="Create new directory" aria-label="Create new directory">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
                     <path d="M2 5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5z"
                       fill="#f59e0b" />
@@ -815,7 +815,7 @@
                     <path d="M16.5 12v5M14 14.5h5" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" />
                   </svg>
                 </button>
-                <button id="sftpNewFileBtn" class="moba-sftp-btn" title="Create new empty file">
+                <button id="sftpNewFileBtn" class="moba-sftp-btn" title="Create new empty file" aria-label="Create new empty file">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#bae6fd" stroke="#0284c7"
                       stroke-width="1.5" />
@@ -824,20 +824,20 @@
                     <line x1="9" y1="14" x2="15" y2="14" stroke="#0284c7" stroke-width="2" stroke-linecap="round" />
                   </svg>
                 </button>
-                <button id="sftpDeleteBtn" class="moba-sftp-btn" title="Delete selected file/folder">
+                <button id="sftpDeleteBtn" class="moba-sftp-btn" title="Delete selected file/folder" aria-label="Delete selected file/folder">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
                     <circle cx="12" cy="12" r="9.5" fill="#ef4444" />
                     <path d="M8 8l8 8M16 8l-8 8" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" />
                   </svg>
                 </button>
-                <button id="sftpEditBtn" class="moba-sftp-btn" title="Edit selected file in Nexterm Editor">
+                <button id="sftpEditBtn" class="moba-sftp-btn" title="Edit selected file in Nexterm Editor" aria-label="Edit selected file in Nexterm Editor">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
                     <rect x="2" y="2" width="20" height="20" rx="3" fill="#a855f7" /><text x="12" y="16.5"
                       font-size="14" font-family="Segoe UI, sans-serif" font-weight="900" fill="#ffffff"
                       text-anchor="middle">A</text>
                   </svg>
                 </button>
-                <button id="sftpToggleHiddenBtn" class="moba-sftp-btn" title="Show/Hide Hidden Files">
+                <button id="sftpToggleHiddenBtn" class="moba-sftp-btn" title="Show/Hide Hidden Files" aria-label="Show/Hide Hidden Files">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
                     <rect x="3" y="3" width="18" height="18" rx="2" fill="#3b82f6" stroke="#2563eb"
                       stroke-width="1.5" />
@@ -845,7 +845,7 @@
                     <rect x="5.5" y="6" width="3" height="3" fill="#ffffff" />
                   </svg>
                 </button>
-                <button id="sftpSyncBtn" class="moba-sftp-btn" title="Automatic Terminal-SFTP Directory Sync">
+                <button id="sftpSyncBtn" class="moba-sftp-btn" title="Automatic Terminal-SFTP Directory Sync" aria-label="Automatic Terminal-SFTP Directory Sync">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
                     <path d="M15 4l5 5L7 21l-5-5L15 4z" fill="#ec4899" stroke="#db2777" stroke-width="1" />
                     <circle cx="19" cy="3" r="1.5" fill="#facc15" />
@@ -1112,7 +1112,7 @@
               </span>
             </div>
             <!-- Dynamic Connection Tabs inserted here (before the inline + button) -->
-            <button id="tabInlineAddBtn" class="tab-inline-add" title="New Home Tab">
+            <button id="tabInlineAddBtn" class="tab-inline-add" title="New Home Tab" aria-label="New Home Tab">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                 stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -1121,14 +1121,14 @@
             </button>
           </div>
           <div class="tabbar-end-tools">
-            <button id="newTabAddBtn" class="tab-add-icon-btn" title="New Tab">
+            <button id="newTabAddBtn" class="tab-add-icon-btn" title="New Tab" aria-label="New Tab">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                 stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
                 <line x1="5" y1="12" x2="19" y2="12"></line>
               </svg>
             </button>
-            <button id="wsSettingsBtn" class="tab-tool-icon-btn" title="Settings">
+            <button id="wsSettingsBtn" class="tab-tool-icon-btn" title="Settings" aria-label="Settings">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>
@@ -1382,7 +1382,7 @@
       <div class="status-left">
         <span class="status-dot-ready"></span>
         <span class="status-msg" id="statusMessage">Ready</span>
-        <button id="statusBarBRMBtn" class="status-brm-btn" type="button" title="Chat with Assistant (Alt+A)">
+        <button id="statusBarBRMBtn" class="status-brm-btn" type="button" title="Chat with Assistant (Alt+A)" aria-label="Chat with Assistant (Alt+A)">
           <span class="brm-pulse-dot"></span>
           <span>🤖 Assistant</span>
         </button>
