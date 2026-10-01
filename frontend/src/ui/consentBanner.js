@@ -28,7 +28,7 @@ export function initConsentBanner() {
   banner.setAttribute('aria-label', 'Privacy and Local Storage Consent Notice');
   banner.className = 'nx-consent-banner';
 
-  banner.innerHTML = \
+  banner.innerHTML = `
     <div class="nx-consent-inner">
       <div class="nx-consent-icon" aria-hidden="true">🛡️</div>
       <div class="nx-consent-body">
@@ -47,7 +47,7 @@ export function initConsentBanner() {
         </button>
       </div>
     </div>
-  \;
+  `;
 
   document.body.appendChild(banner);
 
