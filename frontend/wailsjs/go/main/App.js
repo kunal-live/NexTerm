@@ -158,6 +158,10 @@ export function FocusWorkspacePane(arg1) {
   return window['go']['main']['App']['FocusWorkspacePane'](arg1);
 }
 
+export function GenerateSSHKey(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['GenerateSSHKey'](arg1, arg2, arg3, arg4);
+}
+
 export function GenerateSecurePassword(arg1, arg2) {
   return window['go']['main']['App']['GenerateSecurePassword'](arg1, arg2);
 }

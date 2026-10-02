@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -264,12 +265,12 @@ func (a *App) AppendSessionLog(tabID, serverName, data string) (string, error) {
 	f, ok := sessionLogFiles[tabID]
 	if !ok {
 		dir := sessionLogDir()
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0o700); err != nil {
 			return "", err
 		}
 		ts := time.Now().Format("20060102_150405")
 		path := filepath.Join(dir, fmt.Sprintf("%s_%s.log", sanitizeLogName(serverName), ts))
-		nf, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		nf, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
 		if err != nil {
 			return "", err
 		}
@@ -277,10 +278,24 @@ func (a *App) AppendSessionLog(tabID, serverName, data string) (string, error) {
 		sessionLogFiles[tabID] = nf
 		f = nf
 	}
-	if _, err := f.WriteString(data); err != nil {
+	if _, err := f.WriteString(redactLogData(data)); err != nil {
 		return f.Name(), err
 	}
 	return f.Name(), nil
+}
+
+// logSecretPattern matches common inline-secret shapes so they are masked before
+// being written to a plaintext session log (passwords, tokens, API keys, etc.).
+var logSecretPattern = regexp.MustCompile(`(?i)(-p\s*|--password[=\s]+|password[:=\s]+|passwd[:=\s]+|secret[:=\s]+|token[:=\s]+|api[_-]?key[:=\s]+|bearer\s+)(\S+)`)
+
+// redactLogData masks obvious inline secrets in terminal output before it is
+// persisted to disk. It is best-effort (stream chunks can split a match) but
+// stops the most common leaks: credentials typed on a command line.
+func redactLogData(data string) string {
+	if data == "" {
+		return data
+	}
+	return logSecretPattern.ReplaceAllString(data, "${1}[REDACTED]")
 }
 
 // StopSessionLog closes and forgets the log file for tabID, returning its path.
@@ -571,6 +586,23 @@ func (a *App) ChangeMasterPassword(currentPassword, newPassword, newHint string)
 
 func (a *App) GenerateSecurePassword(length int, includeSymbols bool) string {
 	return service.GenerateSecurePassword(length, includeSymbols)
+}
+
+// GenerateSSHKey creates a real SSH key pair (ed25519 or rsa-4096) on disk under
+// ~/.ssh (private key 0600, optionally passphrase-encrypted) and returns the
+// public key and fingerprint. Replaces the old placeholder key generator.
+func (a *App) GenerateSSHKey(keyType, comment, passphrase, outName string) (*sshsession.GeneratedKey, error) {
+	res, err := sshsession.GenerateKeyPair(keyType, comment, passphrase, outName)
+	if err != nil {
+		if a.loggingService != nil {
+			a.loggingService.LogError("keygen", "SSH key generation failed", err)
+		}
+		return nil, err
+	}
+	if a.loggingService != nil {
+		a.loggingService.LogAudit("SSH_KEY_GENERATED", "keygen", "", "", res.PrivateKeyPath, "SUCCESS", res.KeyType+" "+res.Fingerprint)
+	}
+	return res, nil
 }
 
 // =========================================================================

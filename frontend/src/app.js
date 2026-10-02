@@ -91,6 +91,7 @@ import { openCommandPalette, closeCommandPalette, registerCommandPaletteActions 
 import { initStatusBar, updateStatusBarDisplay } from './statusBar/statusBar.js';
 import { initModernNavigation } from './navigation/navigation.js';
 import { initBRMAssistant, detectCurrentEnvironment } from './brm/brmAssistant.js';
+import { initAppLock, lockNow, showAutoLockSettings } from './ui/appLock.js';
 
 // Hook up workspace tab actions
 registerWorkspaceTabActions({
@@ -230,6 +231,22 @@ registerCommandPaletteActions([
     subtitle: "Master password protection, password generator, and hints",
     icon: "🔑",
     action: () => showSettingsDialog("tab-settings-pwd")
+  },
+  {
+    id: "cmd-lock-now",
+    category: "Security",
+    title: "Lock Screen Now",
+    subtitle: "Lock NexTerm behind your master password (Ctrl+Shift+L)",
+    icon: "🔒",
+    action: () => lockNow()
+  },
+  {
+    id: "cmd-autolock-settings",
+    category: "Security",
+    title: "Auto-Lock Settings...",
+    subtitle: "Idle timeout and lock-on-startup",
+    icon: "⏲",
+    action: () => showAutoLockSettings()
   },
   {
     id: "cmd-theme",
@@ -996,7 +1013,7 @@ export function setupEventListeners() {
     try {
       await window.go.main.App.ImportSessionsFromFile();
       await refreshTree();
-      showToast("Sessions imported successfully", "success");
+      showToast("Sessions imported. For safety, any startup commands they contained are disabled — open a session and Save to re-enable it.", "success");
     } catch (err) {
       showToast("Import failed: " + err, "error");
     }
@@ -1291,6 +1308,10 @@ export function setupEventListeners() {
         e.preventDefault();
         setSplitMode(workspaceState.layout === "split-h" ? "single" : "split-h");
       }
+      if (e.shiftKey && (e.key === "L" || e.key === "l")) {
+        e.preventDefault();
+        lockNow();
+      }
       if (e.key === "n" && !e.shiftKey) {
         e.preventDefault();
         showNewSessionDialog();
@@ -1378,6 +1399,9 @@ export async function init() {
 
   // Privacy, Cookie & Local Storage Transparency Banner
   try { initConsentBanner(); } catch (e) { console.warn("Failed to init Consent Banner:", e); }
+
+  // Application lock / idle auto-lock (only engages when a master password is set)
+  try { initAppLock(); } catch (e) { console.warn("Failed to init App Lock:", e); }
 }
 
 // Auto-run on DOMContentLoaded

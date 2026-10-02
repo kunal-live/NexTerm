@@ -208,6 +208,12 @@ func (s *SessionService) cleanupVaultKeysRecursive(n *model.TreeNode) {
 		if n.Session.PassphraseVaultKey != "" {
 			s.vaultCleanup(n.Session.PassphraseVaultKey)
 		}
+		if n.Session.ProxyVaultKey != "" {
+			s.vaultCleanup(n.Session.ProxyVaultKey)
+		}
+		if n.Session.VaultKey != "" {
+			s.vaultCleanup(n.Session.VaultKey + "_proxy")
+		}
 	}
 	for _, c := range n.Children {
 		s.cleanupVaultKeysRecursive(c)
@@ -250,6 +256,14 @@ func (s *SessionService) AddSession(parentID string, profile model.SessionProfil
 		_ = s.vaultSave(pvKey, profile.KeyPassphrase)
 		profile.PassphraseVaultKey = pvKey
 		profile.KeyPassphrase = ""
+	}
+
+	// Securely persist proxy password to vault, never in sessions.json
+	if profile.ProxyPassword != "" && s.vaultSave != nil {
+		pxKey := profile.VaultKey + "_proxy"
+		_ = s.vaultSave(pxKey, profile.ProxyPassword)
+		profile.ProxyVaultKey = pxKey
+		profile.ProxyPassword = ""
 	}
 
 	// Deduplicate: if an existing session under this parent matches the exact host, port, and username,
@@ -320,6 +334,14 @@ func (s *SessionService) UpdateSession(profile model.SessionProfile) (*model.Tre
 		_ = s.vaultSave(pvKey, profile.KeyPassphrase)
 		profile.PassphraseVaultKey = pvKey
 		profile.KeyPassphrase = ""
+	}
+
+	// Securely persist proxy password to vault, never in sessions.json
+	if profile.ProxyPassword != "" && s.vaultSave != nil {
+		pxKey := profile.VaultKey + "_proxy"
+		_ = s.vaultSave(pxKey, profile.ProxyPassword)
+		profile.ProxyVaultKey = pxKey
+		profile.ProxyPassword = ""
 	}
 
 	node.Name = profile.Name
@@ -612,6 +634,14 @@ func ValidateAndNormalizeTree(imported *model.TreeNode) (*model.TreeNode, error)
 			// Ensure vault key exists
 			if sess.VaultKey == "" {
 				sess.VaultKey = sess.ID
+			}
+
+			// SECURITY: never auto-run a startup command that arrived via import.
+			// Quarantine it so it cannot execute on first connect (RCE vector); the
+			// user must open the session and Save to deliberately re-enable it.
+			if sess.StartupCommand != "" {
+				sess.QuarantinedStartupCommand = sess.StartupCommand
+				sess.StartupCommand = ""
 			}
 		}
 

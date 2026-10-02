@@ -116,6 +116,7 @@ function renderExtras(tab) {
     body = `
       <label class="sx-label">Startup commands for ${escapeHtml(name)} — run automatically on connect (one per line)</label>
       <textarea id="sxStartup" class="sx-textarea mono" spellcheck="false" placeholder="cd /var/www&#10;source .env&#10;tail -f logs/app.log">${escapeHtml(startup)}</textarea>
+      <div class="sx-note" style="font-size:10.5px;color:#f59e0b;margin-top:6px;">⚠️ Avoid putting passwords or secrets here — Notes, Quick Commands and Startup Commands are stored unencrypted on this PC.</div>
       <div class="sx-actions"><button class="sx-btn primary" id="sxSaveStartup">Save startup commands</button></div>`;
   }
 

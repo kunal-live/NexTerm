@@ -17,6 +17,10 @@ type SessionProfile struct {
 	KeyType            string `json:"keyType,omitempty"`
 	KeyFingerprint     string `json:"keyFingerprint,omitempty"`
 	StartupCommand    string `json:"startupCommand,omitempty"`
+	// QuarantinedStartupCommand holds a startup command that arrived via Import. It is
+	// NOT executed on connect; the user must open the session and Save to re-enable it
+	// (prevents an imported profile from auto-running arbitrary commands on first connect).
+	QuarantinedStartupCommand string `json:"quarantinedStartupCommand,omitempty"`
 	TerminalType      string `json:"terminalType,omitempty"`      // e.g. "xterm-256color"
 	Theme             string `json:"theme,omitempty"`             // e.g. "dark-modern", "monokai", "dracula", "nord"
 	FontSize          int    `json:"fontSize,omitempty"`          // e.g. 14
@@ -51,7 +55,8 @@ type SessionProfile struct {
 	ProxyHost         string `json:"proxyHost,omitempty"`
 	ProxyPort         int    `json:"proxyPort,omitempty"`
 	ProxyUsername     string `json:"proxyUsername,omitempty"`
-	ProxyPassword     string `json:"proxyPassword,omitempty"`
+	ProxyPassword     string `json:"proxyPassword,omitempty"` // transient: moved into the OS vault on save, never persisted in plaintext
+	ProxyVaultKey     string `json:"proxyVaultKey,omitempty"` // vault key under which the proxy password is encrypted
 
 	// Terminal Appearance Customization
 	Foreground     string            `json:"foreground,omitempty"`

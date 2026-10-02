@@ -88,6 +88,8 @@ export function FindSessionPassword(arg1:string,arg2:string,arg3:number,arg4:str
 
 export function FocusWorkspacePane(arg1:string):Promise<void>;
 
+export function GenerateSSHKey(arg1:string,arg2:string,arg3:string,arg4:string):Promise<sshsession.GeneratedKey>;
+
 export function GenerateSecurePassword(arg1:number,arg2:boolean):Promise<string>;
 
 export function GetAuditLogs(arg1:number):Promise<Array<service.AuditEvent>>;

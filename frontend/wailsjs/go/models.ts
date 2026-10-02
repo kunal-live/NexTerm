@@ -67,6 +67,7 @@ export namespace model {
 	    keyType?: string;
 	    keyFingerprint?: string;
 	    startupCommand?: string;
+	    quarantinedStartupCommand?: string;
 	    terminalType?: string;
 	    theme?: string;
 	    fontSize?: number;
@@ -94,6 +95,7 @@ export namespace model {
 	    proxyPort?: number;
 	    proxyUsername?: string;
 	    proxyPassword?: string;
+	    proxyVaultKey?: string;
 	    foreground?: string;
 	    background?: string;
 	    cursorColor?: string;
@@ -136,6 +138,7 @@ export namespace model {
 	        this.keyType = source["keyType"];
 	        this.keyFingerprint = source["keyFingerprint"];
 	        this.startupCommand = source["startupCommand"];
+	        this.quarantinedStartupCommand = source["quarantinedStartupCommand"];
 	        this.terminalType = source["terminalType"];
 	        this.theme = source["theme"];
 	        this.fontSize = source["fontSize"];
@@ -163,6 +166,7 @@ export namespace model {
 	        this.proxyPort = source["proxyPort"];
 	        this.proxyUsername = source["proxyUsername"];
 	        this.proxyPassword = source["proxyPassword"];
+	        this.proxyVaultKey = source["proxyVaultKey"];
 	        this.foreground = source["foreground"];
 	        this.background = source["background"];
 	        this.cursorColor = source["cursorColor"];
@@ -994,6 +998,26 @@ export namespace sshsession {
 	        this.message = source["message"];
 	        this.description = source["description"];
 	        this.rawError = source["rawError"];
+	    }
+	}
+	export class GeneratedKey {
+	    privateKeyPath: string;
+	    publicKeyPath: string;
+	    publicKey: string;
+	    fingerprint: string;
+	    keyType: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new GeneratedKey(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.privateKeyPath = source["privateKeyPath"];
+	        this.publicKeyPath = source["publicKeyPath"];
+	        this.publicKey = source["publicKey"];
+	        this.fingerprint = source["fingerprint"];
+	        this.keyType = source["keyType"];
 	    }
 	}
 	export class KeyInfo {

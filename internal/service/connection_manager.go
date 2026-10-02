@@ -244,6 +244,20 @@ func (cm *ConnectionManager) buildSSHConnectOptions(tabID string, profile model.
 		}
 	}
 
+	// 1b. Proxy password: resolve from the vault when not supplied inline
+	// (it is stored encrypted and blanked out of sessions.json on save).
+	if opts.ProxyPassword == "" && cm.credService != nil {
+		pxKey := profile.ProxyVaultKey
+		if pxKey == "" && vKey != "" {
+			pxKey = vKey + "_proxy"
+		}
+		if pxKey != "" {
+			if pxPw, err := cm.credService.GetSessionPassword(pxKey); err == nil && pxPw != "" {
+				opts.ProxyPassword = pxPw
+			}
+		}
+	}
+
 	// 2. Private Key & Key Passphrase
 	if profile.PrivateKeyPath != "" && (profile.AuthType == "" || profile.AuthType == "key" || profile.AuthType == "auto") {
 		opts.PrivateKeyPath = profile.PrivateKeyPath

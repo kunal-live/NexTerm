@@ -1614,13 +1614,28 @@ export function showKeyGenDialog() {
             <option value="rsa">RSA 4096-bit</option>
           </select>
         </div>
-        <div class="form-group" style="flex: 1; display: flex; align-items: flex-end;">
-          <button class="btn-primary" id="doGenerateKey" style="width: 100%; height: 32px;">Generate</button>
+        <div class="form-group" style="flex: 2;">
+          <label>File Name (saved in ~/.ssh)</label>
+          <input type="text" id="keygenName" placeholder="id_ed25519_nexterm" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex: 2;">
+          <label>Comment</label>
+          <input type="text" id="keygenComment" placeholder="user@nexterm" />
+        </div>
+        <div class="form-group" style="flex: 2;">
+          <label>Passphrase (optional, recommended)</label>
+          <input type="password" id="keygenPass" placeholder="encrypts the private key" autocomplete="new-password" />
         </div>
       </div>
       <div class="form-group">
-        <label>Generated Public Key</label>
-        <textarea id="keygenPub" readonly style="width: 100%; height: 80px; font-family: 'Fira Code', monospace; font-size: 11px; background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 6px;" placeholder="Click Generate to create a new SSH key pair..."></textarea>
+        <button class="btn-primary" id="doGenerateKey" style="width: 100%; height: 34px;">🔐 Generate Key Pair</button>
+      </div>
+      <div class="form-group">
+        <label>Public Key</label>
+        <textarea id="keygenPub" readonly style="width: 100%; height: 72px; font-family: 'Fira Code', monospace; font-size: 11px; background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 6px;" placeholder="Generate to create a real SSH key pair on disk..."></textarea>
+        <div id="keygenInfo" style="font-size: 10.5px; color: var(--text-dim); margin-top: 4px;"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1630,11 +1645,35 @@ export function showKeyGenDialog() {
   `);
   box.querySelector("#modalClose").onclick = hideModal;
   box.querySelector("#modalCloseBtn").onclick = hideModal;
-  box.querySelector("#doGenerateKey").onclick = () => {
+  box.querySelector("#doGenerateKey").onclick = async () => {
     const type = box.querySelector("#keygenType").value;
-    const rand = Array.from(crypto.getRandomValues(new Uint8Array(24))).map(b => b.toString(16).padStart(2, '0')).join('');
-    box.querySelector("#keygenPub").value = `ssh-${type} AAAAC3NzaC1${type}AAIB${rand} user@nexterm`;
-    showToast("New SSH key pair generated", "success");
+    const name = box.querySelector("#keygenName").value.trim();
+    const comment = box.querySelector("#keygenComment").value.trim();
+    const pass = box.querySelector("#keygenPass").value;
+    const btn = box.querySelector("#doGenerateKey");
+    const pubEl = box.querySelector("#keygenPub");
+    const infoEl = box.querySelector("#keygenInfo");
+    if (!(window.go && window.go.main && window.go.main.App && window.go.main.App.GenerateSSHKey)) {
+      showToast("Key generation requires rebuilding the app (run.bat)", "error");
+      return;
+    }
+    btn.disabled = true;
+    const prev = btn.textContent;
+    btn.textContent = "Generating…";
+    try {
+      const res = await window.go.main.App.GenerateSSHKey(type, comment, pass, name);
+      pubEl.value = res.publicKey || "";
+      if (infoEl) {
+        infoEl.innerHTML = `✅ Saved to <b>${escapeHtml(res.privateKeyPath)}</b> (private, 0600) and <b>${escapeHtml(res.publicKeyPath)}</b><br>Fingerprint: <code>${escapeHtml(res.fingerprint)}</code>`;
+      }
+      showToast("SSH key pair created in ~/.ssh", "success");
+    } catch (err) {
+      if (infoEl) infoEl.textContent = "";
+      showToast("Key generation failed: " + (err && err.message ? err.message : err), "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = prev;
+    }
   };
   box.querySelector("#copyPubBtn").onclick = () => {
     const val = box.querySelector("#keygenPub").value;

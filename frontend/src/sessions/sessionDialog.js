@@ -590,10 +590,14 @@ export async function showNewSessionDialog(parentFolderId = "", editProfile = nu
 
           <div class="sess-form-group">
             <label>Startup Command (Automatically executed upon connection)</label>
-            <input type="text" id="sStartup" value="${escapeHtml(p.startupCommand || '')}" placeholder="e.g. uptime && free -m" />
+            <input type="text" id="sStartup" value="${escapeHtml(p.startupCommand || p.quarantinedStartupCommand || '')}" placeholder="e.g. uptime && free -m" />
+            ${(p.quarantinedStartupCommand && !p.startupCommand) ? `
+            <div style="font-size: 10.5px; color: #f59e0b; margin-top: 6px; padding: 6px 8px; border: 1px solid rgba(245,158,11,0.4); border-radius: 6px; background: rgba(245,158,11,0.08);">
+              ⚠️ This startup command was <b>imported</b> and is currently <b>disabled</b> for your safety. Review it above and click <b>Save</b> to enable it — it will not run until you do.
+            </div>` : `
             <div style="font-size: 10.5px; color: var(--text-dim); margin-top: 4px;">
               Command will be transmitted directly to the remote shell session once connected.
-            </div>
+            </div>`}
           </div>
 
           <div class="sess-form-group" style="margin-top: 14px;">
