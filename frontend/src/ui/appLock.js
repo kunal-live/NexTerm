@@ -12,6 +12,7 @@
 
 import { showToast } from "./notifications.js";
 
+const ENABLED_KEY = "nexterm_app_lock_enabled"; // "0" = entire feature off
 const IDLE_KEY = "nexterm_idle_lock_min";   // minutes; 0 = disabled
 const ONSTART_KEY = "nexterm_lock_on_start"; // "0" to disable lock on startup
 const DEFAULT_IDLE_MIN = 15;
@@ -72,10 +73,38 @@ function injectStyles() {
 
 export function isLocked() { return locked; }
 
+/** Returns true when the app-lock feature is turned on in Settings. */
+export function isAppLockEnabled() { return lsGet(ENABLED_KEY, "1") !== "0"; }
+
+/** Toggle the entire app-lock feature on or off. */
+export function setAppLockEnabled(on) {
+  lsSet(ENABLED_KEY, on ? "1" : "0");
+  if (!on) {
+    // Immediately tear down any running idle timer
+    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+  }
+}
+
+/** Read current idle-timeout minutes (for settings UI). */
+export function getIdleMinutes() { return idleMinutes(); }
+
+/** Read lock-on-startup flag (for settings UI). */
+export function isLockOnStartup() { return lsGet(ONSTART_KEY, "1") !== "0"; }
+
+/** Persist idle timeout (for settings UI). */
+export function setIdleMinutes(m) { lsSet(IDLE_KEY, m); startIdleWatch(); }
+
+/** Persist lock-on-startup (for settings UI). */
+export function setLockOnStartup(on) { lsSet(ONSTART_KEY, on ? "1" : "0"); }
+
 export async function lockNow() {
   if (locked) return;
+  if (!isAppLockEnabled()) {
+    showToast("App Lock is disabled. Enable it in Settings → Security Policies.", "info");
+    return;
+  }
   if (!(await hasMaster())) {
-    showToast("Set a master password first (Settings → Security) to enable locking.", "warning");
+    showToast("Set a master password first (Settings → Passwords & Vault) to enable locking.", "warning");
     return;
   }
   injectStyles();
@@ -135,8 +164,9 @@ export async function lockNow() {
 }
 
 function startIdleWatch() {
-  const mins = idleMinutes();
   if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+  if (!isAppLockEnabled()) return; // feature disabled
+  const mins = idleMinutes();
   if (mins <= 0 || locked) return;
   idleTimer = setTimeout(() => { lockNow(); }, mins * 60 * 1000);
 }
@@ -161,36 +191,55 @@ export function showAutoLockSettings() {
   const wrap = document.createElement("div");
   wrap.id = "nxLockSettings";
   wrap.style.cssText = "position:fixed;inset:0;z-index:2147483610;display:flex;align-items:center;justify-content:center;background:rgba(2,6,16,0.6);backdrop-filter:blur(4px);";
+  const featureOn = isAppLockEnabled();
   const curMin = idleMinutes();
   const onStart = lsGet(ONSTART_KEY, "1") !== "0";
   wrap.innerHTML = `
     <div class="nx-lock-card" style="text-align:left;">
       <h2 style="text-align:center;">Auto-Lock Settings</h2>
       <p style="text-align:center;">Lock NexTerm automatically to protect saved servers.</p>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1;margin:8px 0 10px;cursor:pointer;">
+        <input type="checkbox" id="nxLockEnabled" ${featureOn ? "checked" : ""} /> <strong>Enable App Lock</strong>
+      </label>
       <label style="display:block;font-size:12px;color:#cbd5e1;margin:8px 0 4px;">Idle timeout (minutes, 0 = off)</label>
-      <input type="number" id="nxLockIdle" min="0" max="240" value="${curMin}" style="width:100%;box-sizing:border-box;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:#0a0f18;color:#fff;" />
+      <input type="number" id="nxLockIdle" min="0" max="240" value="${curMin}" ${featureOn ? "" : "disabled"} style="width:100%;box-sizing:border-box;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:#0a0f18;color:#fff;" />
       <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1;margin-top:12px;cursor:pointer;">
-        <input type="checkbox" id="nxLockOnStart" ${onStart ? "checked" : ""} /> Lock on startup
+        <input type="checkbox" id="nxLockOnStart" ${onStart ? "checked" : ""} ${featureOn ? "" : "disabled"} /> Lock on startup
       </label>
       <button class="nx-lock-btn" id="nxLockSave" style="margin-top:16px;">Save</button>
       <div class="nx-lock-foot" style="text-align:center;"><a id="nxLockCancel">Cancel</a></div>
     </div>`;
   document.body.appendChild(wrap);
   wrap.querySelector("#nxLockCancel").onclick = () => wrap.remove();
+  // Toggle sub-controls when master checkbox changes
+  const enabledCb = wrap.querySelector("#nxLockEnabled");
+  const idleInput = wrap.querySelector("#nxLockIdle");
+  const startCb = wrap.querySelector("#nxLockOnStart");
+  enabledCb.onchange = () => {
+    idleInput.disabled = !enabledCb.checked;
+    startCb.disabled = !enabledCb.checked;
+  };
   wrap.querySelector("#nxLockSave").onclick = () => {
-    let m = parseInt(wrap.querySelector("#nxLockIdle").value, 10);
+    const on = enabledCb.checked;
+    setAppLockEnabled(on);
+    let m = parseInt(idleInput.value, 10);
     if (isNaN(m) || m < 0) m = 0;
     if (m > 240) m = 240;
     lsSet(IDLE_KEY, m);
-    lsSet(ONSTART_KEY, wrap.querySelector("#nxLockOnStart").checked ? "1" : "0");
+    lsSet(ONSTART_KEY, startCb.checked ? "1" : "0");
     wrap.remove();
-    startIdleWatch();
-    showToast(m > 0 ? `Auto-lock set to ${m} min` : "Idle auto-lock disabled", "success");
+    if (on) {
+      startIdleWatch();
+      showToast(m > 0 ? `App Lock enabled — auto-lock in ${m} min` : "App Lock enabled (no idle timeout)", "success");
+    } else {
+      showToast("App Lock & Idle Auto-Lock disabled", "success");
+    }
   };
 }
 
 // initAppLock wires idle watching and (optionally) locks on startup.
 export async function initAppLock() {
+  if (!isAppLockEnabled()) return; // feature turned off in Settings
   const has = await hasMaster();
   if (!has) return; // nothing to lock behind
   bindActivityListeners();

@@ -6,6 +6,7 @@
 import { getTabs } from "../state/tabState.js";
 import { showToast, escapeHtml } from "../ui/notifications.js";
 import { showModal, hideModal } from "../ui/modal.js";
+import { isAppLockEnabled, setAppLockEnabled, getIdleMinutes, setIdleMinutes, isLockOnStartup, setLockOnStartup } from "../ui/appLock.js";
 import {
   getKnowledgeFiles,
   getKnowledgeFolders,
@@ -990,6 +991,28 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
           <label class="checkbox-label"><input type="checkbox" id="secClipboard" checked /> <span>Allow Clipboard Sharing</span></label>
           <label class="checkbox-label"><input type="checkbox" id="secTransfers" checked /> <span>Allow File Transfers</span></label>
           <label class="checkbox-label"><input type="checkbox" id="secAudit" /> <span>Require Audit Logging</span></label>
+        </div>
+
+        <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-subtle);">
+          <div style="font-weight: 600; font-size: 12px; margin-bottom: 10px; color: var(--accent-cyan);">🔒 App Lock & Idle Auto-Lock</div>
+          <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 10px;">
+            When enabled, NexTerm locks behind your master password on startup and/or after idle time. Turn it <strong>off</strong> if you don't need it.
+          </div>
+          <label class="checkbox-label" style="margin-bottom: 8px;">
+            <input type="checkbox" id="secAppLockEnabled" ${isAppLockEnabled() ? 'checked' : ''} />
+            <span>Enable App Lock (master toggle)</span>
+          </label>
+          <div id="secAppLockSub" style="margin-left: 22px; opacity: ${isAppLockEnabled() ? '1' : '0.45'}; pointer-events: ${isAppLockEnabled() ? 'auto' : 'none'}; transition: opacity .2s;">
+            <label class="checkbox-label" style="margin-bottom: 6px;">
+              <input type="checkbox" id="secLockOnStart" ${isLockOnStartup() ? 'checked' : ''} />
+              <span>Lock on app startup</span>
+            </label>
+            <div class="form-row" style="display: flex; align-items: center; gap: 10px; margin-top: 6px;">
+              <label style="font-size: 12px; color: var(--text-secondary); white-space: nowrap;">Idle auto-lock after</label>
+              <input type="number" id="secIdleMin" min="0" max="240" value="${getIdleMinutes()}" style="width: 70px;" />
+              <span style="font-size: 12px; color: var(--text-dim);">minutes (0 = off)</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2430,6 +2453,16 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
     };
   }
 
+  // App Lock master toggle: enable/disable sub-controls in real time
+  const secAppLockCb = box.querySelector("#secAppLockEnabled");
+  const secAppLockSub = box.querySelector("#secAppLockSub");
+  if (secAppLockCb && secAppLockSub) {
+    secAppLockCb.onchange = () => {
+      secAppLockSub.style.opacity = secAppLockCb.checked ? '1' : '0.45';
+      secAppLockSub.style.pointerEvents = secAppLockCb.checked ? 'auto' : 'none';
+    };
+  }
+
   box.querySelector("#cfgSave").onclick = async () => {
     // 1. Terminal & UI Preferences
     const chosenTheme = box.querySelector("#cfgTheme").value || "dark-modern";
@@ -2467,6 +2500,19 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
         await window.go.main.App.SaveSecurityPolicy(updatedPolicy);
       } catch (err) {
         console.error("Failed to save security policy:", err);
+      }
+
+      // 2b. App Lock & Idle Auto-Lock
+      try {
+        const lockEnabled = box.querySelector("#secAppLockEnabled")?.checked ?? true;
+        setAppLockEnabled(lockEnabled);
+        setLockOnStartup(box.querySelector("#secLockOnStart")?.checked ?? true);
+        let idleVal = parseInt(box.querySelector("#secIdleMin")?.value, 10);
+        if (isNaN(idleVal) || idleVal < 0) idleVal = 0;
+        if (idleVal > 240) idleVal = 240;
+        setIdleMinutes(idleVal);
+      } catch (err) {
+        console.error("Failed to save app lock settings:", err);
       }
 
       // 3. Customizer Config to Go backend

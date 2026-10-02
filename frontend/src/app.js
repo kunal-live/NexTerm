@@ -91,7 +91,7 @@ import { openCommandPalette, closeCommandPalette, registerCommandPaletteActions 
 import { initStatusBar, updateStatusBarDisplay } from './statusBar/statusBar.js';
 import { initModernNavigation } from './navigation/navigation.js';
 import { initBRMAssistant, detectCurrentEnvironment } from './brm/brmAssistant.js';
-import { initAppLock, lockNow, showAutoLockSettings } from './ui/appLock.js';
+import { initAppLock, lockNow, isAppLockEnabled, showAutoLockSettings } from './ui/appLock.js';
 
 // Hook up workspace tab actions
 registerWorkspaceTabActions({
@@ -1310,7 +1310,7 @@ export function setupEventListeners() {
       }
       if (e.shiftKey && (e.key === "L" || e.key === "l")) {
         e.preventDefault();
-        lockNow();
+        if (isAppLockEnabled()) lockNow();
       }
       if (e.key === "n" && !e.shiftKey) {
         e.preventDefault();
