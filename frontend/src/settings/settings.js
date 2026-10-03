@@ -947,6 +947,7 @@ export function showThemePickerDialog() {
   let currentFilter = "all";
   const searchInput = box.querySelector("#themeSearchInput");
   const filterBtns = box.querySelectorAll(".theme-filter-btn");
+  const grid = box.querySelector("#themePickerGrid");
 
   const filterCards = () => {
     const q = (searchInput?.value || "").toLowerCase().trim();
@@ -967,7 +968,8 @@ export function showThemePickerDialog() {
       const matchesSearch = !q || name.includes(q) || desc.includes(q);
 
       const isVisible = matchesCat && matchesSearch;
-      card.style.display = isVisible ? "flex" : "none";
+      card.classList.toggle("theme-card-hidden", !isVisible);
+      card.style.setProperty("display", isVisible ? "flex" : "none", "important");
 
       if (isVisible) {
         if (cat === "planets") visiblePlanets++;
@@ -977,11 +979,12 @@ export function showThemePickerDialog() {
 
     dividers.forEach(div => {
       const sec = div.dataset.section;
-      if (sec === "planets") {
-        div.style.display = (visiblePlanets > 0 && (currentFilter === "all" || currentFilter === "planets")) ? "flex" : "none";
-      } else if (sec === "standard") {
-        div.style.display = (visibleStandard > 0 && (currentFilter === "all" || currentFilter === "standard")) ? "flex" : "none";
-      }
+      const shouldShow = (sec === "planets")
+        ? (visiblePlanets > 0 && (currentFilter === "all" || currentFilter === "planets"))
+        : (visibleStandard > 0 && (currentFilter === "all" || currentFilter === "standard"));
+
+      div.classList.toggle("theme-divider-hidden", !shouldShow);
+      div.style.setProperty("display", shouldShow ? "flex" : "none", "important");
     });
   };
 
@@ -989,14 +992,18 @@ export function showThemePickerDialog() {
     btn.onclick = () => {
       filterBtns.forEach(b => b.classList.remove("active"));
       btn.classList.add("active");
-      currentFilter = btn.dataset.filter;
+      currentFilter = btn.dataset.filter || "all";
       filterCards();
+      if (grid) grid.scrollTop = 0;
     };
   });
 
   if (searchInput) {
     searchInput.oninput = filterCards;
   }
+
+  // Initial pass to guarantee exact filter state on open
+  filterCards();
 
   const closeBtn = box.querySelector("#modalCloseBtn");
   if (closeBtn) closeBtn.onclick = hideModal;

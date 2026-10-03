@@ -4180,7 +4180,7 @@ html, body, #app {
 
 .theme-section-divider {
   grid-column: 1 / -1 !important;
-  display: flex !important;
+  display: flex;
   align-items: center !important;
   justify-content: space-between !important;
   margin: 8px 0 2px 0 !important;
@@ -4191,6 +4191,11 @@ html, body, #app {
   border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.theme-section-divider.theme-divider-hidden,
+.theme-picker-grid .theme-section-divider.theme-divider-hidden {
+  display: none !important;
 }
 
 .theme-section-left {
@@ -4227,7 +4232,7 @@ html, body, #app {
   border-radius: 10px !important;
   padding: 12px 14px !important;
   cursor: pointer !important;
-  display: flex !important;
+  display: flex;
   flex-direction: column !important;
   justify-content: space-between !important;
   gap: 8px !important;
@@ -4237,6 +4242,11 @@ html, body, #app {
   position: relative !important;
   overflow: hidden !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.theme-card.theme-card-hidden,
+.theme-picker-grid .theme-card.theme-card-hidden {
+  display: none !important;
 }
 
 .theme-card:hover {
