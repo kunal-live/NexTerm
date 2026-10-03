@@ -597,6 +597,5 @@ export function updatePlanetHero(themeKey) {
       dotEl.style.boxShadow = "0 0 10px #38bdf8";
     }
     if (navIndexEl) navIndexEl.textContent = "Explore";
-    orbitChips.forEach(c => c.classList.remove("active"));
   }
 }
