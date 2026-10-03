@@ -250,6 +250,12 @@ export function renderWorkspace() {
     domPane.classList.toggle("active", pane.id === workspaceState.activePaneId);
     domPane.classList.toggle("maximized", !!pane.maximized);
 
+    // Ensure pane is hidden when Home dashboard is active
+    const isHomeActive = document.getElementById("welcomeState")?.classList.contains("active");
+    if (isHomeActive) {
+      domPane.style.display = "none";
+    }
+
     // Single Active Tab Guarantee: In single-pane mode, hide nested pane header to avoid duplicate tabs
     const headerEl = domPane.querySelector(".workspace-pane-header");
     if (headerEl) {

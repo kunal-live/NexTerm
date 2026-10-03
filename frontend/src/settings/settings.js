@@ -6,6 +6,7 @@
 import { getTabs } from "../state/tabState.js";
 import { showToast, escapeHtml } from "../ui/notifications.js";
 import { showModal, hideModal } from "../ui/modal.js";
+import { updatePlanetHero } from "../ui/planetHeroAnimation.js";
 import { isAppLockEnabled, setAppLockEnabled, getIdleMinutes, setIdleMinutes, isLockOnStartup, setLockOnStartup } from "../ui/appLock.js";
 import {
   getKnowledgeFiles,
@@ -422,6 +423,214 @@ export const THEMES = {
     brightMagenta: "#d2a8ff",
     brightCyan: "#56d4dd",
     brightWhite: "#f0f6fc"
+  },
+  // ======================== PLANET THEMES ========================
+  "planet-mercury": {
+    background: "#0a0908",
+    foreground: "#d4c8b8",
+    cursor: "#c9a96e",
+    cursorAccent: "#0a0908",
+    selectionBackground: "rgba(201, 169, 110, 0.35)",
+    black: "#1a1714",
+    red: "#c87941",
+    green: "#a89878",
+    yellow: "#c9a96e",
+    blue: "#8a7d6b",
+    magenta: "#b08d6a",
+    cyan: "#9e9585",
+    white: "#d4c8b8",
+    brightBlack: "#5c5347",
+    brightRed: "#d89060",
+    brightGreen: "#bfaf96",
+    brightYellow: "#dbbf85",
+    brightBlue: "#a09382",
+    brightMagenta: "#c4a480",
+    brightCyan: "#b5ab9a",
+    brightWhite: "#ede5d8"
+  },
+  "planet-venus": {
+    background: "#0d0a04",
+    foreground: "#e8d8b4",
+    cursor: "#e8c170",
+    cursorAccent: "#0d0a04",
+    selectionBackground: "rgba(232, 193, 112, 0.3)",
+    black: "#1c1608",
+    red: "#d4944a",
+    green: "#c4a860",
+    yellow: "#e8c170",
+    blue: "#b89850",
+    magenta: "#d4a850",
+    cyan: "#c4b07a",
+    white: "#e8d8b4",
+    brightBlack: "#6b5c3a",
+    brightRed: "#e0a860",
+    brightGreen: "#d4b878",
+    brightYellow: "#f0d088",
+    brightBlue: "#c8a868",
+    brightMagenta: "#e0b868",
+    brightCyan: "#d4c090",
+    brightWhite: "#f5ead0"
+  },
+  "planet-earth": {
+    background: "#040a12",
+    foreground: "#c8dce8",
+    cursor: "#2e90d0",
+    cursorAccent: "#040a12",
+    selectionBackground: "rgba(46, 144, 208, 0.3)",
+    black: "#0c1820",
+    red: "#d06040",
+    green: "#48a060",
+    yellow: "#c8a848",
+    blue: "#2e90d0",
+    magenta: "#8068b0",
+    cyan: "#38a8b8",
+    white: "#c8dce8",
+    brightBlack: "#3a5060",
+    brightRed: "#e07858",
+    brightGreen: "#60b878",
+    brightYellow: "#d8b860",
+    brightBlue: "#50a8e0",
+    brightMagenta: "#9880c8",
+    brightCyan: "#50c0d0",
+    brightWhite: "#e8f0f8"
+  },
+  "planet-mars": {
+    background: "#0c0604",
+    foreground: "#e0c4a8",
+    cursor: "#d05830",
+    cursorAccent: "#0c0604",
+    selectionBackground: "rgba(208, 88, 48, 0.35)",
+    black: "#1c1008",
+    red: "#d05830",
+    green: "#b88048",
+    yellow: "#d09848",
+    blue: "#a07050",
+    magenta: "#c07040",
+    cyan: "#b89068",
+    white: "#e0c4a8",
+    brightBlack: "#6b4830",
+    brightRed: "#e07048",
+    brightGreen: "#c89860",
+    brightYellow: "#e0b060",
+    brightBlue: "#b88868",
+    brightMagenta: "#d08858",
+    brightCyan: "#c8a080",
+    brightWhite: "#f0dac0"
+  },
+  "planet-jupiter": {
+    background: "#070514",
+    foreground: "#e8def8",
+    cursor: "#c084fc",
+    cursorAccent: "#070514",
+    selectionBackground: "rgba(168, 85, 247, 0.35)",
+    black: "#130f24",
+    red: "#e879f9",
+    green: "#a855f7",
+    yellow: "#fbbf24",
+    blue: "#818cf8",
+    magenta: "#c084fc",
+    cyan: "#fed7aa",
+    white: "#f5f3ff",
+    brightBlack: "#433560",
+    brightRed: "#f472b6",
+    brightGreen: "#c084fc",
+    brightYellow: "#fde68a",
+    brightBlue: "#a5b4fc",
+    brightMagenta: "#e879f9",
+    brightCyan: "#ffedd5",
+    brightWhite: "#ffffff"
+  },
+  "planet-saturn": {
+    background: "#0a0808",
+    foreground: "#e8dcc8",
+    cursor: "#d4b878",
+    cursorAccent: "#0a0808",
+    selectionBackground: "rgba(212, 184, 120, 0.3)",
+    black: "#1a1610",
+    red: "#c89458",
+    green: "#b8a878",
+    yellow: "#d4b878",
+    blue: "#a09478",
+    magenta: "#c0a468",
+    cyan: "#b0a490",
+    white: "#e8dcc8",
+    brightBlack: "#605848",
+    brightRed: "#d8a870",
+    brightGreen: "#c8b890",
+    brightYellow: "#e4c890",
+    brightBlue: "#b0a490",
+    brightMagenta: "#d0b480",
+    brightCyan: "#c0b4a0",
+    brightWhite: "#f4ece0"
+  },
+  "planet-uranus": {
+    background: "#040a0e",
+    foreground: "#c0dce8",
+    cursor: "#60c0c8",
+    cursorAccent: "#040a0e",
+    selectionBackground: "rgba(96, 192, 200, 0.3)",
+    black: "#0c181e",
+    red: "#5898a0",
+    green: "#68b0a8",
+    yellow: "#88c0b0",
+    blue: "#60c0c8",
+    magenta: "#70a0b0",
+    cyan: "#78d0d0",
+    white: "#c0dce8",
+    brightBlack: "#385860",
+    brightRed: "#70b0b8",
+    brightGreen: "#80c8c0",
+    brightYellow: "#a0d0c8",
+    brightBlue: "#78d0d8",
+    brightMagenta: "#88b8c8",
+    brightCyan: "#90e0e0",
+    brightWhite: "#e0f0f4"
+  },
+  "planet-neptune": {
+    background: "#04060e",
+    foreground: "#b8c8e0",
+    cursor: "#3070d0",
+    cursorAccent: "#04060e",
+    selectionBackground: "rgba(48, 112, 208, 0.35)",
+    black: "#0c1020",
+    red: "#4878c0",
+    green: "#4090a0",
+    yellow: "#6898b0",
+    blue: "#3070d0",
+    magenta: "#5068c0",
+    cyan: "#3898d0",
+    white: "#b8c8e0",
+    brightBlack: "#304060",
+    brightRed: "#6090d0",
+    brightGreen: "#58a8b8",
+    brightYellow: "#80b0c8",
+    brightBlue: "#4888e0",
+    brightMagenta: "#6880d0",
+    brightCyan: "#50b0e0",
+    brightWhite: "#d8e4f0"
+  },
+  "planet-pluto": {
+    background: "#080612",
+    foreground: "#e2dcf2",
+    cursor: "#c084fc",
+    cursorAccent: "#080612",
+    selectionBackground: "rgba(192, 132, 252, 0.3)",
+    black: "#141024",
+    red: "#c084fc",
+    green: "#a78bfa",
+    yellow: "#f472b6",
+    blue: "#818cf8",
+    magenta: "#e879f9",
+    cyan: "#c4b5fd",
+    white: "#e2dcf2",
+    brightBlack: "#4c3d69",
+    brightRed: "#d8b4fe",
+    brightGreen: "#c4b5fd",
+    brightYellow: "#fbcfe8",
+    brightBlue: "#a5b4fc",
+    brightMagenta: "#f0abfc",
+    brightCyan: "#ddd6fe",
+    brightWhite: "#f5f3ff"
   }
 };
 
@@ -521,6 +730,70 @@ export const THEME_METADATA = {
     desc: "Clean porcelain white with high-contrast text and crisp cyan highlights",
     icon: "☀️",
     swatches: ["#f1f5f9", "#ffffff", "#0284c7", "#16a34a", "#0f172a"]
+  },
+  // ======================== PLANET THEMES ========================
+  "planet-mercury": {
+    name: "Mercury",
+    desc: "Cratered silver-grey with warm amber & copper — the scorched messenger planet closest to the Sun",
+    icon: "☿️",
+    image: "assets/planet-mercury.jpg",
+    swatches: ["#0a0908", "#1a1714", "#c9a96e", "#c87941", "#9e9585"]
+  },
+  "planet-venus": {
+    name: "Venus",
+    desc: "Golden sulfuric clouds and warm amber hazes — Earth's blazing twin shrouded in mystery",
+    icon: "♀️",
+    image: "assets/planet-venus.jpg",
+    swatches: ["#0d0a04", "#1c1608", "#e8c170", "#d4944a", "#c4b07a"]
+  },
+  "planet-earth": {
+    name: "Earth",
+    desc: "Deep ocean blue, lush green continents & white clouds — our pale blue dot in the cosmos",
+    icon: "🌍",
+    image: "assets/planet-earth.jpg",
+    swatches: ["#040a12", "#0c1820", "#2e90d0", "#48a060", "#38a8b8"]
+  },
+  "planet-mars": {
+    name: "Mars",
+    desc: "Rusty iron-oxide red, deep canyon ochre & dusty sienna — the Red Planet frontier",
+    icon: "♂️",
+    image: "assets/planet-mars.jpg",
+    swatches: ["#0c0604", "#1c1008", "#d05830", "#b88048", "#d09848"]
+  },
+  "planet-jupiter": {
+    name: "Jupiter",
+    desc: "Cosmic royal violet nebula, swirling gas giant cloud bands & glowing rings — The Guardian of the inner worlds",
+    icon: "♃",
+    image: "assets/planet-jupiter.jpg",
+    swatches: ["#070514", "#150e30", "#a855f7", "#ec4899", "#fed7aa"]
+  },
+  "planet-saturn": {
+    name: "Saturn",
+    desc: "Pale champagne-gold atmosphere with majestic icy rings — the jewel of the solar system",
+    icon: "♄",
+    image: "assets/planet-saturn.jpg",
+    swatches: ["#0a0808", "#1a1610", "#d4b878", "#c89458", "#b8a878"]
+  },
+  "planet-uranus": {
+    name: "Uranus",
+    desc: "Cool cyan-teal methane atmosphere with icy aquamarine glow — the tilted ice giant",
+    icon: "⛢",
+    image: "assets/planet-uranus.jpg",
+    swatches: ["#040a0e", "#0c181e", "#60c0c8", "#68b0a8", "#78d0d0"]
+  },
+  "planet-neptune": {
+    name: "Neptune",
+    desc: "Deep vivid cobalt blue with electric storms & icy winds — the farthest wanderer",
+    icon: "♆",
+    image: "assets/planet-neptune.jpg",
+    swatches: ["#04060e", "#0c1020", "#3070d0", "#4090a0", "#3898d0"]
+  },
+  "planet-pluto": {
+    name: "Pluto",
+    desc: "Frosty nitrogen heart glaciers, icy violet haze & deep Kuiper Belt amethyst — the distant pioneer",
+    icon: "♇",
+    image: "assets/planet-pluto.jpg",
+    swatches: ["#080612", "#150f2c", "#c084fc", "#a78bfa", "#f472b6"]
   }
 };
 
@@ -560,17 +833,56 @@ export function applyUITheme(themeKey, persist = true) {
       }
     }
   });
+
+  // Update dynamic moving planetary hero viewport
+  try {
+    updatePlanetHero(themeKey);
+  } catch (err) {
+    console.warn("[applyUITheme] Failed to update planet hero viewport:", err);
+  }
 }
+window.__applyUITheme = applyUITheme;
 
 export function showThemePickerDialog() {
   const current = userSettings.uiTheme || userSettings.theme || "dark-modern";
 
-  const cardsHtml = Object.entries(THEME_METADATA).map(([key, meta]) => {
+  const cardsHtml = Object.entries(THEME_METADATA).map(([key, meta], idx, arr) => {
     const isActive = key === current;
-    const swatchesHtml = meta.swatches.map(c => `<span class="theme-swatch" style="background: ${c};"></span>`).join("");
+    const swatchesHtml = meta.swatches.map(c => `<span class="theme-swatch" style="background: ${c};" title="${c}"></span>`).join("");
+    const isPlanet = key.startsWith("planet-");
 
-    return `
-      <div class="theme-card ${isActive ? 'active' : ''}" data-theme="${key}">
+    // Insert section dividers before the first item of each category
+    let divider = "";
+    if (isPlanet) {
+      const prevKey = idx > 0 ? arr[idx - 1][0] : "";
+      if (!prevKey.startsWith("planet-")) {
+        divider = `<div class="theme-section-divider" data-section="planets">
+          <div class="theme-section-left">
+            <span class="theme-section-title">🪐 Solar System Collection</span>
+            <span class="theme-section-tag">9 Worlds</span>
+          </div>
+          <span class="theme-section-sub">Planetary contrast aesthetics with orbital telemetry</span>
+        </div>`;
+      }
+    } else if (idx === 0) {
+      divider = `<div class="theme-section-divider" data-section="standard">
+        <div class="theme-section-left">
+          <span class="theme-section-title">🎨 Standard Themes</span>
+          <span class="theme-section-tag">16 Themes</span>
+        </div>
+        <span class="theme-section-sub">Popular developer dark themes and clean light modes</span>
+      </div>`;
+    }
+
+    const imageHtml = meta.image
+      ? `<div class="theme-card-image" style="background-image: url('${meta.image}');">
+          ${isPlanet ? `<span class="planet-badge-orbit">ORBITAL VIEW</span>` : ''}
+        </div>`
+      : "";
+
+    return `${divider}
+      <div class="theme-card ${isActive ? 'active' : ''} ${isPlanet ? 'planet-theme' : 'standard-theme'}" data-theme="${key}" data-category="${isPlanet ? 'planets' : 'standard'}">
+        ${imageHtml}
         <div class="theme-card-header">
           <span class="theme-card-title">${meta.icon} ${meta.name}</span>
           ${isActive ? `<span class="theme-card-badge">Active</span>` : ''}
@@ -589,18 +901,27 @@ export function showThemePickerDialog() {
       <button class="modal-close-btn" id="modalClose">&times;</button>
     </div>
     <div class="modal-body">
-      <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
-        Choose a theme for the entire NexTerm workspace, menus, toolbars, sidebars, and terminals:
+      <div class="theme-gallery-toolbar">
+        <div class="theme-filter-tabs" id="themeFilterTabs">
+          <button class="theme-filter-btn active" data-filter="all">All (25)</button>
+          <button class="theme-filter-btn" data-filter="planets">🪐 Solar System (9)</button>
+          <button class="theme-filter-btn" data-filter="standard">🎨 Standard (16)</button>
+        </div>
+        <input type="text" id="themeSearchInput" class="theme-search-input" placeholder="🔍 Search themes..." autocomplete="off" />
       </div>
       <div class="theme-picker-grid" id="themePickerGrid">
         ${cardsHtml}
       </div>
     </div>
     <div class="modal-footer">
+      <div class="theme-gallery-hint">
+        💡 Click any theme to apply immediately across all workspaces, sidebars & terminals.
+      </div>
       <button class="btn-primary" id="modalCloseBtn">Done</button>
     </div>
-  `, "modal-lg");
+  `, "modal-theme-gallery");
 
+  // Real-time theme selection
   box.querySelectorAll(".theme-card").forEach(card => {
     card.onclick = () => {
       const themeKey = card.dataset.theme;
@@ -621,6 +942,61 @@ export function showThemePickerDialog() {
       showToast(`Switched theme to ${THEME_METADATA[themeKey].name}`, "success");
     };
   });
+
+  // Filter & Search Functionality
+  let currentFilter = "all";
+  const searchInput = box.querySelector("#themeSearchInput");
+  const filterBtns = box.querySelectorAll(".theme-filter-btn");
+
+  const filterCards = () => {
+    const q = (searchInput?.value || "").toLowerCase().trim();
+    const cards = box.querySelectorAll(".theme-card");
+    const dividers = box.querySelectorAll(".theme-section-divider");
+
+    let visiblePlanets = 0;
+    let visibleStandard = 0;
+
+    cards.forEach(card => {
+      const cat = card.dataset.category;
+      const themeKey = card.dataset.theme;
+      const meta = THEME_METADATA[themeKey];
+      const name = (meta?.name || "").toLowerCase();
+      const desc = (meta?.desc || "").toLowerCase();
+
+      const matchesCat = currentFilter === "all" || currentFilter === cat;
+      const matchesSearch = !q || name.includes(q) || desc.includes(q);
+
+      const isVisible = matchesCat && matchesSearch;
+      card.style.display = isVisible ? "flex" : "none";
+
+      if (isVisible) {
+        if (cat === "planets") visiblePlanets++;
+        else visibleStandard++;
+      }
+    });
+
+    dividers.forEach(div => {
+      const sec = div.dataset.section;
+      if (sec === "planets") {
+        div.style.display = (visiblePlanets > 0 && (currentFilter === "all" || currentFilter === "planets")) ? "flex" : "none";
+      } else if (sec === "standard") {
+        div.style.display = (visibleStandard > 0 && (currentFilter === "all" || currentFilter === "standard")) ? "flex" : "none";
+      }
+    });
+  };
+
+  filterBtns.forEach(btn => {
+    btn.onclick = () => {
+      filterBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentFilter = btn.dataset.filter;
+      filterCards();
+    };
+  });
+
+  if (searchInput) {
+    searchInput.oninput = filterCards;
+  }
 
   const closeBtn = box.querySelector("#modalCloseBtn");
   if (closeBtn) closeBtn.onclick = hideModal;
@@ -650,22 +1026,35 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
         <div class="form-group">
           <label>Application & Workspace UI Theme</label>
           <select id="cfgTheme">
-            <option value="dark-modern" ${userSettings.theme === 'dark-modern' ? 'selected' : ''}>🌌 Dark Modern (Nexterm Default)</option>
-            <option value="tokyo-night" ${userSettings.theme === 'tokyo-night' ? 'selected' : ''}>🌸 Tokyo Night (Cyberpunk Twilight)</option>
-            <option value="catppuccin-mocha" ${userSettings.theme === 'catppuccin-mocha' ? 'selected' : ''}>☕ Catppuccin Mocha (Pastel Warm Dark)</option>
-            <option value="gruvbox-dark" ${userSettings.theme === 'gruvbox-dark' ? 'selected' : ''}>🪵 Gruvbox Dark (Warm Retro Espresso)</option>
-            <option value="rose-pine" ${userSettings.theme === 'rose-pine' ? 'selected' : ''}>🌹 Rosé Pine (Ethereal Dusky Rose)</option>
-            <option value="github-dark" ${userSettings.theme === 'github-dark' ? 'selected' : ''}>🐙 GitHub Dark (Executive Charcoal)</option>
-            <option value="nord" ${userSettings.theme === 'nord' ? 'selected' : ''}>❄️ Nordic Frost (Arctic Polar Ice)</option>
-            <option value="dracula" ${userSettings.theme === 'dracula' ? 'selected' : ''}>🧛 Dracula (Midnight Purple & Neon Pink)</option>
-            <option value="cyberpunk" ${userSettings.theme === 'cyberpunk' ? 'selected' : ''}>🌆 Cyberpunk Neon (Synthwave Cyan & Magenta)</option>
-            <option value="monokai" ${userSettings.theme === 'monokai' ? 'selected' : ''}>🍃 Monokai Pro (Warm Charcoal & Lime)</option>
-            <option value="solarized-dark" ${userSettings.theme === 'solarized-dark' ? 'selected' : ''}>🌊 Solarized Dark (Oceanic Teal & Amber)</option>
-            <option value="matrix" ${userSettings.theme === 'matrix' ? 'selected' : ''}>🟩 Matrix Green CRT (Hacker Phosphor)</option>
-            <option value="one-dark" ${userSettings.theme === 'one-dark' ? 'selected' : ''}>⚛️ Atom One Dark (Refined Slate & Cornflower)</option>
-            <option value="avisys-navy" ${userSettings.theme === 'avisys-navy' ? 'selected' : ''}>⚓ Avisys Corporate Navy (Midnight Enterprise)</option>
-            <option value="slack-dark" ${userSettings.theme === 'slack-dark' ? 'selected' : ''}>💬 Slack Theme Dark Mode (Classic Aubergine & Cyan)</option>
-            <option value="light-modern" ${userSettings.theme === 'light-modern' ? 'selected' : ''}>☀️ Modern Light (Clean Porcelain White)</option>
+            <optgroup label="Standard Themes">
+              <option value="dark-modern" ${userSettings.theme === 'dark-modern' ? 'selected' : ''}>🌌 Dark Modern (Nexterm Default)</option>
+              <option value="tokyo-night" ${userSettings.theme === 'tokyo-night' ? 'selected' : ''}>🌸 Tokyo Night (Cyberpunk Twilight)</option>
+              <option value="catppuccin-mocha" ${userSettings.theme === 'catppuccin-mocha' ? 'selected' : ''}>☕ Catppuccin Mocha (Pastel Warm Dark)</option>
+              <option value="gruvbox-dark" ${userSettings.theme === 'gruvbox-dark' ? 'selected' : ''}>🪵 Gruvbox Dark (Warm Retro Espresso)</option>
+              <option value="rose-pine" ${userSettings.theme === 'rose-pine' ? 'selected' : ''}>🌹 Rosé Pine (Ethereal Dusky Rose)</option>
+              <option value="github-dark" ${userSettings.theme === 'github-dark' ? 'selected' : ''}>🐙 GitHub Dark (Executive Charcoal)</option>
+              <option value="nord" ${userSettings.theme === 'nord' ? 'selected' : ''}>❄️ Nordic Frost (Arctic Polar Ice)</option>
+              <option value="dracula" ${userSettings.theme === 'dracula' ? 'selected' : ''}>🧛 Dracula (Midnight Purple & Neon Pink)</option>
+              <option value="cyberpunk" ${userSettings.theme === 'cyberpunk' ? 'selected' : ''}>🌆 Cyberpunk Neon (Synthwave Cyan & Magenta)</option>
+              <option value="monokai" ${userSettings.theme === 'monokai' ? 'selected' : ''}>🍃 Monokai Pro (Warm Charcoal & Lime)</option>
+              <option value="solarized-dark" ${userSettings.theme === 'solarized-dark' ? 'selected' : ''}>🌊 Solarized Dark (Oceanic Teal & Amber)</option>
+              <option value="matrix" ${userSettings.theme === 'matrix' ? 'selected' : ''}>🟩 Matrix Green CRT (Hacker Phosphor)</option>
+              <option value="one-dark" ${userSettings.theme === 'one-dark' ? 'selected' : ''}>⚛️ Atom One Dark (Refined Slate & Cornflower)</option>
+              <option value="avisys-navy" ${userSettings.theme === 'avisys-navy' ? 'selected' : ''}>⚓ Avisys Corporate Navy (Midnight Enterprise)</option>
+              <option value="slack-dark" ${userSettings.theme === 'slack-dark' ? 'selected' : ''}>💬 Slack Theme Dark Mode (Classic Aubergine & Cyan)</option>
+              <option value="light-modern" ${userSettings.theme === 'light-modern' ? 'selected' : ''}>☀️ Modern Light (Clean Porcelain White)</option>
+            </optgroup>
+            <optgroup label="🪐 Solar System Collection (Planetary Contrast)">
+              <option value="planet-mercury" ${userSettings.theme === 'planet-mercury' ? 'selected' : ''}>☿️ Mercury (Scorched Basalt & Molten Amber)</option>
+              <option value="planet-venus" ${userSettings.theme === 'planet-venus' ? 'selected' : ''}>♀️ Venus (Golden Sulfuric Atmosphere)</option>
+              <option value="planet-earth" ${userSettings.theme === 'planet-earth' ? 'selected' : ''}>🌍 Earth (Pale Blue Dot & Ocean Sapphire)</option>
+              <option value="planet-mars" ${userSettings.theme === 'planet-mars' ? 'selected' : ''}>♂️ Mars (Red Planet Rust & Cinnabar)</option>
+              <option value="planet-jupiter" ${userSettings.theme === 'planet-jupiter' ? 'selected' : ''}>♃ Jupiter (The Guardian · Cosmic Violet & Gas Giant)</option>
+              <option value="planet-saturn" ${userSettings.theme === 'planet-saturn' ? 'selected' : ''}>♄ Saturn (Ringed Majesty & Champagne Gold)</option>
+              <option value="planet-uranus" ${userSettings.theme === 'planet-uranus' ? 'selected' : ''}>⛢ Uranus (Aquamarine Ice & Methane Cyan)</option>
+              <option value="planet-neptune" ${userSettings.theme === 'planet-neptune' ? 'selected' : ''}>♆ Neptune (Voyager Cobalt & Deep Abyss Azure)</option>
+              <option value="planet-pluto" ${userSettings.theme === 'planet-pluto' ? 'selected' : ''}>♇ Pluto (Distant Pioneer · Kuiper Belt Amethyst)</option>
+            </optgroup>
           </select>
         </div>
         <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">

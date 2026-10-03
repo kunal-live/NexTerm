@@ -180,6 +180,105 @@ const THEME_PALETTES = {
       { color: "rgba(16, 185, 129, 0.05)", r: 140 }
     ],
     meteor: "#38bdf8"
+  },
+  "planet-mercury": {
+    stars: ["#f59e0b", "#c9a96e", "#c87941", "#d4c8b8", "#f5ede2", "#eab308"],
+    halo: "rgba(245, 158, 11, 0.45)",
+    filaments: "rgba(200, 121, 65, 0.22)",
+    nebulae: [
+      { color: "rgba(245, 158, 11, 0.08)", r: 170 },
+      { color: "rgba(200, 121, 65, 0.07)", r: 180 },
+      { color: "rgba(201, 169, 110, 0.05)", r: 130 }
+    ],
+    meteor: "#f59e0b"
+  },
+  "planet-venus": {
+    stars: ["#fbbf24", "#f59e0b", "#fde047", "#e8c170", "#fff7db", "#d97706"],
+    halo: "rgba(251, 191, 36, 0.48)",
+    filaments: "rgba(245, 158, 11, 0.24)",
+    nebulae: [
+      { color: "rgba(251, 191, 36, 0.09)", r: 180 },
+      { color: "rgba(245, 158, 11, 0.07)", r: 170 },
+      { color: "rgba(232, 193, 112, 0.06)", r: 140 }
+    ],
+    meteor: "#fbbf24"
+  },
+  "planet-earth": {
+    stars: ["#38bdf8", "#2563eb", "#10b981", "#60a5fa", "#f0f6fc", "#34d399"],
+    halo: "rgba(56, 189, 248, 0.5)",
+    filaments: "rgba(37, 99, 235, 0.24)",
+    nebulae: [
+      { color: "rgba(46, 144, 208, 0.09)", r: 180 },
+      { color: "rgba(16, 185, 129, 0.06)", r: 160 },
+      { color: "rgba(56, 189, 248, 0.07)", r: 150 }
+    ],
+    meteor: "#38bdf8"
+  },
+  "planet-mars": {
+    stars: ["#ef4444", "#f97316", "#f59e0b", "#fdba74", "#fde8db", "#dc2626"],
+    halo: "rgba(239, 68, 68, 0.5)",
+    filaments: "rgba(249, 115, 22, 0.25)",
+    nebulae: [
+      { color: "rgba(239, 68, 68, 0.09)", r: 180 },
+      { color: "rgba(249, 115, 22, 0.08)", r: 170 },
+      { color: "rgba(208, 88, 48, 0.06)", r: 140 }
+    ],
+    meteor: "#f97316"
+  },
+  "planet-jupiter": {
+    stars: ["#c084fc", "#a855f7", "#ec4899", "#f59e0b", "#ffffff", "#fed7aa"],
+    halo: "rgba(168, 85, 247, 0.55)",
+    filaments: "rgba(147, 51, 234, 0.28)",
+    nebulae: [
+      { color: "rgba(168, 85, 247, 0.12)", r: 210 },
+      { color: "rgba(217, 70, 239, 0.09)", r: 190 },
+      { color: "rgba(99, 102, 241, 0.08)", r: 170 }
+    ],
+    meteor: "#c084fc"
+  },
+  "planet-saturn": {
+    stars: ["#facc15", "#eab308", "#fef08a", "#d4b878", "#fef8ee", "#f59e0b"],
+    halo: "rgba(250, 204, 21, 0.48)",
+    filaments: "rgba(234, 179, 8, 0.22)",
+    nebulae: [
+      { color: "rgba(212, 184, 120, 0.08)", r: 180 },
+      { color: "rgba(250, 204, 21, 0.07)", r: 170 },
+      { color: "rgba(200, 148, 88, 0.05)", r: 140 }
+    ],
+    meteor: "#facc15"
+  },
+  "planet-uranus": {
+    stars: ["#22d3ee", "#06b6d4", "#2dd4bf", "#38bdf8", "#ecfeff", "#a5f3fc"],
+    halo: "rgba(34, 211, 238, 0.5)",
+    filaments: "rgba(6, 182, 212, 0.24)",
+    nebulae: [
+      { color: "rgba(96, 192, 200, 0.09)", r: 180 },
+      { color: "rgba(34, 211, 238, 0.07)", r: 160 },
+      { color: "rgba(45, 212, 191, 0.05)", r: 140 }
+    ],
+    meteor: "#22d3ee"
+  },
+  "planet-neptune": {
+    stars: ["#3b82f6", "#2563eb", "#60a5fa", "#38bdf8", "#eff6ff", "#6366f1"],
+    halo: "rgba(59, 130, 246, 0.52)",
+    filaments: "rgba(37, 99, 235, 0.26)",
+    nebulae: [
+      { color: "rgba(48, 112, 208, 0.1)", r: 180 },
+      { color: "rgba(59, 130, 246, 0.08)", r: 170 },
+      { color: "rgba(99, 102, 241, 0.06)", r: 140 }
+    ],
+    meteor: "#3b82f6"
+  },
+  "planet-pluto": {
+    stars: ["#c084fc", "#e879f9", "#a855f7", "#818cf8", "#f0f6fc", "#f472b6"],
+    halo: "rgba(192, 132, 252, 0.5)",
+    filaments: "rgba(147, 51, 234, 0.25)",
+    nebulae: [
+      { color: "rgba(192, 132, 252, 0.1)", r: 180 },
+      { color: "rgba(168, 85, 247, 0.08)", r: 170 },
+      { color: "rgba(129, 140, 248, 0.06)", r: 140 }
+    ],
+    meteor: "#c084fc"
   }
 };
 

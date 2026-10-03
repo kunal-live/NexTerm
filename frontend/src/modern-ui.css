@@ -661,6 +661,22 @@ html {
   opacity: 0.18;
 }
 
+/* Dynamic Ambient Planetary Image Backdrop */
+.planet-ambient-backdrop {
+  position: absolute;
+  inset: -60px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(80px) saturate(1.6) brightness(0.42);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  transform: scale(1.12);
+  transition: opacity 0.8s ease, background-image 0.8s ease;
+  will-change: opacity, transform;
+}
+
 /* Dynamic Moving Celestial Universe Canvas */
 .universe-canvas {
   position: absolute;
@@ -669,14 +685,14 @@ html {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
   opacity: 0.95;
   will-change: transform;
 }
 
 .welcome-content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   max-width: 720px !important;
 }
 
@@ -2276,16 +2292,271 @@ html {
 
 .nx-hero-art {
   flex: 1;
-  height: 100%;
-  min-height: 210px;
-  border-radius: 18px;
+  width: 100%;
+  position: relative;
+  overflow: visible;
+  user-select: none;
+}
+
+/* ==========================================================================
+   Celestial Planetary Viewport Scene (3D Orb, Tilted Rings & Corona)
+   ========================================================================== */
+.planet-viewport-scene {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
   overflow: hidden;
-  background-image: url("assets/nexterm-hero-bg.jpg");
+  opacity: 0;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.planet-celestial-orb {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
   background-size: cover;
-  background-position: center right;
+  background-position: right center;
   background-repeat: no-repeat;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 12px 40px rgba(76, 29, 149, 0.25), inset 0 0 60px rgba(0, 0, 0, 0.35);
+  mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.1) 15%, rgba(0, 0, 0, 0.85) 45%, #000 70%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.1) 15%, rgba(0, 0, 0, 0.85) 45%, #000 70%);
+  transition: background-image 0.8s ease;
+  will-change: transform, background-image;
+  animation: celestialGentleOrbit 24s ease-in-out infinite alternate;
+}
+
+@keyframes celestialGentleOrbit {
+  0% { transform: translateY(0) scale(1.0); }
+  50% { transform: translateY(-8px) scale(1.015); }
+  100% { transform: translateY(0) scale(1.0); }
+}
+
+.planet-orb-shading {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 75% 50%, transparent 60%, rgba(0, 0, 0, 0.3) 100%);
+  pointer-events: none;
+}
+
+.planet-celestial-rings {
+  display: none;
+}
+
+.planet-atmosphere-corona {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 45%;
+  pointer-events: none;
+  opacity: 0.35;
+  box-shadow: inset -20px 0 80px var(--planet-corona, rgba(168, 85, 247, 0.5));
+  transition: box-shadow 0.8s ease;
+}
+
+.planet-sun-flare {
+  display: none;
+}
+
+/* ==========================================================================
+   Planetary Frosted Glass Telemetry Showcase Card (Compact & Sleek)
+   ========================================================================== */
+.nx-planet-card {
+  max-width: 430px;
+  margin-left: auto;
+  border-radius: 14px;
+  background: var(--planet-card-bg, rgba(14, 11, 32, 0.68));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--planet-card-border, rgba(168, 85, 247, 0.3));
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 24px var(--planet-card-glow, rgba(168, 85, 247, 0.14));
+  padding: 13px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.nx-planet-card.planet-card-pulse {
+  animation: planetCardPulse 0.35s ease-out;
+}
+
+@keyframes planetCardPulse {
+  0% { transform: scale(0.985); opacity: 0.88; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.nx-planet-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.nx-planet-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1px;
+}
+
+.nx-planet-dot {
+  width: 7.5px;
+  height: 7.5px;
+  border-radius: 50%;
+  background: var(--planet-accent, #a855f7);
+  box-shadow: 0 0 10px var(--planet-accent, #a855f7);
+  flex-shrink: 0;
+}
+
+.nx-planet-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.2px;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.nx-planet-epithet {
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+  margin: 0 0 5px 0;
+  letter-spacing: 0.1px;
+}
+
+.nx-planet-desc {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #cbd5e1;
+  margin: 0 0 10px 0;
+  max-width: 245px;
+}
+
+.nx-planet-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nx-planet-explore-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9999px;
+  height: 28px;
+  padding: 0 13px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--planet-card-border, rgba(168, 85, 247, 0.4));
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.nx-planet-explore-btn:hover {
+  background: var(--planet-card-border, rgba(168, 85, 247, 0.3));
+  border-color: var(--planet-accent, #a855f7);
+  box-shadow: 0 0 14px var(--planet-card-glow, rgba(168, 85, 247, 0.4));
+  transform: translateY(-1px);
+}
+
+.nx-planet-explore-btn .nx-btn-arrow {
+  transition: transform 0.16s ease;
+}
+
+.nx-planet-explore-btn:hover .nx-btn-arrow {
+  transform: translateX(3px);
+}
+
+.nx-planet-quick-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 9999px;
+  padding: 2px 6px;
+}
+
+.nx-pnav-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 13px;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.nx-pnav-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.nx-pnav-index {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  padding: 0 3px;
+  user-select: none;
+}
+
+/* Right Column: Telemetry Stats Grid (Compact) */
+.nx-planet-stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex-shrink: 0;
+  min-width: 105px;
+}
+
+.nx-pstat-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.nx-pstat-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.9px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 1px;
+}
+
+.nx-pstat-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.2px;
+}
+
+/* Completely suppress inactive workspace panes & empty terminal placeholders when Home is active */
+#welcomeState.active ~ .workspace-pane,
+#welcomeState.active ~ #panesGrid,
+#welcomeState.active ~ .panes-grid,
+.panes-container:has(#welcomeState.active) > .workspace-pane {
+  display: none !important;
+}
+
+#welcomeState.active {
+  z-index: 10 !important;
+  background-color: #030508 !important;
 }
 
 /* Feature cards */
@@ -8045,6 +8316,241 @@ html {
     radial-gradient(1.8px 1.8px at 168px 128px, rgba(46, 182, 125, 0.85), transparent);
 }
 
+/* ==========================================================================
+   Planetary Atmospheric Dashboards & Hero Art Showcase
+   ========================================================================== */
 
+/* 15. Mercury — Scorched Messenger */
+[data-theme="planet-mercury"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(245, 158, 11, 0.22) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(200, 121, 65, 0.18) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(201, 169, 110, 0.12) 0%, transparent 55%),
+    linear-gradient(180deg, #08080a 0%, #121013 60%, #060507 100%) !important;
+}
+[data-theme="planet-mercury"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(245, 158, 11, 0.85), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(200, 121, 65, 0.75), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(212, 200, 184, 0.85), transparent);
+}
+/* 15. Mercury — Scorched Messenger */
+[data-theme="planet-mercury"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(245, 158, 11, 0.28) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(200, 121, 65, 0.22) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(201, 169, 110, 0.16) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(8, 8, 10, 0.72) 0%, rgba(18, 16, 19, 0.65) 60%, rgba(6, 5, 7, 0.82) 100%) !important;
+}
+[data-theme="planet-mercury"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(245, 158, 11, 0.85), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(200, 121, 65, 0.75), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(212, 200, 184, 0.85), transparent);
+}
+[data-theme="planet-mercury"] .nx-hero-art {
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 16px 48px rgba(200, 121, 65, 0.35), 0 0 30px rgba(245, 158, 11, 0.2);
+}
 
+/* 16. Venus — Golden Atmospheric Veil */
+[data-theme="planet-venus"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(251, 191, 36, 0.32) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(245, 158, 11, 0.25) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(232, 193, 112, 0.18) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(10, 8, 3, 0.72) 0%, rgba(20, 16, 6, 0.65) 60%, rgba(7, 5, 2, 0.82) 100%) !important;
+}
+[data-theme="planet-venus"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(251, 191, 36, 0.9), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(245, 158, 11, 0.8), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(254, 240, 138, 0.85), transparent);
+}
+[data-theme="planet-venus"] .nx-hero-art {
+  border-color: rgba(251, 191, 36, 0.35);
+  box-shadow: 0 16px 48px rgba(245, 158, 11, 0.4), 0 0 30px rgba(251, 191, 36, 0.22);
+}
+
+/* 17. Earth — The Pale Blue Dot */
+[data-theme="planet-earth"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(56, 189, 248, 0.32) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(37, 99, 235, 0.28) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(16, 185, 129, 0.16) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(3, 8, 17, 0.70) 0%, rgba(9, 19, 34, 0.62) 60%, rgba(2, 5, 11, 0.82) 100%) !important;
+}
+[data-theme="planet-earth"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(56, 189, 248, 0.9), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(72, 160, 96, 0.8), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(240, 246, 252, 0.85), transparent);
+}
+[data-theme="planet-earth"] .nx-hero-art {
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 16px 48px rgba(37, 99, 235, 0.4), 0 0 32px rgba(56, 189, 248, 0.25);
+}
+
+/* 18. Mars — The Red Planet Frontier */
+[data-theme="planet-mars"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(239, 68, 68, 0.32) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(249, 115, 22, 0.25) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(184, 128, 72, 0.16) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(12, 5, 4, 0.72) 0%, rgba(23, 10, 8, 0.65) 60%, rgba(8, 3, 2, 0.82) 100%) !important;
+}
+[data-theme="planet-mars"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(249, 115, 22, 0.9), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(239, 68, 68, 0.8), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(253, 186, 116, 0.85), transparent);
+}
+[data-theme="planet-mars"] .nx-hero-art {
+  border-color: rgba(239, 68, 68, 0.35);
+  box-shadow: 0 16px 48px rgba(220, 38, 38, 0.4), 0 0 32px rgba(239, 68, 68, 0.22);
+}
+
+/* 19. Jupiter — King of Giants (Cosmic Violet & Amber Storm) */
+[data-theme="planet-jupiter"] .welcome-dashboard {
+  background:
+    radial-gradient(950px 700px at 85% 20%, rgba(168, 85, 247, 0.35) 0%, transparent 65%),
+    radial-gradient(800px 500px at 70% 60%, rgba(217, 70, 239, 0.22) 0%, transparent 55%),
+    radial-gradient(1000px 750px at 15% 15%, rgba(99, 102, 241, 0.25) 0%, transparent 60%),
+    radial-gradient(1200px 800px at 50% 110%, rgba(147, 51, 234, 0.2) 0%, transparent 60%),
+    linear-gradient(180deg, #070414 0%, #0e0722 50%, #05030e 100%) !important;
+}
+[data-theme="planet-jupiter"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(168, 85, 247, 0.9), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(217, 70, 239, 0.8), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(254, 215, 170, 0.85), transparent);
+}
+[data-theme="planet-jupiter"] .nx-planet-card {
+  border-color: rgba(168, 85, 247, 0.35);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 32px rgba(168, 85, 247, 0.22);
+}
+
+/* 20. Saturn — Ringed Majesty */
+[data-theme="planet-saturn"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(250, 204, 21, 0.32) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(212, 184, 120, 0.24) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(200, 148, 88, 0.16) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(8, 7, 5, 0.72) 0%, rgba(19, 17, 9, 0.64) 60%, rgba(5, 4, 3, 0.82) 100%) !important;
+}
+[data-theme="planet-saturn"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(250, 204, 21, 0.9), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(212, 184, 120, 0.8), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(254, 240, 138, 0.85), transparent);
+}
+
+/* 21. Uranus — The Tilted Ice Giant */
+[data-theme="planet-uranus"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(34, 211, 238, 0.32) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(96, 192, 200, 0.25) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(45, 212, 191, 0.16) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(3, 8, 11, 0.72) 0%, rgba(7, 19, 26, 0.64) 60%, rgba(2, 5, 7, 0.82) 100%) !important;
+}
+[data-theme="planet-uranus"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(34, 211, 238, 0.9), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(96, 192, 200, 0.8), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(236, 254, 255, 0.85), transparent);
+}
+
+/* 22. Neptune — Deep Ocean Voyager */
+[data-theme="planet-neptune"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(59, 130, 246, 0.35) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(48, 112, 208, 0.28) 0%, transparent 55%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(99, 102, 241, 0.18) 0%, transparent 55%),
+    linear-gradient(180deg, rgba(2, 4, 12, 0.72) 0%, rgba(6, 10, 28, 0.64) 60%, rgba(1, 2, 7, 0.82) 100%) !important;
+}
+[data-theme="planet-neptune"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(59, 130, 246, 0.9), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(48, 112, 208, 0.8), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(239, 246, 255, 0.85), transparent);
+}
+
+/* 23. Pluto — The Distant Pioneer */
+[data-theme="planet-pluto"] .welcome-dashboard {
+  background:
+    radial-gradient(1000px 650px at 85% 15%, rgba(192, 132, 252, 0.35) 0%, transparent 65%),
+    radial-gradient(850px 520px at 20% 20%, rgba(147, 51, 234, 0.25) 0%, transparent 55%),
+    radial-gradient(1100px 700px at 50% 115%, rgba(217, 70, 239, 0.2) 0%, transparent 60%),
+    linear-gradient(180deg, #070511 0%, #120e23 50%, #05040d 100%) !important;
+}
+[data-theme="planet-pluto"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(192, 132, 252, 0.9), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(168, 85, 247, 0.8), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(245, 243, 255, 0.85), transparent);
+}
+
+/* ==========================================================================
+   Global Planetary UI Tokens & Component Adaptation
+   ========================================================================== */
+[data-theme^="planet-"] .nx-hero-eyebrow {
+  color: var(--planet-eyebrow, #c084fc);
+  text-shadow: 0 0 16px var(--planet-card-glow, rgba(168, 85, 247, 0.4));
+}
+
+[data-theme^="planet-"] .nx-hero-h1 .nx-grad {
+  background: var(--planet-h1-grad, linear-gradient(90deg, #a855f7, #ec4899));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme^="planet-"] .nx-btn-primary {
+  background: var(--planet-btn-grad, linear-gradient(135deg, #7c3aed, #9333ea));
+  box-shadow: 0 6px 22px var(--planet-btn-glow, rgba(124, 58, 237, 0.45));
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+[data-theme^="planet-"] .nx-btn-primary:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 8px 28px var(--planet-btn-glow, rgba(124, 58, 237, 0.6));
+}
+
+[data-theme^="planet-"] .nx-feature-card:hover {
+  border-color: var(--planet-accent, #a855f7);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 20px var(--planet-card-glow, rgba(168, 85, 247, 0.2));
+}
+
+/* Status Bar Cosmic Elements */
+.status-cosmic-tagline {
+  font-style: italic;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.48);
+  letter-spacing: 0.04em;
+  user-select: none;
+}
+
+.status-ver-pill {
+  font-size: 11px;
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+
+.status-dot-green {
+  width: 6.5px;
+  height: 6.5px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.statusbar .status-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 

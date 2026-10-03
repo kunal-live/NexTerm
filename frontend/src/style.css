@@ -466,6 +466,271 @@
   --text-dim: #7c8b82;
 }
 
+/* ==========================================================================
+   Planetary Contrast Themes — Solar System Collection
+   ========================================================================== */
+
+/* 1. Mercury — Scorched Messenger */
+[data-theme="planet-mercury"] {
+  --bg-app: #08080a;
+  --bg-topbar: #121013;
+  --bg-menubar: #0b0a0d;
+  --bg-toolbar: #121013;
+  --bg-sidebar: #100f13;
+  --bg-sidebar-strip: #09080b;
+  --bg-workspace: #08080a;
+  --bg-card: #18151c;
+  --bg-card-hover: #221e27;
+  --bg-input: #0f0e13;
+  --bg-input-border: #332d3b;
+
+  --border-subtle: #25202b;
+  --border-active: #f59e0b;
+
+  --accent-cyan: #d4c8b8;
+  --accent-blue: #c9a96e;
+  --accent-green: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-purple: #c87941;
+
+  --text-primary: #f5ede2;
+  --text-muted: #b5a898;
+  --text-dim: #786d60;
+}
+
+/* 2. Venus — Golden Atmospheric Veil */
+[data-theme="planet-venus"] {
+  --bg-app: #0a0803;
+  --bg-topbar: #141006;
+  --bg-menubar: #0e0b04;
+  --bg-toolbar: #141006;
+  --bg-sidebar: #120e05;
+  --bg-sidebar-strip: #0a0803;
+  --bg-workspace: #0a0803;
+  --bg-card: #1c1608;
+  --bg-card-hover: #27200c;
+  --bg-input: #100d04;
+  --bg-input-border: #3d3110;
+
+  --border-subtle: #29210c;
+  --border-active: #fbbf24;
+
+  --accent-cyan: #fef08a;
+  --accent-blue: #f59e0b;
+  --accent-green: #84cc16;
+  --accent-amber: #fbbf24;
+  --accent-rose: #f97316;
+  --accent-purple: #d97706;
+
+  --text-primary: #fff7db;
+  --text-muted: #c9b788;
+  --text-dim: #85764f;
+}
+
+/* 3. Earth — The Pale Blue Dot */
+[data-theme="planet-earth"] {
+  --bg-app: #030811;
+  --bg-topbar: #091322;
+  --bg-menubar: #050d18;
+  --bg-toolbar: #091322;
+  --bg-sidebar: #07101d;
+  --bg-sidebar-strip: #030710;
+  --bg-workspace: #030811;
+  --bg-card: #0f1c30;
+  --bg-card-hover: #152642;
+  --bg-input: #08111e;
+  --bg-input-border: #1e3558;
+
+  --border-subtle: #162740;
+  --border-active: #38bdf8;
+
+  --accent-cyan: #38bdf8;
+  --accent-blue: #2563eb;
+  --accent-green: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-purple: #818cf8;
+
+  --text-primary: #f0f6fc;
+  --text-muted: #94b2d4;
+  --text-dim: #5c799a;
+}
+
+/* 4. Mars — The Red Planet Frontier */
+[data-theme="planet-mars"] {
+  --bg-app: #0c0504;
+  --bg-topbar: #170a08;
+  --bg-menubar: #100605;
+  --bg-toolbar: #170a08;
+  --bg-sidebar: #130807;
+  --bg-sidebar-strip: #0a0403;
+  --bg-workspace: #0c0504;
+  --bg-card: #200f0c;
+  --bg-card-hover: #2c1612;
+  --bg-input: #120706;
+  --bg-input-border: #441e17;
+
+  --border-subtle: #2d140f;
+  --border-active: #ef4444;
+
+  --accent-cyan: #fdba74;
+  --accent-blue: #f97316;
+  --accent-green: #84cc16;
+  --accent-amber: #f59e0b;
+  --accent-rose: #ef4444;
+  --accent-purple: #dc2626;
+
+  --text-primary: #fde8db;
+  --text-muted: #d4a392;
+  --text-dim: #8c5d4f;
+}
+
+/* 5. Jupiter — King of Giants (Cosmic Violet & Amber Storm) */
+[data-theme="planet-jupiter"] {
+  --bg-app: #070514;
+  --bg-topbar: #0f0a24;
+  --bg-menubar: #0a0618;
+  --bg-toolbar: #0f0a24;
+  --bg-sidebar: #0d0820;
+  --bg-sidebar-strip: #060410;
+  --bg-workspace: #070514;
+  --bg-card: #150e30;
+  --bg-card-hover: #1e1442;
+  --bg-input: #0b071a;
+  --bg-input-border: #3b2268;
+
+  --border-subtle: #251644;
+  --border-active: #a855f7;
+
+  --accent-cyan: #fed7aa;
+  --accent-blue: #818cf8;
+  --accent-green: #34d399;
+  --accent-amber: #fbbf24;
+  --accent-rose: #f43f5e;
+  --accent-purple: #a855f7;
+
+  --text-primary: #f5f3ff;
+  --text-muted: #c4b5fd;
+  --text-dim: #7c68a4;
+}
+
+/* 6. Saturn — Ringed Majesty */
+[data-theme="planet-saturn"] {
+  --bg-app: #080705;
+  --bg-topbar: #131109;
+  --bg-menubar: #0c0b06;
+  --bg-toolbar: #131109;
+  --bg-sidebar: #100e08;
+  --bg-sidebar-strip: #070604;
+  --bg-workspace: #080705;
+  --bg-card: #1a170f;
+  --bg-card-hover: #252216;
+  --bg-input: #0f0d07;
+  --bg-input-border: #3b351e;
+
+  --border-subtle: #272314;
+  --border-active: #facc15;
+
+  --accent-cyan: #fef08a;
+  --accent-blue: #eab308;
+  --accent-green: #a3e635;
+  --accent-amber: #facc15;
+  --accent-rose: #f97316;
+  --accent-purple: #d97706;
+
+  --text-primary: #fef8ee;
+  --text-muted: #c2b694;
+  --text-dim: #7d7253;
+}
+
+/* 7. Uranus — The Tilted Ice Giant */
+[data-theme="planet-uranus"] {
+  --bg-app: #03080b;
+  --bg-topbar: #07131a;
+  --bg-menubar: #040d12;
+  --bg-toolbar: #07131a;
+  --bg-sidebar: #061016;
+  --bg-sidebar-strip: #02070a;
+  --bg-workspace: #03080b;
+  --bg-card: #0c1e28;
+  --bg-card-hover: #122b3a;
+  --bg-input: #051118;
+  --bg-input-border: #183e52;
+
+  --border-subtle: #122f3f;
+  --border-active: #22d3ee;
+
+  --accent-cyan: #22d3ee;
+  --accent-blue: #06b6d4;
+  --accent-green: #2dd4bf;
+  --accent-amber: #38bdf8;
+  --accent-rose: #f43f5e;
+  --accent-purple: #0ea5e9;
+
+  --text-primary: #ecfeff;
+  --text-muted: #8ad1dd;
+  --text-dim: #4b8894;
+}
+
+/* 8. Neptune — Deep Ocean Voyager */
+[data-theme="planet-neptune"] {
+  --bg-app: #02040c;
+  --bg-topbar: #060a1c;
+  --bg-menubar: #030612;
+  --bg-toolbar: #060a1c;
+  --bg-sidebar: #050817;
+  --bg-sidebar-strip: #02030a;
+  --bg-workspace: #02040c;
+  --bg-card: #0a122e;
+  --bg-card-hover: #0f1c44;
+  --bg-input: #040817;
+  --bg-input-border: #16265e;
+
+  --border-subtle: #101c44;
+  --border-active: #3b82f6;
+
+  --accent-cyan: #38bdf8;
+  --accent-blue: #3b82f6;
+  --accent-green: #06b6d4;
+  --accent-amber: #60a5fa;
+  --accent-rose: #f43f5e;
+  --accent-purple: #6366f1;
+
+  --text-primary: #eff6ff;
+  --text-muted: #8ea8db;
+  --text-dim: #4f669b;
+}
+
+/* 9. Pluto — The Distant Pioneer */
+[data-theme="planet-pluto"] {
+  --bg-app: #080612;
+  --bg-topbar: #100b22;
+  --bg-menubar: #0a0718;
+  --bg-toolbar: #100b22;
+  --bg-sidebar: #0e091e;
+  --bg-sidebar-strip: #05040d;
+  --bg-workspace: #080612;
+  --bg-card: #150f2c;
+  --bg-card-hover: #20173f;
+  --bg-input: #0c081a;
+  --bg-input-border: #3b285c;
+
+  --border-subtle: #271a40;
+  --border-active: #c084fc;
+
+  --accent-cyan: #e2dcf2;
+  --accent-blue: #818cf8;
+  --accent-green: #a78bfa;
+  --accent-amber: #f472b6;
+  --accent-rose: #fb7185;
+  --accent-purple: #c084fc;
+
+  --text-primary: #fdfcff;
+  --text-muted: #d8b4fe;
+  --text-dim: #785e9e;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -3801,82 +4066,330 @@ html, body, #app {
   color: #fff;
 }
 
-/* Theme Picker Modal Styles */
+/* ==========================================================================
+   Application UI Theme Gallery — Modern Modal & Resilient Theme Cards
+   ========================================================================== */
+.modal-card.modal-theme-gallery {
+  width: 820px !important;
+  max-width: 95vw !important;
+  height: 82vh !important;
+  max-height: 840px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #0f131d !important;
+  border: 1px solid rgba(56, 189, 248, 0.28) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 30px rgba(56, 189, 248, 0.15) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+.modal-theme-gallery .modal-header {
+  padding: 12px 18px !important;
+  background: rgba(14, 18, 28, 0.95) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  flex-shrink: 0 !important;
+}
+
+.modal-theme-gallery .modal-title {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: #f8fafc !important;
+}
+
+.modal-theme-gallery .modal-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  padding: 14px 18px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  overflow: hidden !important;
+}
+
+.theme-gallery-toolbar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  flex-shrink: 0 !important;
+}
+
+.theme-filter-tabs {
+  display: flex !important;
+  gap: 6px !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+  padding: 3px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.theme-filter-btn {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  color: #94a3b8 !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  padding: 5px 12px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.theme-filter-btn:hover {
+  color: #f8fafc !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.theme-filter-btn.active {
+  color: #38bdf8 !important;
+  background: rgba(56, 189, 248, 0.16) !important;
+  border-color: rgba(56, 189, 248, 0.35) !important;
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15) !important;
+}
+
+.theme-search-input {
+  flex: 0 0 220px !important;
+  height: 30px !important;
+  background: rgba(0, 0, 0, 0.35) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 6px !important;
+  color: #f8fafc !important;
+  font-size: 11.5px !important;
+  padding: 0 10px !important;
+  outline: none !important;
+  transition: border-color 0.2s !important;
+}
+
+.theme-search-input:focus {
+  border-color: #38bdf8 !important;
+}
+
 .theme-picker-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  max-height: 440px;
-  overflow-y: auto;
-  padding: 4px;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  overflow-y: auto !important;
+  padding: 2px 4px 16px 2px !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  align-content: start !important;
+}
+
+.theme-section-divider {
+  grid-column: 1 / -1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin: 8px 0 2px 0 !important;
+  padding: 7px 12px !important;
+  border-radius: 8px !important;
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.12), rgba(168, 85, 247, 0.08), transparent) !important;
+  border-left: 3px solid #38bdf8 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.theme-section-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.theme-section-title {
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em !important;
+  text-transform: uppercase !important;
+  color: #f8fafc !important;
+}
+
+.theme-section-tag {
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  padding: 2px 8px !important;
+  border-radius: 12px !important;
+  background: rgba(56, 189, 248, 0.18) !important;
+  color: #38bdf8 !important;
+}
+
+.theme-section-sub {
+  font-size: 11px !important;
+  color: #94a3b8 !important;
 }
 
 .theme-card {
-  background: var(--bg-card);
-  border: 1.5px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 10px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  transition: all 0.15s ease;
+  background: rgba(20, 26, 40, 0.75) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 10px !important;
+  padding: 12px 14px !important;
+  cursor: pointer !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  min-height: 108px !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  overflow: hidden !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 .theme-card:hover {
-  border-color: var(--border-active);
-  background: var(--bg-card-hover);
-  transform: translateY(-1px);
+  border-color: #38bdf8 !important;
+  background: rgba(28, 36, 56, 0.85) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
 }
 
 .theme-card.active {
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
-  background: var(--bg-card-hover);
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.5), 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+  background: rgba(28, 38, 62, 0.95) !important;
+}
+
+.theme-card.planet-theme {
+  min-height: 160px !important;
+  background: linear-gradient(180deg, rgba(18, 22, 34, 0.85) 0%, rgba(10, 14, 22, 0.95) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.theme-card.planet-theme:hover {
+  border-color: #a855f7 !important;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.55), 0 0 20px rgba(168, 85, 247, 0.25) !important;
+}
+
+.theme-card.planet-theme.active {
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 2px #38bdf8, 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+}
+
+.theme-card-image {
+  width: 100% !important;
+  height: 60px !important;
+  border-radius: 6px !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  position: relative !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6) !important;
+  flex-shrink: 0 !important;
+  transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+}
+
+.theme-card-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.7) 100%);
+  pointer-events: none;
+}
+
+.theme-card:hover .theme-card-image {
+  transform: scale(1.02);
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3), 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.planet-badge-orbit {
+  position: absolute !important;
+  top: 6px !important;
+  right: 6px !important;
+  font-family: var(--font-mono, monospace) !important;
+  font-size: 8px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.06em !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  background: rgba(3, 6, 14, 0.85) !important;
+  backdrop-filter: blur(8px) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  z-index: 2 !important;
 }
 
 .theme-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  line-height: 1.25 !important;
 }
 
 .theme-card-title {
-  font-weight: 700;
-  font-size: 12px;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  color: #f8fafc !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .theme-card-badge {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 10px;
-  background: rgba(59, 130, 246, 0.2);
-  color: #60a5fa;
-  font-weight: 600;
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  padding: 2px 7px !important;
+  border-radius: 10px !important;
+  background: rgba(56, 189, 248, 0.22) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
 .theme-card-desc {
-  font-size: 11px;
-  color: var(--text-muted);
-  line-height: 1.3;
+  font-size: 11px !important;
+  color: #94a3b8 !important;
+  line-height: 1.4 !important;
+  margin: 2px 0 4px 0 !important;
+  flex: 1 1 auto !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
 }
 
 .theme-preview-palette {
-  display: flex;
-  gap: 3px;
-  height: 20px;
-  border-radius: 4px;
-  overflow: hidden;
-  border: 1px solid var(--border-subtle);
+  display: flex !important;
+  gap: 3px !important;
+  height: 16px !important;
+  border-radius: 5px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  padding: 1.5px !important;
+  flex-shrink: 0 !important;
 }
 
 .theme-swatch {
-  flex: 1;
-  height: 100%;
+  flex: 1 !important;
+  height: 100% !important;
+  border-radius: 3px !important;
+}
+
+.modal-theme-gallery .modal-footer {
+  padding: 10px 18px !important;
+  background: rgba(14, 18, 28, 0.95) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-shrink: 0 !important;
+}
+
+.theme-gallery-hint {
+  font-size: 11px !important;
+  color: #94a3b8 !important;
 }
 
 .hidden {

@@ -566,6 +566,14 @@ export function activateHomeTab() {
   if (homeTabBtnEl) homeTabBtnEl.classList.add("active");
   if (welcomeStateEl) welcomeStateEl.classList.add("active");
 
+  // Completely hide all workspace panes so no empty placeholder or terminal bleeds through Home
+  const panesContainer = document.getElementById("panesContainer");
+  if (panesContainer) {
+    panesContainer.querySelectorAll(".workspace-pane").forEach(p => {
+      p.style.display = "none";
+    });
+  }
+
   Object.values(tabs).forEach(t => {
     if (t.tabEl) t.tabEl.classList.remove("active");
     if (t.paneEl) t.paneEl.classList.remove("active");
@@ -595,6 +603,14 @@ export function activateTab(tabId) {
 
   if (homeTabBtnEl) homeTabBtnEl.classList.remove("active");
   if (welcomeStateEl) welcomeStateEl.classList.remove("active");
+
+  // Restore workspace panes visibility when leaving Home
+  const panesContainer = document.getElementById("panesContainer");
+  if (panesContainer) {
+    panesContainer.querySelectorAll(".workspace-pane").forEach(p => {
+      p.style.display = "";
+    });
+  }
 
   setActiveTabId(tabId);
   markTabActivity(tabId, false);

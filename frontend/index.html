@@ -1144,6 +1144,15 @@
         <div id="panesContainer" class="panes-container">
           <!-- A. Home / Welcome Screen (Dashboard) -->
           <div id="welcomeState" class="welcome-dashboard active">
+            <div class="planet-ambient-backdrop" id="planetAmbientBackdrop"></div>
+            <div class="planet-viewport-scene" id="planetViewportScene">
+              <div class="planet-sun-flare" id="planetSunFlare"></div>
+              <div class="planet-celestial-orb" id="planetCelestialOrb">
+                <div class="planet-orb-shading"></div>
+              </div>
+              <div class="planet-celestial-rings" id="planetCelestialRings"></div>
+              <div class="planet-atmosphere-corona" id="planetAtmosphereCorona"></div>
+            </div>
             <canvas id="universeCanvas" class="universe-canvas"></canvas>
             <div class="welcome-content nx-home">
 
@@ -1387,8 +1396,13 @@
           <span>🤖 Assistant</span>
         </button>
       </div>
+      <div class="status-center">
+        <span class="status-cosmic-tagline">✦ A universe of servers. One command center. ✦</span>
+      </div>
       <div class="status-right">
-        <span id="activeTargetText">No active session</span>
+        <span class="status-ver-pill"><span class="status-dot-green"></span> NexTerm v2.9.2</span>
+        <span class="sep">·</span>
+        <span id="activeTargetText"><span class="status-idle-pill">○ Workspace Ready</span></span>
         <span class="sep">|</span>
         <span id="activeSessionsCount">0 active tabs</span>
       </div>
