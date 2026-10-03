@@ -3242,6 +3242,42 @@ html {
   color: #475569;
 }
 
+:root[data-theme="light-modern"] .nx-btn-ghost,
+body[data-theme="light-modern"] .nx-btn-ghost,
+:root[data-theme="light-modern"] #homeViewDocsBtn,
+body[data-theme="light-modern"] #homeViewDocsBtn {
+  background: #ffffff !important;
+  border: 1.5px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+}
+
+:root[data-theme="light-modern"] .nx-btn-ghost:hover,
+body[data-theme="light-modern"] .nx-btn-ghost:hover,
+:root[data-theme="light-modern"] #homeViewDocsBtn:hover,
+body[data-theme="light-modern"] #homeViewDocsBtn:hover {
+  background: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #0284c7 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12) !important;
+  transform: translateY(-2px);
+}
+
+:root[data-theme="light-modern"] .nx-btn-ghost svg,
+body[data-theme="light-modern"] .nx-btn-ghost svg,
+:root[data-theme="light-modern"] #homeViewDocsBtn svg,
+body[data-theme="light-modern"] #homeViewDocsBtn svg {
+  stroke: #475569 !important;
+}
+
+:root[data-theme="light-modern"] .nx-btn-ghost:hover svg,
+body[data-theme="light-modern"] .nx-btn-ghost:hover svg,
+:root[data-theme="light-modern"] #homeViewDocsBtn:hover svg,
+body[data-theme="light-modern"] #homeViewDocsBtn:hover svg {
+  stroke: #0284c7 !important;
+}
+
 :root[data-theme="light-modern"] .nx-feature-card {
   background: #ffffff;
   border-color: #e2e8f0;
