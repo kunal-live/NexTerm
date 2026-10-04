@@ -10,11 +10,27 @@
 [![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://kernel.org)
 [![License](https://img.shields.io/badge/License-MIT-green.badge?style=for-the-badge)](#license)
 [![GitHub Release](https://img.shields.io/github/v/release/kunal-live/NexTerm?style=for-the-badge&color=8b5cf6&logo=github)](https://github.com/kunal-live/NexTerm/releases/latest)
-[![Windows 1-Click](https://img.shields.io/badge/Download-Windows_x64-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/latest)
+[![Download NexTerm for Windows](https://img.shields.io/badge/Download-NexTerm_for_Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/latest/download/NexTerm-Setup.exe)
+[![Windows Portable](https://img.shields.io/badge/Download-Windows_Portable_(.zip)-005A9E?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-windows-x64-portable.zip)
+[![macOS Download](https://img.shields.io/badge/Download-macOS_Apple_Silicon-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-macos-arm64.zip)
+[![Linux Download](https://img.shields.io/badge/Download-Linux_x64-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-linux-x64.tar.gz)
 
 **NexTerm** is an all-in-one, cross-platform desktop SSH client, terminal emulator, SFTP browser, and remote infrastructure workstation built with **Go**, **Wails v2**, and **xterm.js**. Engineered for native execution on **Windows**, **macOS** (Apple Silicon & Intel), and **Linux**, it features zero artificial limits, enterprise-grade security controls, visual SSH tunnel management, bastion jump hosts, live server performance monitoring, multi-execution command broadcasting, macro automation, and multi-protocol connectivity.
 
-**[👉 Click here to Download the Latest Release (Zero Setup Required)](https://github.com/kunal-live/NexTerm/releases/latest)**
+### 📥 Download NexTerm
+
+> Choose the download for your operating system below. Each release package includes the compiled NexTerm app and its frontend; you do not need Go, Node.js, Python, or Git. Download the installer for the simplest setup, or the portable package to extract and run.
+
+| Platform | Format | Direct 1-Click Download | Dependencies Needed |
+| :--- | :--- | :--- | :--- |
+| **Windows 10 / 11 (64-bit)** | 📦 Setup Installer (`.exe`) | **[⬇️ Download NexTerm Setup](https://github.com/kunal-live/NexTerm/releases/latest/download/NexTerm-Setup.exe)** | **None** (Built-in) |
+| **Windows 10 / 11 (64-bit)** | ⚡ Portable Archive (`.zip`) | **[⬇️ Download Portable (.zip)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-windows-x64-portable.zip)** | **None** (Extract & Run) |
+| **macOS (M1 / M2 / M3 / M4)** | 🍏 App Bundle (`.zip`) | **[⬇️ Download macOS (arm64)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-macos-arm64.zip)** | **None** |
+| **Linux (Ubuntu, Debian, Fedora)** | 🐧 Binary Archive (`.tar.gz`) | **[⬇️ Download Linux (x64)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-linux-x64.tar.gz)** | GTK 3 and WebKit2GTK 4.0 runtime libraries must be installed by the system |
+
+> ⚠️ **Important Note for Non-Developers**: Do **NOT** click the green **`Code ➔ Download ZIP`** button on GitHub. That button only downloads raw source code. Use the platform download above instead.
+
+**[👉 Download NexTerm for another platform or view all release files](https://github.com/kunal-live/NexTerm/releases/latest)**
 
 </div>
 
@@ -25,6 +41,22 @@
 <img src="assets/nexterm-main.png" alt="NexTerm Application Workspace" width="100%" />
 
 </div>
+
+---
+
+## 🚀 What's New in v1.3.0
+
+> **Release Name**: *Enterprise Security, Custom Themes & Dynamic Workspaces*  
+> Full release log available in **[CHANGELOG.md](CHANGELOG.md)**.
+
+- 🔒 **Master Password Vault Protection**: Optional Master Password encryption layer over the native DPAPI vault, featuring password hint recovery and a built-in cryptographic password generator.
+- 🛡️ **App Lock & Idle Inactivity Auto-Lock**: Instantly lock the entire workstation with a master toggle or configure automated idle timeout locks to safeguard active terminal connections.
+- 🔑 **Real In-App SSH KeyGen**: Native RSA 2048-bit & 4096-bit SSH key pair generator with 1-click PEM and OpenSSH export.
+- 🕵️ **Real-Time Session Log Redaction**: Automatic in-flight scrubbing of passwords, bearer tokens, and private keys from terminal buffers and session logs.
+- 🌌 **Overhauled Theme Gallery & Universe Animations**: Interactive Theme Gallery with category filters (Cyberpunk, Matrix, Dracula, Solarized, Nord, Celestial) and an interactive particle canvas on the welcome screen.
+- 🤖 **Universal AI DevOps Assistant**: Integrated diagnostic AI companion to assist with shell commands, log debugging, and automation scripts.
+- ♿ **Full WCAG 2.1 Accessibility & Compliance**: Added complete ARIA semantics, interactive GDPR privacy consent controls, and enterprise documentation ([PRIVACY.md](PRIVACY.md), [TERMS.md](TERMS.md), [COOKIE_POLICY.md](COOKIE_POLICY.md)).
+- 📥 **Direct Platform Downloads**: Windows setup installer and portable archive, macOS app bundle, and Linux binary archive are attached to each GitHub release. Linux requires GTK 3 and WebKit2GTK runtime libraries.
 
 ---
 
