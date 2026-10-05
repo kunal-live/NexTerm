@@ -8352,6 +8352,20 @@ body[data-theme="light-modern"] #homeViewDocsBtn:hover svg {
     radial-gradient(1.8px 1.8px at 168px 128px, rgba(46, 182, 125, 0.85), transparent);
 }
 
+/* 15. Linux Console (Pure Black) */
+[data-theme="linux-black"] .welcome-dashboard {
+  background:
+    radial-gradient(1100px 620px at 85% -10%, rgba(78, 154, 6, 0.12) 0%, transparent 60%),
+    radial-gradient(900px 520px at 15% 10%, rgba(52, 101, 164, 0.10) 0%, transparent 55%),
+    linear-gradient(180deg, #000000 0%, #050505 60%, #0a0a0a 100%) !important;
+}
+[data-theme="linux-black"] .welcome-dashboard::before {
+  background-image:
+    radial-gradient(1.6px 1.6px at 24px 32px, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1.2px 1.2px at 108px 76px, rgba(78, 154, 6, 0.75), transparent),
+    radial-gradient(1.8px 1.8px at 168px 128px, rgba(52, 101, 164, 0.75), transparent);
+}
+
 /* ==========================================================================
    Planetary Atmospheric Dashboards & Hero Art Showcase
    ========================================================================== */

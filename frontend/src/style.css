@@ -466,6 +466,35 @@
   --text-dim: #7c8b82;
 }
 
+/* Linux Console — Pure Pitch Black Terminal Theme */
+[data-theme="linux-black"] {
+  --bg-app: #000000;
+  --bg-topbar: #0a0a0a;
+  --bg-menubar: #050505;
+  --bg-toolbar: #0c0c0c;
+  --bg-sidebar: #080808;
+  --bg-sidebar-strip: #040404;
+  --bg-workspace: #000000;
+  --bg-card: #111111;
+  --bg-card-hover: #1a1a1a;
+  --bg-input: #080808;
+  --bg-input-border: #2a2a2a;
+
+  --border-subtle: #1c1c1c;
+  --border-active: #4e9a06;
+
+  --accent-cyan: #06989a;
+  --accent-blue: #3465a4;
+  --accent-green: #4e9a06;
+  --accent-amber: #c4a000;
+  --accent-rose: #cc0000;
+  --accent-purple: #75507b;
+
+  --text-primary: #f2f2f2;
+  --text-muted: #d3d7cf;
+  --text-dim: #767676;
+}
+
 /* ==========================================================================
    Planetary Contrast Themes — Solar System Collection
    ========================================================================== */

@@ -160,6 +160,17 @@ const THEME_PALETTES = {
     ],
     meteor: "#36c5f0"
   },
+  "linux-black": {
+    stars: ["#ffffff", "#d3d7cf", "#4e9a06", "#8ae234", "#3465a4", "#729fcf"],
+    halo: "rgba(255, 255, 255, 0.35)",
+    filaments: "rgba(78, 154, 6, 0.2)",
+    nebulae: [
+      { color: "rgba(255, 255, 255, 0.04)", r: 180 },
+      { color: "rgba(78, 154, 6, 0.05)", r: 160 },
+      { color: "rgba(52, 101, 164, 0.05)", r: 150 }
+    ],
+    meteor: "#ffffff"
+  },
   "light-modern": {
     stars: ["#0284c7", "#0891b2", "#16a34a", "#d97706", "#9333ea", "#475569"],
     halo: "rgba(2, 132, 199, 0.35)",

@@ -309,6 +309,29 @@ export const THEMES = {
     brightCyan: "#67e8f9",
     brightWhite: "#ffffff"
   },
+  "linux-black": {
+    background: "#000000",
+    foreground: "#f2f2f2",
+    cursor: "#ffffff",
+    cursorAccent: "#000000",
+    selectionBackground: "rgba(255, 255, 255, 0.25)",
+    black: "#000000",
+    red: "#cc0000",
+    green: "#4e9a06",
+    yellow: "#c4a000",
+    blue: "#3465a4",
+    magenta: "#75507b",
+    cyan: "#06989a",
+    white: "#d3d7cf",
+    brightBlack: "#555753",
+    brightRed: "#ef2929",
+    brightGreen: "#8ae234",
+    brightYellow: "#fce94f",
+    brightBlue: "#729fcf",
+    brightMagenta: "#ad7fa8",
+    brightCyan: "#34e2e2",
+    brightWhite: "#ffffff"
+  },
   "tokyo-night": {
     background: "#1a1b26",
     foreground: "#a9b1d6",
@@ -725,6 +748,12 @@ export const THEME_METADATA = {
     icon: "💬",
     swatches: ["#222222", "#1b1d21", "#36c5f0", "#ecb22e", "#e01e5a"]
   },
+  "linux-black": {
+    name: "Linux Console (Pure Black)",
+    desc: "Classic Linux TTY terminal with pitch black background, crisp white console text, and VGA ANSI colors",
+    icon: "🐧",
+    swatches: ["#000000", "#111111", "#4e9a06", "#3465a4", "#ffffff"]
+  },
   "light-modern": {
     name: "Modern Light",
     desc: "Clean porcelain white with high-contrast text and crisp cyan highlights",
@@ -865,10 +894,12 @@ export function showThemePickerDialog() {
         </div>`;
       }
     } else if (idx === 0) {
+      const allThemeEntries = Object.keys(THEME_METADATA);
+      const stdCount = allThemeEntries.filter(k => !k.startsWith("planet-")).length;
       divider = `<div class="theme-section-divider" data-section="standard">
         <div class="theme-section-left">
           <span class="theme-section-title">🎨 Standard Themes</span>
-          <span class="theme-section-tag">16 Themes</span>
+          <span class="theme-section-tag">${stdCount} Themes</span>
         </div>
         <span class="theme-section-sub">Popular developer dark themes and clean light modes</span>
       </div>`;
@@ -895,6 +926,10 @@ export function showThemePickerDialog() {
     `;
   }).join("");
 
+  const allThemesTotal = Object.keys(THEME_METADATA).length;
+  const planetThemesTotal = Object.keys(THEME_METADATA).filter(k => k.startsWith("planet-")).length;
+  const standardThemesTotal = allThemesTotal - planetThemesTotal;
+
   const box = showModal(`
     <div class="modal-header">
       <div class="modal-title">🎨 Application UI Theme Gallery</div>
@@ -903,9 +938,9 @@ export function showThemePickerDialog() {
     <div class="modal-body">
       <div class="theme-gallery-toolbar">
         <div class="theme-filter-tabs" id="themeFilterTabs">
-          <button class="theme-filter-btn active" data-filter="all">All (25)</button>
-          <button class="theme-filter-btn" data-filter="planets">🪐 Solar System (9)</button>
-          <button class="theme-filter-btn" data-filter="standard">🎨 Standard (16)</button>
+          <button class="theme-filter-btn active" data-filter="all">All (${allThemesTotal})</button>
+          <button class="theme-filter-btn" data-filter="planets">🪐 Solar System (${planetThemesTotal})</button>
+          <button class="theme-filter-btn" data-filter="standard">🎨 Standard (${standardThemesTotal})</button>
         </div>
         <input type="text" id="themeSearchInput" class="theme-search-input" placeholder="🔍 Search themes..." autocomplete="off" />
       </div>
@@ -1049,6 +1084,7 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
               <option value="one-dark" ${userSettings.theme === 'one-dark' ? 'selected' : ''}>⚛️ Atom One Dark (Refined Slate & Cornflower)</option>
               <option value="avisys-navy" ${userSettings.theme === 'avisys-navy' ? 'selected' : ''}>⚓ Avisys Corporate Navy (Midnight Enterprise)</option>
               <option value="slack-dark" ${userSettings.theme === 'slack-dark' ? 'selected' : ''}>💬 Slack Theme Dark Mode (Classic Aubergine & Cyan)</option>
+              <option value="linux-black" ${userSettings.theme === 'linux-black' ? 'selected' : ''}>🐧 Linux Console (Pure Black)</option>
               <option value="light-modern" ${userSettings.theme === 'light-modern' ? 'selected' : ''}>☀️ Modern Light (Clean Porcelain White)</option>
             </optgroup>
             <optgroup label="🪐 Solar System Collection (Planetary Contrast)">
@@ -1452,6 +1488,7 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
               <option value="one-dark">⚛️ Atom One Dark (Refined Slate & Cornflower)</option>
               <option value="avisys-navy">⚓ Avisys Corporate Navy (Midnight Enterprise)</option>
               <option value="slack-dark">💬 Slack Theme Dark Mode (Classic Aubergine & Cyan)</option>
+              <option value="linux-black">🐧 Linux Console (Pure Black)</option>
               <option value="light-modern">☀️ Modern Light (Clean Porcelain White)</option>
             </select>
           </div>
