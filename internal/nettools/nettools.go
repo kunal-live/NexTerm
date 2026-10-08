@@ -45,6 +45,14 @@ var commonServices = map[int]string{
 	27017: "MongoDB",
 }
 
+// LookupService returns the standard service name for a port.
+func LookupService(port int) string {
+	if s, ok := commonServices[port]; ok {
+		return s
+	}
+	return fmt.Sprintf("Port %d", port)
+}
+
 // Ping executes a system ping command and returns formatted statistics.
 func Ping(host string) (string, error) {
 	if host == "" {

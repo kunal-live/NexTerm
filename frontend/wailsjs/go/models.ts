@@ -385,6 +385,40 @@ export namespace nettools {
 	        this.latency = source["latency"];
 	    }
 	}
+	export class ServerReachability {
+	    host: string;
+	    port: number;
+	    online: boolean;
+	    latencyMs: number;
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ServerReachability(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.host = source["host"];
+	        this.port = source["port"];
+	        this.online = source["online"];
+	        this.latencyMs = source["latencyMs"];
+	        this.error = source["error"];
+	    }
+	}
+	export class TargetQuery {
+	    host: string;
+	    port: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new TargetQuery(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.host = source["host"];
+	        this.port = source["port"];
+	    }
+	}
 
 }
 

@@ -11,9 +11,12 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/crypto/ssh"
 
 	"nexterm/internal/hostkey"
 	"nexterm/internal/macro"
@@ -1284,6 +1287,236 @@ func (a *App) CheckServersReachability(targets []nettools.TargetQuery, timeoutMs
 
 func (a *App) PingTarget(host string, port int, timeoutMs int) nettools.ServerReachability {
 	return nettools.PingTarget(host, port, timeoutMs)
+}
+
+type ConnectionTestResult struct {
+	Success       bool   `json:"success"`
+	Reachable     bool   `json:"reachable"`
+	Authenticated bool   `json:"authenticated"`
+	LatencyMs     int64  `json:"latencyMs"`
+	Banner        string `json:"banner,omitempty"`
+	Message       string `json:"message"`
+	Error         string `json:"error,omitempty"`
+}
+
+func (a *App) ScanPorts(host string, portStr string, timeoutMs int) []nettools.PortScanResult {
+	if host == "" {
+		return nil
+	}
+	port, err := strconv.Atoi(portStr)
+	if err != nil || port <= 0 {
+		port = 22
+	}
+	if timeoutMs <= 0 {
+		timeoutMs = 3000
+	}
+	res := nettools.PingTarget(host, port, timeoutMs)
+	latencyStr := "-"
+	if res.Online {
+		latencyStr = fmt.Sprintf("%d ms", res.LatencyMs)
+	}
+	return []nettools.PortScanResult{
+		{
+			Port:    port,
+			Open:    res.Online,
+			Service: nettools.LookupService(port),
+			Latency: latencyStr,
+		},
+	}
+}
+
+func (a *App) TestSessionConnection(profile model.SessionProfile, password string) (ConnectionTestResult, error) {
+	proto := strings.ToLower(profile.Protocol)
+	if proto == "" {
+		proto = "ssh"
+	}
+
+	if proto == "local" {
+		return ConnectionTestResult{
+			Success:   true,
+			Reachable: true,
+			Message:   "Local shell environment is available and ready.",
+		}, nil
+	}
+
+	if proto == "serial" {
+		if profile.SerialPort == "" {
+			return ConnectionTestResult{
+				Success: false,
+				Message: "Serial port is empty. Please select a valid COM port.",
+			}, nil
+		}
+		available := a.GetAvailableSerialPorts()
+		found := false
+		for _, p := range available {
+			if strings.EqualFold(p, profile.SerialPort) {
+				found = true
+				break
+			}
+		}
+		if found {
+			return ConnectionTestResult{
+				Success:   true,
+				Reachable: true,
+				Message:   fmt.Sprintf("Serial port %s is detected on this system.", profile.SerialPort),
+			}, nil
+		}
+		return ConnectionTestResult{
+			Success: false,
+			Message: fmt.Sprintf("Serial port %s is not detected or currently in use.", profile.SerialPort),
+		}, nil
+	}
+
+	if strings.TrimSpace(profile.Host) == "" {
+		return ConnectionTestResult{
+			Success: false,
+			Message: "Remote Host / IP cannot be empty.",
+		}, fmt.Errorf("remote host cannot be empty")
+	}
+
+	port := profile.Port
+	if port <= 0 {
+		switch proto {
+		case "rdp":
+			port = 3389
+		case "vnc":
+			port = 5900
+		case "telnet":
+			port = 23
+		default:
+			port = 22
+		}
+	}
+
+	// 1. Probe TCP port reachability
+	pingRes := nettools.PingTarget(profile.Host, port, 3500)
+	if !pingRes.Online {
+		errMsg := pingRes.Error
+		if errMsg == "" {
+			errMsg = "Connection timed out"
+		}
+		return ConnectionTestResult{
+			Success:   false,
+			Reachable: false,
+			LatencyMs: -1,
+			Message:   fmt.Sprintf("Cannot reach %s:%d (Port closed or %s).", profile.Host, port, errMsg),
+			Error:     errMsg,
+		}, nil
+	}
+
+	// Target port is reachable!
+	if proto != "ssh" && proto != "sftp" {
+		return ConnectionTestResult{
+			Success:   true,
+			Reachable: true,
+			LatencyMs: pingRes.LatencyMs,
+			Message:   fmt.Sprintf("Port %d is open on %s and reachable (%d ms latency)!", port, profile.Host, pingRes.LatencyMs),
+		}, nil
+	}
+
+	// For SSH/SFTP: If no username is provided, verify port reachability
+	if strings.TrimSpace(profile.Username) == "" {
+		return ConnectionTestResult{
+			Success:   true,
+			Reachable: true,
+			LatencyMs: pingRes.LatencyMs,
+			Message:   fmt.Sprintf("SSH port %d on %s is open and responsive (%d ms latency)! Enter username to test credentials.", port, profile.Host, pingRes.LatencyMs),
+		}, nil
+	}
+
+	// Username provided: test SSH authentication handshake
+	// Retrieve password from vault if not supplied
+	if password == "" && a.credentialService != nil {
+		vKey := profile.VaultKey
+		if vKey == "" {
+			vKey = profile.ID
+		}
+		if vKey != "" {
+			if saved, err := a.credentialService.GetSessionPassword(vKey); err == nil && saved != "" {
+				password = saved
+			}
+		}
+	}
+
+	var authMethods []ssh.AuthMethod
+	if password != "" {
+		authMethods = append(authMethods, ssh.Password(password), ssh.KeyboardInteractive(func(user, instruction string, questions []string, echos []bool) ([]string, error) {
+			answers := make([]string, len(questions))
+			for i := range questions {
+				answers[i] = password
+			}
+			return answers, nil
+		}))
+	}
+
+	if profile.PrivateKeyPath != "" {
+		keyBytes, err := os.ReadFile(profile.PrivateKeyPath)
+		if err == nil {
+			var signer ssh.Signer
+			if profile.KeyPassphrase != "" {
+				signer, err = ssh.ParsePrivateKeyWithPassphrase(keyBytes, []byte(profile.KeyPassphrase))
+			} else {
+				signer, err = ssh.ParsePrivateKey(keyBytes)
+			}
+			if err == nil && signer != nil {
+				authMethods = append(authMethods, ssh.PublicKeys(signer))
+			}
+		}
+	}
+
+	if len(authMethods) == 0 {
+		return ConnectionTestResult{
+			Success:   true,
+			Reachable: true,
+			LatencyMs: pingRes.LatencyMs,
+			Message:   fmt.Sprintf("SSH port %d on %s is open (%d ms latency). No password or private key provided yet.", port, profile.Host, pingRes.LatencyMs),
+		}, nil
+	}
+
+	clientConfig := &ssh.ClientConfig{
+		User:            profile.Username,
+		Auth:            authMethods,
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		Timeout:         5 * time.Second,
+	}
+
+	targetAddr := fmt.Sprintf("%s:%d", profile.Host, port)
+	client, err := ssh.Dial("tcp", targetAddr, clientConfig)
+	if err != nil {
+		errStr := err.Error()
+		low := strings.ToLower(errStr)
+		if strings.Contains(low, "unable to authenticate") ||
+			strings.Contains(low, "handshake failed") ||
+			strings.Contains(low, "permission denied") {
+			return ConnectionTestResult{
+				Success:       false,
+				Reachable:     true,
+				Authenticated: false,
+				LatencyMs:     pingRes.LatencyMs,
+				Message:       fmt.Sprintf("Server reachable (%d ms), but authentication failed! Please verify username or password.", pingRes.LatencyMs),
+				Error:         errStr,
+			}, nil
+		}
+		return ConnectionTestResult{
+			Success:       false,
+			Reachable:     true,
+			Authenticated: false,
+			LatencyMs:     pingRes.LatencyMs,
+			Message:       fmt.Sprintf("SSH handshake error on %s:%d: %v", profile.Host, port, err),
+			Error:         errStr,
+		}, nil
+	}
+	defer client.Close()
+
+	serverVer := string(client.ServerVersion())
+	return ConnectionTestResult{
+		Success:       true,
+		Reachable:     true,
+		Authenticated: true,
+		LatencyMs:     pingRes.LatencyMs,
+		Banner:        serverVer,
+		Message:       fmt.Sprintf("Connected & Authenticated to %s:%d! (%s, %d ms)", profile.Host, port, serverVer, pingRes.LatencyMs),
+	}, nil
 }
 
 // =========================================================================

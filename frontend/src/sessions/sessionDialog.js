@@ -1631,27 +1631,75 @@ export async function showNewSessionDialog(parentFolderId = "", editProfile = nu
   const testConnBtn = box.querySelector("#modalTestConnect");
   if (testConnBtn) {
     testConnBtn.onclick = async () => {
-      const host = box.querySelector("#sHost")?.value.trim();
+      const host = box.querySelector("#sHost")?.value.trim() || "";
       if (currentProto !== "serial" && currentProto !== "local" && !host) {
         showToast("Enter Remote Host / IP to test connection", "error");
+        if (box.querySelector("#sHost")) box.querySelector("#sHost").focus();
         return;
       }
-      const port = parseInt(box.querySelector("#sPort")?.value, 10) || (currentProto === "rdp" ? 3389 : 22);
+      const port = parseInt(box.querySelector("#sPort")?.value, 10) || (currentProto === "rdp" ? 3389 : (currentProto === "vnc" ? 5900 : (currentProto === "telnet" ? 23 : 22)));
+      const username = box.querySelector("#sUsername")?.value.trim() || "";
+      const password = box.querySelector("#sPassword")?.value || "";
+      const keyPath = box.querySelector("#sKeyPath")?.value.trim() || "";
+      const passphrase = box.querySelector("#sKeyPassphrase")?.value || "";
+      const authType = box.querySelector("#sAuthType")?.value || "password";
+      const serialPort = box.querySelector("#sSerialPort")?.value || "";
+
       testConnBtn.disabled = true;
       testConnBtn.textContent = "⏳ Testing...";
+
+      const testProfile = {
+        protocol: currentProto || "ssh",
+        host: host,
+        port: port,
+        username: username,
+        authType: authType,
+        privateKeyPath: keyPath,
+        keyPassphrase: passphrase,
+        serialPort: serialPort,
+        vaultKey: isEdit ? (editNode?.session?.vaultKey || editNode?.session?.id || "") : ""
+      };
+
       try {
+        if (window.go && window.go.main && window.go.main.App && window.go.main.App.TestSessionConnection) {
+          const res = await window.go.main.App.TestSessionConnection(testProfile, password);
+          if (res) {
+            if (res.success) {
+              showToast(res.message || `✅ Connection successful! (${host}:${port})`, "success");
+            } else if (res.reachable && !res.authenticated) {
+              showToast(res.message || `⚠️ Port reachable, but authentication failed. Check credentials.`, "warning");
+            } else {
+              showToast(res.message || `❌ Cannot reach ${host}:${port}`, "error");
+            }
+            return;
+          }
+        }
+
+        // Fallback to PingTarget
+        if (window.go && window.go.main && window.go.main.App && window.go.main.App.PingTarget) {
+          const res = await window.go.main.App.PingTarget(host, port, 3500);
+          if (res && res.online) {
+            showToast(`✅ Port ${port} is open and reachable on ${host} (${res.latencyMs} ms)!`, "success");
+          } else {
+            showToast(`❌ Cannot reach ${host}:${port} (${res?.error || 'Timed out / closed'})`, "error");
+          }
+          return;
+        }
+
+        // Fallback to ScanPorts
         if (window.go && window.go.main && window.go.main.App && window.go.main.App.ScanPorts) {
-          const res = await window.go.main.App.ScanPorts(host, String(port), 4000);
+          const res = await window.go.main.App.ScanPorts(host, String(port), 3500);
           if (res && res.length > 0 && res[0].open) {
-            showToast(`✅ Port ${port} reachable on ${host}!`, "success");
+            showToast(`✅ Port ${port} reachable on ${host}! (${res[0].latency})`, "success");
           } else {
             showToast(`⚠️ Cannot reach ${host}:${port} (Port closed or timed out)`, "warning");
           }
-        } else {
-          showToast(`Configuration for ${host}:${port} is valid!`, "success");
+          return;
         }
+
+        showToast(`Configuration for ${host}:${port} is valid!`, "info");
       } catch (err) {
-        showToast("Test connection failed: " + err, "error");
+        showToast("Test connection failed: " + (err && err.message ? err.message : err), "error");
       } finally {
         testConnBtn.disabled = false;
         testConnBtn.textContent = "🧪 Test Connection";

@@ -82,10 +82,6 @@ export function CheckServersReachability(arg1, arg2) {
   return window['go']['main']['App']['CheckServersReachability'](arg1, arg2);
 }
 
-export function PingTarget(arg1, arg2, arg3) {
-  return window['go']['main']['App']['PingTarget'](arg1, arg2, arg3);
-}
-
 export function ClassifyConnectionError(arg1) {
   return window['go']['main']['App']['ClassifyConnectionError'](arg1);
 }
@@ -342,6 +338,10 @@ export function OpenSessionWithTabIDAndJumpSecret(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['OpenSessionWithTabIDAndJumpSecret'](arg1, arg2, arg3, arg4);
 }
 
+export function PingTarget(arg1, arg2, arg3) {
+  return window['go']['main']['App']['PingTarget'](arg1, arg2, arg3);
+}
+
 export function QuickConnect(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['QuickConnect'](arg1, arg2, arg3, arg4, arg5);
 }
@@ -532,6 +532,14 @@ export function SetWorkspaceActiveTab(arg1, arg2) {
 
 export function SetWorkspaceLayout(arg1) {
   return window['go']['main']['App']['SetWorkspaceLayout'](arg1);
+}
+
+export function ScanPorts(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ScanPorts'](arg1, arg2, arg3);
+}
+
+export function TestSessionConnection(arg1, arg2) {
+  return window['go']['main']['App']['TestSessionConnection'](arg1, arg2);
 }
 
 export function StartTunnel(arg1, arg2) {
