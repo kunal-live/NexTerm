@@ -17,17 +17,6 @@ const THEME_PALETTES = {
     ],
     meteor: "#7dcfff"
   },
-  "catppuccin-mocha": {
-    stars: ["#cba6f7", "#89b4fa", "#a6e3a1", "#f9e2af", "#f5e0dc", "#cdd6f4"],
-    halo: "rgba(203, 166, 247, 0.45)",
-    filaments: "rgba(137, 180, 250, 0.22)",
-    nebulae: [
-      { color: "rgba(203, 166, 247, 0.07)", r: 170 },
-      { color: "rgba(137, 180, 250, 0.07)", r: 180 },
-      { color: "rgba(166, 227, 161, 0.05)", r: 130 }
-    ],
-    meteor: "#cba6f7"
-  },
   "gruvbox-dark": {
     stars: ["#fe8019", "#fabd2f", "#b8bb26", "#8ec07c", "#ebdbb2", "#d3869b"],
     halo: "rgba(254, 128, 25, 0.45)",
@@ -49,17 +38,6 @@ const THEME_PALETTES = {
       { color: "rgba(156, 207, 216, 0.06)", r: 130 }
     ],
     meteor: "#ebbcba"
-  },
-  "github-dark": {
-    stars: ["#58a6ff", "#79c0ff", "#3fb950", "#bc8cff", "#f0f6fc", "#d29922"],
-    halo: "rgba(88, 166, 255, 0.45)",
-    filaments: "rgba(88, 166, 255, 0.22)",
-    nebulae: [
-      { color: "rgba(88, 166, 255, 0.07)", r: 170 },
-      { color: "rgba(63, 185, 80, 0.05)", r: 150 },
-      { color: "rgba(188, 140, 255, 0.06)", r: 140 }
-    ],
-    meteor: "#79c0ff"
   },
   "nord": {
     stars: ["#88c0d0", "#81a1c1", "#a3be8c", "#ebcb8b", "#eceff4", "#b48ead"],
@@ -127,38 +105,16 @@ const THEME_PALETTES = {
     ],
     meteor: "#00ff41"
   },
-  "one-dark": {
-    stars: ["#61afef", "#c678dd", "#98c379", "#e5c07b", "#e06c75", "#abb2bf"],
-    halo: "rgba(97, 175, 239, 0.45)",
-    filaments: "rgba(198, 120, 221, 0.22)",
+  "crimson-sunset": {
+    stars: ["#f43f5e", "#fb923c", "#fb7185", "#fda4af", "#fff1f2", "#e11d48"],
+    halo: "rgba(244, 63, 94, 0.55)",
+    filaments: "rgba(251, 146, 60, 0.28)",
     nebulae: [
-      { color: "rgba(97, 175, 239, 0.07)", r: 170 },
-      { color: "rgba(198, 120, 221, 0.06)", r: 180 },
-      { color: "rgba(152, 195, 121, 0.05)", r: 130 }
+      { color: "rgba(244, 63, 94, 0.1)", r: 180 },
+      { color: "rgba(251, 146, 60, 0.08)", r: 170 },
+      { color: "rgba(225, 29, 72, 0.06)", r: 140 }
     ],
-    meteor: "#61afef"
-  },
-  "avisys-navy": {
-    stars: ["#38bdf8", "#4ade80", "#22d3ee", "#f8fafc", "#818cf8", "#facc15"],
-    halo: "rgba(56, 189, 248, 0.5)",
-    filaments: "rgba(56, 189, 248, 0.25)",
-    nebulae: [
-      { color: "rgba(56, 189, 248, 0.08)", r: 180 },
-      { color: "rgba(74, 222, 128, 0.05)", r: 150 },
-      { color: "rgba(37, 99, 235, 0.07)", r: 170 }
-    ],
-    meteor: "#38bdf8"
-  },
-  "slack-dark": {
-    stars: ["#36c5f0", "#ecb22e", "#e01e5a", "#2eb67d", "#e1e4e8", "#9c27b0"],
-    halo: "rgba(54, 197, 240, 0.45)",
-    filaments: "rgba(236, 178, 46, 0.22)",
-    nebulae: [
-      { color: "rgba(54, 197, 240, 0.07)", r: 170 },
-      { color: "rgba(236, 178, 46, 0.06)", r: 180 },
-      { color: "rgba(224, 30, 90, 0.05)", r: 130 }
-    ],
-    meteor: "#36c5f0"
+    meteor: "#f43f5e"
   },
   "linux-black": {
     stars: ["#ffffff", "#d3d7cf", "#4e9a06", "#8ae234", "#3465a4", "#729fcf"],
@@ -602,7 +558,8 @@ export function initUniverseAnimation() {
       }
     }
 
-    // 3. Draw ethereal cosmic constellation filaments
+    // 3. Constellation filaments and shooting star streaks disabled to prevent light line artifacts across the dashboard
+    /*
     ctx.save();
     ctx.strokeStyle = palette.filaments;
     ctx.lineWidth = 0.85;
@@ -627,17 +584,7 @@ export function initUniverseAnimation() {
       }
     }
     ctx.restore();
-
-    // 4. Update & draw cosmic shooting stars
-    maybeSpawnShootingStar(timestamp, palette);
-    for (let i = shootingStars.length - 1; i >= 0; i--) {
-      const s = shootingStars[i];
-      s.update();
-      s.draw(ctx);
-      if (!s.active) {
-        shootingStars.splice(i, 1);
-      }
-    }
+    */
 
     animId = requestAnimationFrame(render);
   }

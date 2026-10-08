@@ -318,53 +318,19 @@ export function initPlanetHero() {
   heroArtContainer = document.querySelector(".nx-hero-art");
   if (!heroArtContainer) return;
 
-  // Render the glassmorphic Planetary Showcase Card
+  // Render the minimalist glassmorphic Planetary Theme Badge
   heroArtContainer.innerHTML = `
-    <div class="nx-planet-card" id="nxPlanetCard">
-      <!-- Left Column: Header, Epithet, Infrastructure Metaphor, Action Buttons -->
-      <div class="nx-planet-card-main">
-        <div class="nx-planet-header">
-          <span class="nx-planet-dot" id="nxPlanetDot"></span>
-          <h2 class="nx-planet-title" id="nxPlanetTitle">Jupiter</h2>
-        </div>
-        <div class="nx-planet-epithet" id="nxPlanetEpithet">The Guardian</div>
-        <p class="nx-planet-desc" id="nxPlanetDesc">
-          The largest planet in our solar system, symbolizing power, stability and limitless possibilities — just like your infrastructure.
-        </p>
-        <div class="nx-planet-actions">
-          <button class="nx-planet-explore-btn" id="nxPlanetExploreBtn" type="button" title="Explore next planet in the Solar System">
-            <span>Explore Space</span>
-            <svg class="nx-btn-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-          </button>
-          <div class="nx-planet-quick-nav">
-            <button class="nx-pnav-btn" id="nxPlanetPrevBtn" type="button" title="Previous Planet">‹</button>
-            <span class="nx-pnav-index" id="nxPlanetNavIndex">5 / 9</span>
-            <button class="nx-pnav-btn" id="nxPlanetNextBtn" type="button" title="Next Planet">›</button>
-          </div>
-        </div>
+    <div class="nx-planet-card nx-planet-badge" id="nxPlanetCard" title="Planetary cosmic theme selector">
+      <div class="nx-planet-badge-left">
+        <span class="nx-planet-dot" id="nxPlanetDot"></span>
+        <span class="nx-planet-title" id="nxPlanetTitle">Neptune</span>
+        <span class="nx-planet-sep">·</span>
+        <span class="nx-planet-epithet" id="nxPlanetEpithet">The Mystic Voyager</span>
       </div>
-
-      <!-- Right Column: 4 Telemetry Stats (Diameter, Moons, Type, Distance from Sun) -->
-      <div class="nx-planet-stats-grid">
-        <div class="nx-pstat-box">
-          <div class="nx-pstat-label">DIAMETER</div>
-          <div class="nx-pstat-val" id="nxPstatDiameter">142,984 km</div>
-        </div>
-        <div class="nx-pstat-box">
-          <div class="nx-pstat-label">MOONS</div>
-          <div class="nx-pstat-val" id="nxPstatMoons">95+</div>
-        </div>
-        <div class="nx-pstat-box">
-          <div class="nx-pstat-label">TYPE</div>
-          <div class="nx-pstat-val" id="nxPstatType">Gas Giant</div>
-        </div>
-        <div class="nx-pstat-box">
-          <div class="nx-pstat-label">DISTANCE FROM SUN</div>
-          <div class="nx-pstat-val" id="nxPstatDistance">778.5M km</div>
-        </div>
+      <div class="nx-planet-quick-nav">
+        <button class="nx-pnav-btn" id="nxPlanetPrevBtn" type="button" title="Previous Planet Theme">‹</button>
+        <span class="nx-pnav-index" id="nxPlanetNavIndex">8 / 9</span>
+        <button class="nx-pnav-btn" id="nxPlanetNextBtn" type="button" title="Next Planet Theme">›</button>
       </div>
     </div>
   `;
@@ -374,7 +340,7 @@ export function initPlanetHero() {
   const prevBtn = heroArtContainer.querySelector("#nxPlanetPrevBtn");
   const nextBtn = heroArtContainer.querySelector("#nxPlanetNextBtn");
 
-  // Cycle to next planet on "Explore Space"
+  // Cycle to next planet on "Explore Space" if present
   if (exploreBtn) {
     exploreBtn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -538,9 +504,10 @@ export function updatePlanetHero(themeKey) {
       }
     }
 
-    // Update Atmospheric Corona
+    // Atmospheric Corona element disabled to prevent vertical rectangular light line artifacts across the planet
     if (coronaRim) {
-      coronaRim.style.boxShadow = `0 0 100px 30px ${data.corona}`;
+      coronaRim.style.boxShadow = "none";
+      coronaRim.style.display = "none";
     }
 
     // Ambient Backdrop

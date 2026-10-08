@@ -171,27 +171,27 @@ export const THEMES = {
     brightCyan: "#a4ffff",
     brightWhite: "#ffffff"
   },
-  "one-dark": {
-    background: "#1e1e1e",
-    foreground: "#abb2bf",
-    cursor: "#528bff",
-    cursorAccent: "#1e1e1e",
-    selectionBackground: "rgba(62, 68, 81, 0.8)",
-    black: "#282c34",
-    red: "#e06c75",
-    green: "#98c379",
-    yellow: "#e5c07b",
-    blue: "#61afef",
-    magenta: "#c678dd",
-    cyan: "#56b6c2",
-    white: "#abb2bf",
-    brightBlack: "#5c6370",
-    brightRed: "#e06c75",
-    brightGreen: "#98c379",
-    brightYellow: "#e5c07b",
-    brightBlue: "#61afef",
-    brightMagenta: "#c678dd",
-    brightCyan: "#56b6c2",
+  "crimson-sunset": {
+    background: "#150608",
+    foreground: "#fff1f2",
+    cursor: "#f43f5e",
+    cursorAccent: "#150608",
+    selectionBackground: "rgba(244, 63, 94, 0.35)",
+    black: "#240a0f",
+    red: "#f43f5e",
+    green: "#34d399",
+    yellow: "#fb923c",
+    blue: "#fb7185",
+    magenta: "#e11d48",
+    cyan: "#fda4af",
+    white: "#fff1f2",
+    brightBlack: "#4c141d",
+    brightRed: "#ff4d6d",
+    brightGreen: "#4ade80",
+    brightYellow: "#fba655",
+    brightBlue: "#fda4af",
+    brightMagenta: "#f43f5e",
+    brightCyan: "#ffe4e6",
     brightWhite: "#ffffff"
   },
   "matrix": {
@@ -240,29 +240,6 @@ export const THEMES = {
     brightCyan: "#9b4dca",
     brightWhite: "#ffffff"
   },
-  "avisys-navy": {
-    background: "#0b1528",
-    foreground: "#e2e8f0",
-    cursor: "#38bdf8",
-    cursorAccent: "#0b1528",
-    selectionBackground: "rgba(14, 165, 233, 0.35)",
-    black: "#0f172a",
-    red: "#f87171",
-    green: "#4ade80",
-    yellow: "#facc15",
-    blue: "#38bdf8",
-    magenta: "#c084fc",
-    cyan: "#22d3ee",
-    white: "#f8fafc",
-    brightBlack: "#334155",
-    brightRed: "#fca5a5",
-    brightGreen: "#86efac",
-    brightYellow: "#fde047",
-    brightBlue: "#7dd3fc",
-    brightMagenta: "#d8b4fe",
-    brightCyan: "#67e8f9",
-    brightWhite: "#ffffff"
-  },
   "light-modern": {
     background: "#f8fafc",
     foreground: "#0f172a",
@@ -284,29 +261,6 @@ export const THEMES = {
     brightBlue: "#38bdf8",
     brightMagenta: "#a855f7",
     brightCyan: "#06b6d4",
-    brightWhite: "#ffffff"
-  },
-  "slack-dark": {
-    background: "#222222",
-    foreground: "#e1e4e8",
-    cursor: "#36c5f0",
-    cursorAccent: "#222222",
-    selectionBackground: "rgba(54, 197, 240, 0.35)",
-    black: "#1b1d21",
-    red: "#e01e5a",
-    green: "#2eb67d",
-    yellow: "#ecb22e",
-    blue: "#36c5f0",
-    magenta: "#e01e5a",
-    cyan: "#36c5f0",
-    white: "#e1e4e8",
-    brightBlack: "#565b62",
-    brightRed: "#e57373",
-    brightGreen: "#34d399",
-    brightYellow: "#fde047",
-    brightBlue: "#38bdf8",
-    brightMagenta: "#f43f5e",
-    brightCyan: "#67e8f9",
     brightWhite: "#ffffff"
   },
   "linux-black": {
@@ -355,29 +309,6 @@ export const THEMES = {
     brightCyan: "#7dcfff",
     brightWhite: "#c0caf5"
   },
-  "catppuccin-mocha": {
-    background: "#1e1e2e",
-    foreground: "#cdd6f4",
-    cursor: "#f5e0dc",
-    cursorAccent: "#1e1e2e",
-    selectionBackground: "rgba(203, 166, 247, 0.3)",
-    black: "#45475a",
-    red: "#f38ba8",
-    green: "#a6e3a1",
-    yellow: "#f9e2af",
-    blue: "#89b4fa",
-    magenta: "#cba6f7",
-    cyan: "#94e2d5",
-    white: "#bac2de",
-    brightBlack: "#585b70",
-    brightRed: "#f38ba8",
-    brightGreen: "#a6e3a1",
-    brightYellow: "#f9e2af",
-    brightBlue: "#89b4fa",
-    brightMagenta: "#cba6f7",
-    brightCyan: "#94e2d5",
-    brightWhite: "#a6adc8"
-  },
   "gruvbox-dark": {
     background: "#282828",
     foreground: "#ebdbb2",
@@ -423,29 +354,6 @@ export const THEMES = {
     brightMagenta: "#c4a7e7",
     brightCyan: "#ebbcba",
     brightWhite: "#e0def4"
-  },
-  "github-dark": {
-    background: "#0d1117",
-    foreground: "#c9d1d9",
-    cursor: "#58a6ff",
-    cursorAccent: "#0d1117",
-    selectionBackground: "rgba(56, 139, 253, 0.3)",
-    black: "#161b22",
-    red: "#ff7b72",
-    green: "#3fb950",
-    yellow: "#d29922",
-    blue: "#58a6ff",
-    magenta: "#bc8cff",
-    cyan: "#39c5cf",
-    white: "#b1bac4",
-    brightBlack: "#484f58",
-    brightRed: "#ffa198",
-    brightGreen: "#56d364",
-    brightYellow: "#e3b341",
-    brightBlue: "#79c0ff",
-    brightMagenta: "#d2a8ff",
-    brightCyan: "#56d4dd",
-    brightWhite: "#f0f6fc"
   },
   // ======================== PLANET THEMES ========================
   "planet-mercury": {
@@ -660,39 +568,15 @@ export const THEMES = {
 export const THEME_METADATA = {
   "dark-modern": {
     name: "Dark Modern",
-    desc: "Nexterm professional compact dark theme with slate and azure accents",
+    desc: "Nexterm signature professional dark theme with electric cyan and deep slate accents",
     icon: "🌌",
-    swatches: ["#1a1c23", "#232733", "#3b82f6", "#10b981", "#06b6d4"]
+    swatches: ["#0d0f17", "#131722", "#38bdf8", "#3b82f6", "#10b981"]
   },
   "tokyo-night": {
     name: "Tokyo Night",
     desc: "Iconic Japanese cyberpunk dark theme with deep twilight indigo, electric neon blue, and vivid purple",
     icon: "🌸",
     swatches: ["#1a1b26", "#16161e", "#7aa2f7", "#bb9af7", "#7dcfff"]
-  },
-  "catppuccin-mocha": {
-    name: "Catppuccin Mocha",
-    desc: "Soothing pastel-warm dark aesthetic with soft lavender, mauve, sapphire, and peach accents",
-    icon: "☕",
-    swatches: ["#1e1e2e", "#181825", "#cba6f7", "#89b4fa", "#a6e3a1"]
-  },
-  "gruvbox-dark": {
-    name: "Gruvbox Dark",
-    desc: "Retro warm espresso palette with rich terracotta, warm amber, and golden olive accents",
-    icon: "🪵",
-    swatches: ["#282828", "#1d2021", "#fe8019", "#fabd2f", "#b8bb26"]
-  },
-  "rose-pine": {
-    name: "Rosé Pine",
-    desc: "Ethereal twilight atmosphere with soothing warm rose, dusky pine, and soft gold",
-    icon: "🌹",
-    swatches: ["#191724", "#1f1d2e", "#ebbcba", "#f6c177", "#9ccfd8"]
-  },
-  "github-dark": {
-    name: "GitHub Dark",
-    desc: "Official GitHub high-contrast dark theme with crisp sky blue, charcoal, and emerald accents",
-    icon: "🐙",
-    swatches: ["#0d1117", "#161b22", "#58a6ff", "#3fb950", "#bc8cff"]
   },
   "nord": {
     name: "Nordic Frost",
@@ -706,11 +590,17 @@ export const THEME_METADATA = {
     icon: "🧛",
     swatches: ["#282a36", "#21222c", "#bd93f9", "#ff79c6", "#50fa7b"]
   },
-  "cyberpunk": {
-    name: "Cyberpunk Neon",
-    desc: "High-contrast synthwave neon palette with hot magenta, yellow and cyan",
-    icon: "🌆",
-    swatches: ["#0f051d", "#1a0b2e", "#ff007f", "#00f0ff", "#00ff9f"]
+  "gruvbox-dark": {
+    name: "Gruvbox Dark",
+    desc: "Retro warm espresso palette with rich terracotta, warm amber, and golden olive accents",
+    icon: "🪵",
+    swatches: ["#282828", "#1d2021", "#fe8019", "#fabd2f", "#b8bb26"]
+  },
+  "rose-pine": {
+    name: "Rosé Pine",
+    desc: "Ethereal twilight atmosphere with soothing warm rose, dusky pine, and soft gold",
+    icon: "🌹",
+    swatches: ["#191724", "#1f1d2e", "#ebbcba", "#f6c177", "#9ccfd8"]
   },
   "monokai": {
     name: "Monokai Pro",
@@ -730,23 +620,17 @@ export const THEME_METADATA = {
     icon: "🟩",
     swatches: ["#031105", "#051c09", "#00ff41", "#00cc33", "#22eb4f"]
   },
-  "one-dark": {
-    name: "Atom One Dark",
-    desc: "Refined deep obsidian with soft cornflower blue and pastel highlights",
-    icon: "⚛️",
-    swatches: ["#21252b", "#282c34", "#61afef", "#98c379", "#e5c07b"]
+  "cyberpunk": {
+    name: "Cyberpunk Neon",
+    desc: "High-contrast synthwave neon palette with hot magenta, yellow and cyan",
+    icon: "🌆",
+    swatches: ["#0f051d", "#1a0b2e", "#ff007f", "#00f0ff", "#00ff9f"]
   },
-  "avisys-navy": {
-    name: "Avisys Corporate Navy",
-    desc: "Professional enterprise midnight navy blue with sky blue accents",
-    icon: "⚓",
-    swatches: ["#0b1528", "#0f1f3d", "#38bdf8", "#4ade80", "#f8fafc"]
-  },
-  "slack-dark": {
-    name: "Slack Theme Dark Mode",
-    desc: "Slack dark code theme by Felipe Mendes with iconic cyan, amber, coral, and emerald highlights",
-    icon: "💬",
-    swatches: ["#222222", "#1b1d21", "#36c5f0", "#ecb22e", "#e01e5a"]
+  "crimson-sunset": {
+    name: "Sunset Crimson",
+    desc: "Fiery dark palette with molten crimson, blood orange, and burning ember highlights",
+    icon: "🔥",
+    swatches: ["#150608", "#280e12", "#f43f5e", "#fb923c", "#fff1f2"]
   },
   "linux-black": {
     name: "Linux Console (Pure Black)",
@@ -827,6 +711,14 @@ export const THEME_METADATA = {
 };
 
 export function applyUITheme(themeKey, persist = true) {
+  const LEGACY_ALIASES = {
+    "one-dark": "dark-modern",
+    "github-dark": "dark-modern",
+    "avisys-navy": "dark-modern",
+    "slack-dark": "dark-modern",
+    "catppuccin-mocha": "tokyo-night"
+  };
+  if (LEGACY_ALIASES[themeKey]) themeKey = LEGACY_ALIASES[themeKey];
   if (!THEMES[themeKey]) themeKey = "dark-modern";
   userSettings.uiTheme = themeKey;
   userSettings.theme = themeKey;

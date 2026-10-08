@@ -1151,6 +1151,7 @@ export function setupEventListeners() {
 
   // Dashboard Buttons
   safeClick("startLocalTerminalBtn", () => startLocalTerminal("powershell"));
+  safeClick("startLocalTerminalBigBtn", () => startLocalTerminal("powershell"));
   safeClick("newSSHSessionBigBtn", () => showNewSessionDialog());
   safeClick("homeMultiConnectBtn", () => showMultiServerConnectDialog());
   safeClick("homeAddServerBtn", () => showNewSessionDialog());

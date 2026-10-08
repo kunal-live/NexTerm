@@ -2202,20 +2202,16 @@ html {
 }
 
 .nx-hero-eyebrow {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  color: #34d399;
-  margin-bottom: 14px;
+  display: none;
 }
 
 .nx-hero-h1 {
-  font-size: 52px;
-  line-height: 1.05;
+  font-size: 42px;
+  line-height: 1.1;
   font-weight: 800;
-  letter-spacing: -1px;
+  letter-spacing: -0.8px;
   color: #f8fafc;
-  margin: 0 0 16px;
+  margin: 0 0 10px;
 }
 
 .nx-hero-h1 .nx-grad {
@@ -2226,41 +2222,52 @@ html {
 }
 
 .nx-hero-sub {
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 14.5px;
+  line-height: 1.45;
   color: #94a3b8;
-  margin: 0 0 26px;
+  margin: 0 0 20px;
 }
 
 .nx-hero-actions {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 .nx-btn {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  height: 46px;
-  padding: 0 22px;
-  border-radius: 12px;
-  font-size: 14px;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 11px;
+  font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
   transition: all .16s cubic-bezier(.16, 1, .3, 1);
   border: 1px solid transparent;
 }
 
-.nx-btn-primary {
+.nx-btn-emerald {
   background: linear-gradient(135deg, #10b981, #059669);
   color: #fff;
-  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.32);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+}
+
+.nx-btn-emerald:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.48);
+}
+
+.nx-btn-primary {
+  background: var(--planet-btn-grad, linear-gradient(135deg, #3b82f6, #2563eb));
+  color: #fff;
+  box-shadow: 0 4px 16px var(--planet-btn-glow, rgba(59, 130, 246, 0.35));
 }
 
 .nx-btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.45);
+  box-shadow: 0 8px 24px var(--planet-btn-glow, rgba(59, 130, 246, 0.48));
 }
 
 .nx-btn-primary .nx-btn-arrow {
@@ -2346,15 +2353,7 @@ html {
 }
 
 .planet-atmosphere-corona {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 45%;
-  pointer-events: none;
-  opacity: 0.35;
-  box-shadow: inset -20px 0 80px var(--planet-corona, rgba(168, 85, 247, 0.5));
-  transition: box-shadow 0.8s ease;
+  display: none;
 }
 
 .planet-sun-flare {
@@ -2364,23 +2363,24 @@ html {
 /* ==========================================================================
    Planetary Frosted Glass Telemetry Showcase Card (Compact & Sleek)
    ========================================================================== */
-.nx-planet-card {
-  max-width: 430px;
+.nx-planet-card,
+.nx-planet-card.nx-planet-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 360px;
   margin-left: auto;
-  border-radius: 14px;
-  background: var(--planet-card-bg, rgba(14, 11, 32, 0.68));
+  border-radius: 9999px;
+  background: var(--planet-card-bg, rgba(14, 11, 32, 0.72));
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--planet-card-border, rgba(168, 85, 247, 0.3));
   box-shadow:
-    0 12px 32px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 24px var(--planet-card-glow, rgba(168, 85, 247, 0.14));
-  padding: 13px 18px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
+    0 0 16px var(--planet-card-glow, rgba(168, 85, 247, 0.14));
+  padding: 6px 14px;
   position: relative;
   transition: all 0.25s ease;
 }
@@ -2394,16 +2394,11 @@ html {
   100% { transform: scale(1); opacity: 1; }
 }
 
-.nx-planet-card-main {
-  flex: 1;
-  min-width: 0;
-}
-
-.nx-planet-header {
+.nx-planet-badge-left {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 1px;
+  gap: 7px;
+  min-width: 0;
 }
 
 .nx-planet-dot {
@@ -2416,75 +2411,39 @@ html {
 }
 
 .nx-planet-title {
-  font-size: 18px;
+  font-size: 13px;
   font-weight: 700;
   color: #ffffff;
   letter-spacing: -0.2px;
   margin: 0;
-  line-height: 1.15;
+  line-height: 1;
+}
+
+.nx-planet-sep {
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 12px;
+  user-select: none;
 }
 
 .nx-planet-epithet {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   color: #94a3b8;
-  margin: 0 0 5px 0;
   letter-spacing: 0.1px;
-}
-
-.nx-planet-desc {
-  font-size: 11px;
-  line-height: 1.45;
-  color: #cbd5e1;
-  margin: 0 0 10px 0;
-  max-width: 245px;
-}
-
-.nx-planet-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.nx-planet-explore-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border-radius: 9999px;
-  height: 28px;
-  padding: 0 13px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--planet-card-border, rgba(168, 85, 247, 0.4));
-  color: #ffffff;
-  font-size: 11.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.18s ease;
-}
-
-.nx-planet-explore-btn:hover {
-  background: var(--planet-card-border, rgba(168, 85, 247, 0.3));
-  border-color: var(--planet-accent, #a855f7);
-  box-shadow: 0 0 14px var(--planet-card-glow, rgba(168, 85, 247, 0.4));
-  transform: translateY(-1px);
-}
-
-.nx-planet-explore-btn .nx-btn-arrow {
-  transition: transform 0.16s ease;
-}
-
-.nx-planet-explore-btn:hover .nx-btn-arrow {
-  transform: translateX(3px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .nx-planet-quick-nav {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 9999px;
   padding: 2px 6px;
+  flex-shrink: 0;
 }
 
 .nx-pnav-btn {
@@ -2516,34 +2475,10 @@ html {
   user-select: none;
 }
 
-/* Right Column: Telemetry Stats Grid (Compact) */
-.nx-planet-stats-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  flex-shrink: 0;
-  min-width: 105px;
-}
-
-.nx-pstat-box {
-  display: flex;
-  flex-direction: column;
-}
-
-.nx-pstat-label {
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: 0.9px;
-  color: #94a3b8;
-  text-transform: uppercase;
-  margin-bottom: 1px;
-}
-
-.nx-pstat-val {
-  font-size: 12px;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: -0.2px;
+.nx-planet-stats-grid,
+.nx-planet-desc,
+.nx-planet-explore-btn {
+  display: none !important;
 }
 
 /* Completely suppress inactive workspace panes & empty terminal placeholders when Home is active */
@@ -2563,16 +2498,17 @@ html {
 .nx-feature-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 14px;
+  margin-bottom: 20px;
 }
 
 .nx-feature-card {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
+  align-items: center;
+  gap: 12px;
   text-align: left;
-  padding: 20px;
-  border-radius: 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)), rgba(16, 20, 32, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.07);
   cursor: pointer;
@@ -2581,19 +2517,43 @@ html {
 }
 
 .nx-feature-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   border-color: rgba(56, 189, 248, 0.4);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
 }
 
 .nx-feat-icon {
   flex: 0 0 auto;
-  width: 46px;
-  height: 46px;
-  border-radius: 13px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.nx-feat-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.nx-feat-title {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #f1f5f9;
+  line-height: 1.25;
+}
+
+.nx-feat-desc {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .feat-emerald {
@@ -4923,171 +4883,305 @@ body[data-theme="light-modern"] #homeViewDocsBtn:hover svg {
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.5) !important;
 }
 
+/* ==========================================================================
+   Option 1: Modern Quick-Launch Saved Sessions Redesign
+   ========================================================================== */
+
+/* Quick-Filter Environment Chips Bar */
+.nx-env-filter-chips {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  overflow-x: auto !important;
+  padding: 2px 2px 8px !important;
+  margin-bottom: 6px !important;
+  scrollbar-width: none !important;
+}
+
+.nx-env-filter-chips::-webkit-scrollbar {
+  display: none !important;
+}
+
+.nx-env-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 3px 9px !important;
+  border-radius: 20px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #94a3b8 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  cursor: pointer !important;
+  transition: all 0.16s ease !important;
+  white-space: nowrap !important;
+  user-select: none !important;
+}
+
+.nx-env-chip:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f1f5f9 !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.nx-env-chip.active {
+  background: rgba(56, 189, 248, 0.14) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.18) !important;
+}
+
+.nx-env-chip .chip-dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
+}
+
+.nx-env-chip .chip-count {
+  font-size: 10px !important;
+  padding: 1px 5px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: inherit !important;
+  font-weight: 700 !important;
+}
+
 /* Environment groups inside Saved Sessions */
 #recentSessionsGrid .home-env-group {
-  margin-bottom: 16px !important;
+  margin-bottom: 12px !important;
 }
 
 #recentSessionsGrid .home-env-header {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  padding: 7px 12px !important;
-  background: rgba(255, 255, 255, 0.03) !important;
-  border-radius: 8px !important;
-  margin-bottom: 10px !important;
-  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  padding: 3px 2px 6px !important;
+  background: transparent !important;
+  border: none !important;
+  margin-bottom: 6px !important;
 }
 
-#recentSessionsGrid .home-env-badge {
-  font-size: 10.5px !important;
+#recentSessionsGrid .home-env-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+
+#recentSessionsGrid .home-env-pill {
+  font-size: 9.5px !important;
   font-weight: 800 !important;
-  padding: 3px 8px !important;
-  border-radius: 5px !important;
-  letter-spacing: 0.6px !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  letter-spacing: 0.5px !important;
   text-transform: uppercase !important;
 }
 
 #recentSessionsGrid .home-env-name {
-  font-size: 12px !important;
+  font-size: 11px !important;
   font-weight: 700 !important;
-  color: #f1f5f9 !important;
+  color: #94a3b8 !important;
   letter-spacing: 0.5px !important;
 }
 
 #recentSessionsGrid .home-env-count {
-  font-size: 11px !important;
+  font-size: 10px !important;
   font-weight: 600 !important;
-  color: #94a3b8 !important;
-  background: rgba(255, 255, 255, 0.06) !important;
-  padding: 1px 6px !important;
-  border-radius: 10px !important;
+  color: #64748b !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  padding: 1px 5px !important;
+  border-radius: 8px !important;
 }
 
 #recentSessionsGrid .home-env-cards-grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)) !important;
-  gap: 10px !important;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
+  gap: 9px !important;
 }
 
-#recentSessionsGrid .home-env-empty {
-  padding: 8px 14px !important;
-  font-size: 11.5px !important;
-  color: #64748b !important;
-  background: rgba(255, 255, 255, 0.015) !important;
-  border-radius: 8px !important;
-  border: 1px dashed rgba(255, 255, 255, 0.06) !important;
-}
-
-/* Card aesthetics & readability */
+/* Modern 1-Click Launch Card */
 #recentSessionsGrid .recent-session-card {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%), rgba(18, 23, 36, 0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
-  border-radius: 12px !important;
-  padding: 12px 14px !important;
+  position: relative !important;
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.65) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-left: 3px solid var(--card-accent, #38bdf8) !important;
+  border-radius: 10px !important;
+  padding: 10px 12px !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 6px !important;
+  gap: 8px !important;
   cursor: pointer !important;
-  transition: all 0.16s ease !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25) !important;
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+  user-select: none !important;
 }
 
 #recentSessionsGrid .recent-session-card:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(24, 31, 48, 0.95) !important;
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.85) 0%, rgba(20, 29, 52, 0.95) 100%) !important;
   border-color: rgba(56, 189, 248, 0.45) !important;
+  border-left-color: var(--card-accent, #38bdf8) !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 16px rgba(56, 189, 248, 0.15) !important;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35), 0 0 14px rgba(56, 189, 248, 0.14) !important;
 }
 
-#recentSessionsGrid .card-header-row {
+#recentSessionsGrid .recent-session-card.is-connected {
+  border-left-color: #10b981 !important;
+  background: linear-gradient(145deg, rgba(16, 185, 129, 0.09) 0%, rgba(15, 23, 42, 0.85) 100%) !important;
+}
+
+#recentSessionsGrid .card-top-bar {
   display: flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  margin-bottom: 2px !important;
+  gap: 9px !important;
 }
 
-#recentSessionsGrid .card-name {
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  color: #f8fafc !important;
-  line-height: 1.3 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-}
-
-#recentSessionsGrid .card-host {
-  font-size: 11.5px !important;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
-  color: #94a3b8 !important;
-  line-height: 1.3 !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-  margin-bottom: 6px !important;
-}
-
-#recentSessionsGrid .card-actions-row {
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  margin-top: auto !important;
-}
-
-#recentSessionsGrid .card-connect-btn {
-  flex: 1 !important;
-  height: 28px !important;
+#recentSessionsGrid .card-icon-box {
+  width: 32px !important;
+  height: 32px !important;
   border-radius: 7px !important;
-  background: rgba(56, 189, 248, 0.14) !important;
-  border: 1px solid rgba(56, 189, 248, 0.35) !important;
-  color: #38bdf8 !important;
-  font-size: 11.5px !important;
-  font-weight: 600 !important;
-  cursor: pointer !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+  font-size: 15px !important;
+  flex-shrink: 0 !important;
+  transition: transform 0.15s ease !important;
+}
+
+#recentSessionsGrid .recent-session-card:hover .card-icon-box {
+  transform: scale(1.06) !important;
+}
+
+#recentSessionsGrid .card-title-group {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  flex: 1 !important;
+}
+
+#recentSessionsGrid .card-name {
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  color: #f8fafc !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.25 !important;
+}
+
+#recentSessionsGrid .card-host {
+  font-size: 11px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  color: #94a3b8 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.3 !important;
+  margin-top: 2px !important;
+}
+
+#recentSessionsGrid .card-tag-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex-shrink: 0 !important;
+}
+
+#recentSessionsGrid .card-env-badge {
+  font-size: 9.5px !important;
+  font-weight: 800 !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  letter-spacing: 0.5px !important;
+  text-transform: uppercase !important;
+}
+
+#recentSessionsGrid .card-bottom-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-top: 5px !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+#recentSessionsGrid .card-status-pill {
+  display: inline-flex !important;
+  align-items: center !important;
   gap: 5px !important;
-  transition: all 0.15s ease !important;
+  font-size: 10.5px !important;
+  color: #64748b !important;
+  font-weight: 500 !important;
+}
+
+#recentSessionsGrid .card-status-pill.is-live {
+  color: #34d399 !important;
+}
+
+#recentSessionsGrid .status-dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: #64748b !important;
+}
+
+#recentSessionsGrid .card-status-pill.is-live .status-dot {
+  background: #10b981 !important;
+  box-shadow: 0 0 8px #10b981 !important;
+  animation: pulseSessionLive 2s infinite !important;
+}
+
+@keyframes pulseSessionLive {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.85); }
+}
+
+#recentSessionsGrid .card-hover-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+
+#recentSessionsGrid .card-action-btn {
+  height: 24px !important;
+  border-radius: 5px !important;
+  border: 1px solid transparent !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.12s ease !important;
+  font-size: 11px !important;
+}
+
+#recentSessionsGrid .card-connect-btn {
+  padding: 0 8px !important;
+  background: rgba(56, 189, 248, 0.12) !important;
+  border-color: rgba(56, 189, 248, 0.3) !important;
+  color: #38bdf8 !important;
+  font-weight: 600 !important;
+  gap: 4px !important;
 }
 
 #recentSessionsGrid .card-connect-btn:hover {
   background: #0284c7 !important;
   border-color: #38bdf8 !important;
   color: #ffffff !important;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.4) !important;
 }
 
-#recentSessionsGrid .card-color-btn {
-  height: 28px !important;
-  padding: 0 9px !important;
-  border-radius: 7px !important;
-  background: rgba(255, 255, 255, 0.05) !important;
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+#recentSessionsGrid .card-edit-btn,
+#recentSessionsGrid .card-delete-btn {
+  width: 24px !important;
+  padding: 0 !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
   color: #94a3b8 !important;
-  font-size: 11px !important;
-  cursor: pointer !important;
-  transition: all 0.12s ease !important;
 }
 
-#recentSessionsGrid .card-color-btn:hover {
+#recentSessionsGrid .card-edit-btn:hover {
   background: rgba(255, 255, 255, 0.1) !important;
   color: #f1f5f9 !important;
-}
-
-#recentSessionsGrid .card-delete-btn {
-  width: 28px !important;
-  height: 28px !important;
-  border-radius: 7px !important;
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  color: #64748b !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  cursor: pointer !important;
-  transition: all 0.12s ease !important;
 }
 
 #recentSessionsGrid .card-delete-btn:hover {
@@ -5098,7 +5192,8 @@ body[data-theme="light-modern"] #homeViewDocsBtn:hover svg {
 
 #recentSessionsGrid .empty-saved-sessions-card,
 .nx-saved-list .empty-saved-sessions-card {
-  padding: 26px 16px !important;
+  padding: 24px 16px !important;
+  text-align: center !important;
 }
 
 /* Light Theme Overrides for Saved Sessions */
@@ -5153,6 +5248,24 @@ body[data-theme="light-modern"] #homeViewDocsBtn:hover svg {
 
 :root[data-theme="light-modern"] #recentSessionsGrid .card-host {
   color: #64748b !important;
+}
+
+:root[data-theme="light-modern"] .nx-env-chip {
+  background: rgba(0, 0, 0, 0.04) !important;
+  color: #475569 !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+:root[data-theme="light-modern"] .nx-env-chip:hover {
+  background: rgba(0, 0, 0, 0.07) !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme="light-modern"] .nx-env-chip.active {
+  background: rgba(14, 165, 233, 0.12) !important;
+  color: #0284c7 !important;
+  border-color: rgba(14, 165, 233, 0.35) !important;
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.15) !important;
 }
 
 /* System Overview */
@@ -8398,10 +8511,6 @@ body[data-theme="light-modern"] #homeViewDocsBtn:hover svg {
     radial-gradient(1.2px 1.2px at 108px 76px, rgba(200, 121, 65, 0.75), transparent),
     radial-gradient(1.8px 1.8px at 168px 128px, rgba(212, 200, 184, 0.85), transparent);
 }
-[data-theme="planet-mercury"] .nx-hero-art {
-  border-color: rgba(245, 158, 11, 0.3);
-  box-shadow: 0 16px 48px rgba(200, 121, 65, 0.35), 0 0 30px rgba(245, 158, 11, 0.2);
-}
 
 /* 16. Venus — Golden Atmospheric Veil */
 [data-theme="planet-venus"] .welcome-dashboard {
@@ -8416,10 +8525,6 @@ body[data-theme="light-modern"] #homeViewDocsBtn:hover svg {
     radial-gradient(1.6px 1.6px at 24px 32px, rgba(251, 191, 36, 0.9), transparent),
     radial-gradient(1.2px 1.2px at 108px 76px, rgba(245, 158, 11, 0.8), transparent),
     radial-gradient(1.8px 1.8px at 168px 128px, rgba(254, 240, 138, 0.85), transparent);
-}
-[data-theme="planet-venus"] .nx-hero-art {
-  border-color: rgba(251, 191, 36, 0.35);
-  box-shadow: 0 16px 48px rgba(245, 158, 11, 0.4), 0 0 30px rgba(251, 191, 36, 0.22);
 }
 
 /* 17. Earth — The Pale Blue Dot */
@@ -8436,10 +8541,6 @@ body[data-theme="light-modern"] #homeViewDocsBtn:hover svg {
     radial-gradient(1.2px 1.2px at 108px 76px, rgba(72, 160, 96, 0.8), transparent),
     radial-gradient(1.8px 1.8px at 168px 128px, rgba(240, 246, 252, 0.85), transparent);
 }
-[data-theme="planet-earth"] .nx-hero-art {
-  border-color: rgba(56, 189, 248, 0.35);
-  box-shadow: 0 16px 48px rgba(37, 99, 235, 0.4), 0 0 32px rgba(56, 189, 248, 0.25);
-}
 
 /* 18. Mars — The Red Planet Frontier */
 [data-theme="planet-mars"] .welcome-dashboard {
@@ -8454,10 +8555,6 @@ body[data-theme="light-modern"] #homeViewDocsBtn:hover svg {
     radial-gradient(1.6px 1.6px at 24px 32px, rgba(249, 115, 22, 0.9), transparent),
     radial-gradient(1.2px 1.2px at 108px 76px, rgba(239, 68, 68, 0.8), transparent),
     radial-gradient(1.8px 1.8px at 168px 128px, rgba(253, 186, 116, 0.85), transparent);
-}
-[data-theme="planet-mars"] .nx-hero-art {
-  border-color: rgba(239, 68, 68, 0.35);
-  box-shadow: 0 16px 48px rgba(220, 38, 38, 0.4), 0 0 32px rgba(239, 68, 68, 0.22);
 }
 
 /* 19. Jupiter — King of Giants (Cosmic Violet & Amber Storm) */
@@ -8474,10 +8571,6 @@ body[data-theme="light-modern"] #homeViewDocsBtn:hover svg {
     radial-gradient(1.6px 1.6px at 24px 32px, rgba(168, 85, 247, 0.9), transparent),
     radial-gradient(1.2px 1.2px at 108px 76px, rgba(217, 70, 239, 0.8), transparent),
     radial-gradient(1.8px 1.8px at 168px 128px, rgba(254, 215, 170, 0.85), transparent);
-}
-[data-theme="planet-jupiter"] .nx-planet-card {
-  border-color: rgba(168, 85, 247, 0.35);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 32px rgba(168, 85, 247, 0.22);
 }
 
 /* 20. Saturn — Ringed Majesty */

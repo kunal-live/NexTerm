@@ -74,32 +74,30 @@
   --text-dim: #565f89;
 }
 
+/* Legacy alias for removed duplicate theme */
 [data-theme="catppuccin-mocha"] {
-  --bg-app: #1e1e2e;
-  --bg-topbar: #181825;
-  --bg-menubar: #11111b;
-  --bg-toolbar: #181825;
-  --bg-sidebar: #181825;
-  --bg-sidebar-strip: #11111b;
-  --bg-workspace: #1e1e2e;
-  --bg-card: #313244;
-  --bg-card-hover: #45475a;
-  --bg-input: #11111b;
-  --bg-input-border: #585b70;
-
-  --border-subtle: #313244;
-  --border-active: #cba6f7;
-
-  --accent-cyan: #94e2d5;
-  --accent-blue: #89b4fa;
-  --accent-green: #a6e3a1;
-  --accent-amber: #f9e2af;
-  --accent-rose: #f38ba8;
-  --accent-purple: #cba6f7;
-
-  --text-primary: #cdd6f4;
-  --text-muted: #a6adc8;
-  --text-dim: #6c7086;
+  --bg-app: #1a1b26;
+  --bg-topbar: #16161e;
+  --bg-menubar: #13141c;
+  --bg-toolbar: #16161e;
+  --bg-sidebar: #16161e;
+  --bg-sidebar-strip: #13141c;
+  --bg-workspace: #1a1b26;
+  --bg-card: #202334;
+  --bg-card-hover: #292e42;
+  --bg-input: #13141c;
+  --bg-input-border: #3b4261;
+  --border-subtle: #292e42;
+  --border-active: #7aa2f7;
+  --accent-cyan: #7dcfff;
+  --accent-blue: #7aa2f7;
+  --accent-green: #9ece6a;
+  --accent-amber: #e0af68;
+  --accent-rose: #f7768e;
+  --accent-purple: #bb9af7;
+  --text-primary: #c0caf5;
+  --text-muted: #9aa5ce;
+  --text-dim: #565f89;
 }
 
 [data-theme="gruvbox-dark"] {
@@ -158,32 +156,30 @@
   --text-dim: #6e6a86;
 }
 
+/* Legacy alias for removed duplicate theme */
 [data-theme="github-dark"] {
-  --bg-app: #0d1117;
-  --bg-topbar: #161b22;
-  --bg-menubar: #090d13;
-  --bg-toolbar: #161b22;
-  --bg-sidebar: #161b22;
-  --bg-sidebar-strip: #090d13;
-  --bg-workspace: #0d1117;
-  --bg-card: #21262d;
-  --bg-card-hover: #30363d;
-  --bg-input: #0d1117;
-  --bg-input-border: #30363d;
-
-  --border-subtle: #21262d;
-  --border-active: #58a6ff;
-
-  --accent-cyan: #39c5cf;
-  --accent-blue: #58a6ff;
-  --accent-green: #3fb950;
-  --accent-amber: #d29922;
-  --accent-rose: #ff7b72;
-  --accent-purple: #bc8cff;
-
-  --text-primary: #f0f6fc;
-  --text-muted: #8b949e;
-  --text-dim: #484f58;
+  --bg-app: #0d0f17;
+  --bg-topbar: #131722;
+  --bg-menubar: #0f121a;
+  --bg-toolbar: #131722;
+  --bg-sidebar: #131722;
+  --bg-sidebar-strip: #0d0f17;
+  --bg-workspace: #0a0c12;
+  --bg-card: #181d2a;
+  --bg-card-hover: #1e2433;
+  --bg-input: #10131c;
+  --bg-input-border: #222938;
+  --border-subtle: #1c2230;
+  --border-active: #2c364c;
+  --accent-cyan: #38bdf8;
+  --accent-blue: #3b82f6;
+  --accent-green: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-purple: #a855f7;
+  --text-primary: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-dim: #8ea0b5;
 }
 
 [data-theme="nord"] {
@@ -354,60 +350,60 @@
   --text-dim: #09611c;
 }
 
-[data-theme="one-dark"] {
-  --bg-app: #21252b;
-  --bg-topbar: #282c34;
-  --bg-menubar: #1b1d23;
-  --bg-toolbar: #282c34;
-  --bg-sidebar: #21252b;
-  --bg-sidebar-strip: #1b1d23;
-  --bg-workspace: #21252b;
-  --bg-card: #2c313a;
-  --bg-card-hover: #3a3f4b;
-  --bg-input: #1b1d23;
-  --bg-input-border: #4b5263;
+/* Crimson Sunset — High-Contrast Fiery Dark Red & Ember Theme */
+[data-theme="crimson-sunset"] {
+  --bg-app: #150608;
+  --bg-topbar: #1e090c;
+  --bg-menubar: #110507;
+  --bg-toolbar: #1e090c;
+  --bg-sidebar: #19080b;
+  --bg-sidebar-strip: #110507;
+  --bg-workspace: #150608;
+  --bg-card: #280e12;
+  --bg-card-hover: #38141a;
+  --bg-input: #110507;
+  --bg-input-border: #521822;
 
-  --border-subtle: #282c34;
-  --border-active: #61afef;
+  --border-subtle: #301015;
+  --border-active: #f43f5e;
 
-  --accent-cyan: #56b6c2;
-  --accent-blue: #61afef;
-  --accent-green: #98c379;
-  --accent-amber: #e5c07b;
-  --accent-rose: #e06c75;
-  --accent-purple: #c678dd;
+  --accent-cyan: #fb923c;
+  --accent-blue: #f43f5e;
+  --accent-green: #34d399;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-purple: #e11d48;
 
-  --text-primary: #abb2bf;
-  --text-muted: #828997;
-  --text-dim: #5c6370;
+  --text-primary: #fff1f2;
+  --text-muted: #fda4af;
+  --text-dim: #9f1239;
 }
 
+/* Legacy aliases for removed duplicate themes */
+[data-theme="one-dark"],
 [data-theme="avisys-navy"] {
-  --bg-app: #0b1528;
-  --bg-topbar: #0f1f3d;
-  --bg-menubar: #070d1a;
-  --bg-toolbar: #0f1f3d;
-  --bg-sidebar: #0d1930;
-  --bg-sidebar-strip: #070d1a;
-  --bg-workspace: #0b1528;
-  --bg-card: #14284f;
-  --bg-card-hover: #1c366b;
-  --bg-input: #070d1a;
-  --bg-input-border: #1e3a8a;
-
-  --border-subtle: #1e293b;
-  --border-active: #38bdf8;
-
-  --accent-cyan: #22d3ee;
-  --accent-blue: #38bdf8;
-  --accent-green: #4ade80;
-  --accent-amber: #facc15;
-  --accent-rose: #f87171;
-  --accent-purple: #c084fc;
-
-  --text-primary: #f8fafc;
-  --text-muted: #cbd5e1;
-  --text-dim: #64748b;
+  --bg-app: #0d0f17;
+  --bg-topbar: #131722;
+  --bg-menubar: #0f121a;
+  --bg-toolbar: #131722;
+  --bg-sidebar: #131722;
+  --bg-sidebar-strip: #0d0f17;
+  --bg-workspace: #0a0c12;
+  --bg-card: #181d2a;
+  --bg-card-hover: #1e2433;
+  --bg-input: #10131c;
+  --bg-input-border: #222938;
+  --border-subtle: #1c2230;
+  --border-active: #2c364c;
+  --accent-cyan: #38bdf8;
+  --accent-blue: #3b82f6;
+  --accent-green: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-purple: #a855f7;
+  --text-primary: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-dim: #8ea0b5;
 }
 
 [data-theme="light-modern"] {
@@ -438,32 +434,30 @@
   --text-dim: #94a3b8;
 }
 
+/* Legacy alias for removed duplicate theme */
 [data-theme="slack-dark"] {
-  --bg-app: #222222;
-  --bg-topbar: #1b1d21;
-  --bg-menubar: #16181b;
-  --bg-toolbar: #1b1d21;
-  --bg-sidebar: #1f2125;
-  --bg-sidebar-strip: #16181b;
-  --bg-workspace: #222222;
-  --bg-card: #2a2d32;
-  --bg-card-hover: #353940;
-  --bg-input: #1b1d21;
-  --bg-input-border: #383b40;
-
-  --border-subtle: #2e3136;
-  --border-active: #36c5f0;
-
-  --accent-cyan: #36c5f0;
-  --accent-blue: #36c5f0;
-  --accent-green: #2eb67d;
-  --accent-amber: #ecb22e;
-  --accent-rose: #e01e5a;
-  --accent-purple: #9c27b0;
-
-  --text-primary: #e1e4e8;
-  --text-muted: #abb2bf;
-  --text-dim: #7c8b82;
+  --bg-app: #0d0f17;
+  --bg-topbar: #131722;
+  --bg-menubar: #0f121a;
+  --bg-toolbar: #131722;
+  --bg-sidebar: #131722;
+  --bg-sidebar-strip: #0d0f17;
+  --bg-workspace: #0a0c12;
+  --bg-card: #181d2a;
+  --bg-card-hover: #1e2433;
+  --bg-input: #10131c;
+  --bg-input-border: #222938;
+  --border-subtle: #1c2230;
+  --border-active: #2c364c;
+  --accent-cyan: #38bdf8;
+  --accent-blue: #3b82f6;
+  --accent-green: #10b981;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
+  --accent-purple: #a855f7;
+  --text-primary: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-dim: #8ea0b5;
 }
 
 /* Linux Console — Pure Pitch Black Terminal Theme */

@@ -636,9 +636,14 @@ export function renderNode(node, filter = "", parentNode = null, level = 0) {
   return wrap;
 }
 
+let activeSavedSessionsEnv = "all";
+
 export function updateRecentSessionsGrid(targetNode = null, filterText = "") {
   const section = document.getElementById("recentSessionsSection");
   const grid = document.getElementById("recentSessionsGrid");
+  const chipsContainer = document.getElementById("nxEnvFilterChips");
+  const searchInput = document.getElementById("welcomeSearchInput");
+  const filterClearBtn = document.getElementById("welcomeSearchFilterBtn");
   if (!grid) return;
 
   const nodeToUse = targetNode || rootNode;
@@ -664,13 +669,15 @@ export function updateRecentSessionsGrid(targetNode = null, filterText = "") {
       if (child.isFolder || child.children) {
         const folderSessions = collectFromFolder(child);
         const folderEnv = getEnvironmentFromFolderName(child.name) || getEnvironmentInfo(child.name);
-        groups.push({
-          folder: child,
-          name: child.name,
-          env: folderEnv,
-          sessions: folderSessions
-        });
-        allSessions.push(...folderSessions);
+        if (folderSessions.length > 0) {
+          groups.push({
+            folder: child,
+            name: child.name,
+            env: folderEnv,
+            sessions: folderSessions
+          });
+          allSessions.push(...folderSessions);
+        }
       } else if (child.session) {
         const item = { session: child.session, nodeId: child.id, folder: null };
         allSessions.push(item);
@@ -693,14 +700,183 @@ export function updateRecentSessionsGrid(targetNode = null, filterText = "") {
     grid.style.overflowY = "auto";
   }
 
-  if (allSessions.length === 0 && groups.length === 0) {
+  const q = (filterText || (searchInput ? searchInput.value : "") || "").trim().toLowerCase();
+
+  // Clear button toggle on search box
+  if (filterClearBtn) {
+    if (q) {
+      filterClearBtn.style.display = "flex";
+      filterClearBtn.onclick = () => {
+        if (searchInput) searchInput.value = "";
+        activeSavedSessionsEnv = "all";
+        updateRecentSessionsGrid(null, "");
+      };
+    } else {
+      filterClearBtn.style.display = "none";
+    }
+  }
+
+  // Helper to determine environment of session item
+  const getItemEnv = item => {
+    const folderEnv = item.folder ? getEnvironmentFromFolderName(item.folder.name) : null;
+    return folderEnv || getEnvironmentInfo(item.session.environment || item.session.color);
+  };
+
+  // Build Environment Filter Chips
+  if (chipsContainer) {
+    if (allSessions.length === 0) {
+      chipsContainer.innerHTML = "";
+    } else {
+      const envCounts = {};
+      allSessions.forEach(item => {
+        const env = getItemEnv(item);
+        const key = env ? env.key : "other";
+        if (!envCounts[key]) {
+          envCounts[key] = {
+            count: 0,
+            label: env ? env.label : "OTHER",
+            color: env ? env.color : "#94a3b8",
+            bg: env ? env.bg : "rgba(255,255,255,0.06)"
+          };
+        }
+        envCounts[key].count++;
+      });
+
+      const uniqueKeys = Object.keys(envCounts);
+      if (uniqueKeys.length > 0) {
+        let chipsHtml = `
+          <button type="button" class="nx-env-chip ${activeSavedSessionsEnv === 'all' ? 'active' : ''}" data-env="all">
+            <span>All</span>
+            <span class="chip-count">${allSessions.length}</span>
+          </button>
+        `;
+        uniqueKeys.forEach(k => {
+          const info = envCounts[k];
+          chipsHtml += `
+            <button type="button" class="nx-env-chip ${activeSavedSessionsEnv === k ? 'active' : ''}" data-env="${k}" style="--chip-accent:${info.color};">
+              <span class="chip-dot" style="background:${info.color};"></span>
+              <span>${info.label}</span>
+              <span class="chip-count">${info.count}</span>
+            </button>
+          `;
+        });
+        chipsContainer.innerHTML = chipsHtml;
+
+        chipsContainer.querySelectorAll(".nx-env-chip").forEach(chip => {
+          chip.onclick = () => {
+            activeSavedSessionsEnv = chip.dataset.env;
+            updateRecentSessionsGrid(null, searchInput ? searchInput.value : "");
+          };
+        });
+      } else {
+        chipsContainer.innerHTML = "";
+      }
+    }
+  }
+
+  // Filter items based on active env chip and search text
+  const filterFn = item => {
+    if (activeSavedSessionsEnv !== "all") {
+      const env = getItemEnv(item);
+      const key = env ? env.key : "other";
+      if (key !== activeSavedSessionsEnv) return false;
+    }
+    if (!q) return true;
+    const s = item.session;
+    return (s.name && s.name.toLowerCase().includes(q)) ||
+           (s.host && s.host.toLowerCase().includes(q)) ||
+           (s.username && s.username.toLowerCase().includes(q)) ||
+           (s.environment && s.environment.toLowerCase().includes(q)) ||
+           (item.folder && item.folder.name.toLowerCase().includes(q));
+  };
+
+  const renderCard = item => {
+    const s = item.session;
+    const nodeId = item.nodeId || "";
+    const protoInfo = getSessionProtocolInfo(s);
+    const folderEnv = item.folder ? getEnvironmentFromFolderName(item.folder.name) : null;
+    const env = folderEnv || getEnvironmentInfo(s.environment || s.color);
+    const customColor = (folderEnv ? folderEnv.color : s.color) || (env ? env.color : "#38bdf8");
+    
+    const rawName = s.name || s.host || "Session";
+    const safeName = rawName.replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+    
+    const hostStr = s.host || 'localhost';
+    const portStr = s.port ? `:${s.port}` : (protoInfo.badge === 'SSH' ? ':22' : '');
+    const userHost = `${s.username ? s.username + '@' : ''}${hostStr}${portStr}`;
+    
+    // Avoid repeating title and subtitle if identical
+    let subText = "";
+    if (rawName.trim() === userHost || rawName.trim() === hostStr || rawName.trim() === `${s.username}@${hostStr}`) {
+      subText = `${protoInfo.badge} • ${hostStr}${portStr}`;
+    } else {
+      subText = `${protoInfo.badge} • ${userHost}`;
+    }
+    const safeSub = subText.replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+
+    const isConn = Object.values(tabs).some(t => t.profile && (t.profile.id === s.id || (t.profile.host === s.host && t.profile.username === s.username)) && t.isConnected);
+    
+    const envBadge = env
+      ? `<span class="card-env-badge env-${env.key}" style="color:${env.color}; background:${env.bg}; border:1px solid ${env.border};" title="Environment: ${env.name}">${env.label}</span>`
+      : `<span class="card-env-badge card-env-default" title="No environment set">DEFAULT</span>`;
+
+    return `
+      <div class="recent-session-card ${isConn ? 'is-connected' : ''}" data-id="${s.id}" data-node-id="${nodeId}" style="--card-accent:${customColor};" title="Click to ${isConn ? 'focus' : 'connect'} ${safeName}">
+        <div class="card-top-bar">
+          <div class="card-icon-box" style="background:${env ? env.bg : 'rgba(56,189,248,0.1)'}; color:${customColor}; border:1px solid ${env ? env.border : 'rgba(56,189,248,0.2)'};">
+            <span class="card-proto-glyph">${protoInfo.icon}</span>
+          </div>
+          <div class="card-title-group">
+            <span class="card-name" title="${safeName}">${safeName}</span>
+            <span class="card-host" title="${safeSub}">${safeSub}</span>
+          </div>
+          <div class="card-tag-group">
+            ${envBadge}
+          </div>
+        </div>
+
+        <div class="card-bottom-bar">
+          <div class="card-status-pill ${isConn ? 'is-live' : 'is-idle'}">
+            <span class="status-dot"></span>
+            <span class="status-label">${isConn ? 'Connected' : 'Ready'}</span>
+          </div>
+          <div class="card-hover-actions">
+            <button class="card-action-btn card-connect-btn" type="button" data-id="${s.id}" title="${isConn ? 'Focus Tab' : 'Connect'}">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              <span>${isConn ? 'Focus' : 'Connect'}</span>
+            </button>
+            <button class="card-action-btn card-edit-btn" type="button" data-id="${s.id}" title="Edit Configuration">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+            </button>
+            <button class="card-action-btn card-delete-btn" type="button" data-id="${s.id}" data-node-id="${nodeId}" title="Remove Server">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  if (allSessions.length === 0) {
     grid.innerHTML = `
       <div class="empty-saved-sessions-card">
-        <div style="font-size:28px; margin-bottom:8px;">🌐</div>
-        <div style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:4px;">Saved & Active Servers</div>
-        <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Connect to any server or create a new session to display 1-click launch cards right here.</div>
+        <div style="font-size:30px; margin-bottom:8px;">🌐</div>
+        <div style="font-size:14px; font-weight:700; color:var(--text-primary); margin-bottom:4px;">No Saved Sessions Yet</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">Create your first SSH, SFTP, or RDP connection to launch with one click.</div>
         <div style="display:flex; gap:10px; justify-content:center;">
-          <button class="btn btn-sm btn-primary" id="homeCreateSessBtn" type="button">＋ New SSH Session</button>
+          <button class="btn btn-sm btn-primary" id="homeCreateSessBtn" type="button">＋ New Session</button>
         </div>
       </div>
     `;
@@ -713,139 +889,115 @@ export function updateRecentSessionsGrid(targetNode = null, filterText = "") {
     return;
   }
 
-  const q = (filterText || "").trim().toLowerCase();
-  const filterFn = item => {
-    if (!q) return true;
-    const s = item.session;
-    return (s.name && s.name.toLowerCase().includes(q)) ||
-           (s.host && s.host.toLowerCase().includes(q)) ||
-           (s.username && s.username.toLowerCase().includes(q)) ||
-           (s.environment && s.environment.toLowerCase().includes(q));
-  };
-
-  const renderCard = item => {
-    const s = item.session;
-    const nodeId = item.nodeId || "";
-    const protoInfo = getSessionProtocolInfo(s);
-    const folderEnv = item.folder ? getEnvironmentFromFolderName(item.folder.name) : null;
-    const env = folderEnv || getEnvironmentInfo(s.environment || s.color);
-    const customColor = (folderEnv ? folderEnv.color : s.color) || (env ? env.color : "");
-    const safeName = (s.name || s.host || "Session").replace(/[&<>"']/g, c => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[c]));
-    const safeHost = `${s.username ? s.username + '@' : ''}${s.host || ''}${s.port ? ':' + s.port : ''}`.replace(/[&<>"']/g, c => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[c]));
-    const isConn = Object.values(tabs).some(t => t.profile && t.profile.id === s.id && t.isConnected);
-    const cardStyle = customColor ? `style="--card-accent:${customColor}; border-top: 3px solid ${customColor};"` : '';
-    const envBadge = env
-      ? `<span class="card-env-badge env-${env.key}" style="color:${env.color}; background:${env.bg}; border:1px solid ${env.border};" title="Environment: ${env.name}">${env.label}</span>`
-      : `<span class="card-env-badge card-env-default" title="No environment set">DEFAULT</span>`;
-
-    return `
-      <div class="recent-session-card ${customColor ? 'has-env-color' : ''}" data-id="${s.id}" data-node-id="${nodeId}" title="Click to open or focus ${safeHost}" ${cardStyle}>
-        <div class="card-header-row">
-          <span class="key-icon">${protoInfo.icon}</span>
-          ${envBadge}
-          <span class="card-proto-tag">${protoInfo.badge}</span>
-          <span class="connected-item-dot ${isConn ? 'state-connected' : 'state-closed'}" style="margin-left:auto;" title="${isConn ? '● Connected' : '○ Disconnected'}"></span>
-          <button class="card-close-btn" type="button" data-id="${s.id}" data-node-id="${nodeId}" title="Remove this server from saved connections">&times;</button>
-        </div>
-        <span class="card-name" title="${safeName}">${safeName}</span>
-        <span class="card-host" title="${safeHost}">${safeHost}</span>
-        <div class="card-actions-row">
-          <button class="card-connect-btn" type="button" data-id="${s.id}">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-            <span>${isConn ? 'Focus Tab' : 'Connect'}</span>
-          </button>
-          <button class="card-color-btn" type="button" data-id="${s.id}" title="Change Environment / Color">Env ▾</button>
-          <button class="card-delete-btn" type="button" data-id="${s.id}" data-node-id="${nodeId}" title="Remove Server">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-          </button>
-        </div>
-      </div>
-    `;
-  };
-
   let html = "";
-  groups.forEach(grp => {
-    const matched = grp.sessions.filter(filterFn);
-    if (matched.length === 0 && q) return;
-    const env = grp.env || { key: 'default', label: grp.name.toUpperCase(), name: grp.name, color: '#94a3b8', bg: 'rgba(255,255,255,0.08)', border: 'rgba(255,255,255,0.15)' };
-    html += `
-      <div class="home-env-group" data-folder-name="${escapeHtml(grp.name)}">
-        <div class="home-env-header" style="border-left: 3px solid ${env.color};">
-          <div class="home-env-title">
-            <span class="home-env-badge env-${env.key}" style="color:${env.color}; background:${env.bg}; border: 1px solid ${env.border};">${env.label}</span>
-            <span class="home-env-name">${escapeHtml(grp.name.toUpperCase())}</span>
-            <span class="home-env-count">(${matched.length})</span>
-          </div>
-        </div>
-        <div class="home-env-cards-grid">
-          ${matched.length > 0 ? matched.map(renderCard).join("") : `<div class="home-env-empty">No servers in ${escapeHtml(grp.name)}</div>`}
-        </div>
-      </div>
-    `;
-  });
 
-  // Render any root unassigned sessions
-  const unassigned = allSessions.filter(item => !item.folder && filterFn(item));
-  if (unassigned.length > 0) {
-    html += `
-      <div class="home-env-group unassigned-group">
-        <div class="home-env-header" style="border-left: 3px solid #64748b;">
-          <div class="home-env-title">
-            <span class="home-env-badge" style="color:#94a3b8; background:rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);">SERVERS</span>
-            <span class="home-env-name">OTHER SAVED SERVERS</span>
-            <span class="home-env-count">(${unassigned.length})</span>
+  if (activeSavedSessionsEnv !== "all") {
+    // When an environment chip is selected, render a clean, direct flat grid
+    const filtered = allSessions.filter(filterFn);
+    if (filtered.length > 0) {
+      html = `<div class="home-env-cards-grid">${filtered.map(renderCard).join("")}</div>`;
+    }
+  } else {
+    // When "All" is active, group by folder but STRICTLY SKIP any group with 0 matching sessions!
+    groups.forEach(grp => {
+      const matched = grp.sessions.filter(filterFn);
+      if (matched.length === 0) return; // Completely hide empty groups!
+      const env = grp.env || { key: 'default', label: grp.name.toUpperCase(), name: grp.name, color: '#94a3b8', bg: 'rgba(255,255,255,0.08)', border: 'rgba(255,255,255,0.15)' };
+      html += `
+        <div class="home-env-group" data-folder-name="${escapeHtml(grp.name)}">
+          <div class="home-env-header">
+            <div class="home-env-title">
+              <span class="home-env-pill env-${env.key}" style="color:${env.color}; background:${env.bg}; border: 1px solid ${env.border};">${env.label}</span>
+              <span class="home-env-name">${escapeHtml(grp.name.toUpperCase())}</span>
+              <span class="home-env-count">${matched.length}</span>
+            </div>
+          </div>
+          <div class="home-env-cards-grid">
+            ${matched.map(renderCard).join("")}
           </div>
         </div>
-        <div class="home-env-cards-grid">
-          ${unassigned.map(renderCard).join("")}
+      `;
+    });
+
+    // Render any root unassigned sessions (if any exist)
+    const unassigned = allSessions.filter(item => !item.folder && filterFn(item));
+    if (unassigned.length > 0) {
+      html += `
+        <div class="home-env-group unassigned-group">
+          <div class="home-env-header">
+            <div class="home-env-title">
+              <span class="home-env-pill" style="color:#94a3b8; background:rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);">SERVERS</span>
+              <span class="home-env-name">OTHER SAVED SERVERS</span>
+              <span class="home-env-count">${unassigned.length}</span>
+            </div>
+          </div>
+          <div class="home-env-cards-grid">
+            ${unassigned.map(renderCard).join("")}
+          </div>
         </div>
-      </div>
-    `;
+      `;
+    }
   }
 
-  grid.innerHTML = html || `<div class="empty-saved-sessions-card"><div style="font-size:13px; color:var(--text-muted);">No sessions match "${escapeHtml(filterText)}"</div></div>`;
+  grid.innerHTML = html || `
+    <div class="empty-saved-sessions-card">
+      <div style="font-size:24px; margin-bottom:6px;">🔍</div>
+      <div style="font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:4px;">No matching sessions found</div>
+      <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:12px;">Try adjusting your search query or selected environment filter.</div>
+      <button class="btn btn-xs btn-secondary" id="clearSavedFiltersBtn" type="button">Reset Filters</button>
+    </div>
+  `;
+
+  const resetBtn = grid.querySelector("#clearSavedFiltersBtn");
+  if (resetBtn) {
+    resetBtn.onclick = () => {
+      if (searchInput) searchInput.value = "";
+      activeSavedSessionsEnv = "all";
+      updateRecentSessionsGrid(null, "");
+    };
+  }
 
   const sessions = allSessions;
+
+  // Launch / Connect Handler
+  const handleLaunch = sessId => {
+    const item = sessions.find(s => s.session.id === sessId);
+    if (!item || !item.session) return;
+    const openTabEntry = Object.entries(tabs).find(([_, t]) => t.profile && (t.profile.id === item.session.id || (t.profile.host === item.session.host && t.profile.username === item.session.username)));
+    if (openTabEntry && openTabEntry[1].isConnected) {
+      activateTab(openTabEntry[0]);
+    } else {
+      const folderEnv = item.folder ? getEnvironmentFromFolderName(item.folder.name) : null;
+      const env = folderEnv || getEnvironmentInfo(item.session.environment || item.session.color);
+      const customColor = (folderEnv ? folderEnv.color : item.session.color) || (env ? env.color : "");
+      connectToSession({
+        ...item.session,
+        environment: env ? env.key : item.session.environment,
+        color: customColor || item.session.color
+      });
+    }
+  };
 
   grid.querySelectorAll(".card-connect-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
-      const item = sessions.find(s => s.session.id === btn.dataset.id);
-      if (item && item.session) {
-        const folderEnv = item.folder ? getEnvironmentFromFolderName(item.folder.name) : null;
-        const env = folderEnv || getEnvironmentInfo(item.session.environment || item.session.color);
-        const customColor = (folderEnv ? folderEnv.color : item.session.color) || (env ? env.color : "");
-        connectToSession({
-          ...item.session,
-          environment: env ? env.key : item.session.environment,
-          color: customColor || item.session.color
-        });
-      }
+      handleLaunch(btn.dataset.id);
     });
   });
 
-  grid.querySelectorAll(".card-color-btn").forEach(btn => {
+  // Edit session handler
+  grid.querySelectorAll(".card-edit-btn").forEach(btn => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const item = sessions.find(s => s.session.id === btn.dataset.id);
       if (item && item.session) {
-        const matchingTab = Object.entries(tabs).find(([_, t]) => t.profile && t.profile.id === item.session.id);
-        const rect = btn.getBoundingClientRect();
-        if (matchingTab) {
-          showTabColorPalette(rect.right + 4, rect.top, matchingTab[0]);
-        } else {
-          import("./sessionDialog.js").then(m => m.showEditSessionDialog(item.session));
-        }
+        import("./sessionDialog.js").then(m => m.showEditSessionDialog(item.session));
       }
     });
   });
 
   // Remove / Delete Server Handler
-  grid.querySelectorAll(".card-delete-btn, .card-close-btn").forEach(btn => {
+  grid.querySelectorAll(".card-delete-btn").forEach(btn => {
     btn.addEventListener("click", async (e) => {
       e.stopPropagation();
       const sessId = btn.dataset.id;
@@ -886,19 +1038,20 @@ export function updateRecentSessionsGrid(targetNode = null, filterText = "") {
     });
   });
 
+  // 1-Click Connect on entire card body
   grid.querySelectorAll(".recent-session-card").forEach(card => {
     card.addEventListener("click", (e) => {
-      if (e.target.closest(".card-connect-btn") || e.target.closest(".card-color-btn") || e.target.closest(".card-delete-btn") || e.target.closest(".card-close-btn")) return;
+      if (e.target.closest(".card-action-btn")) return;
+      handleLaunch(card.dataset.id);
+    });
+
+    // Native Context Menu on card right-click
+    card.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const item = sessions.find(s => s.session.id === card.dataset.id);
       if (item && item.session) {
-        const folderEnv = item.folder ? getEnvironmentFromFolderName(item.folder.name) : null;
-        const env = folderEnv || getEnvironmentInfo(item.session.environment || item.session.color);
-        const customColor = (folderEnv ? folderEnv.color : item.session.color) || (env ? env.color : "");
-        connectToSession({
-          ...item.session,
-          environment: env ? env.key : item.session.environment,
-          color: customColor || item.session.color
-        });
+        showSessionContextMenu(e.clientX, e.clientY, item.session, item.nodeId);
       }
     });
   });

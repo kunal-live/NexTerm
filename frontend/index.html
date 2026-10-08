@@ -1159,37 +1159,45 @@
               <!-- ============ HERO ============ -->
               <section class="nx-hero">
                 <div class="nx-hero-left">
-                  <div class="nx-hero-eyebrow">FAST&nbsp; · &nbsp;SECURE&nbsp; · &nbsp;FLEXIBLE</div>
                   <h1 class="nx-hero-h1">Your Terminal, <span class="nx-grad">Elevated.</span></h1>
-                  <p class="nx-hero-sub">Manage servers, automate workflows, and stay in control &mdash;<br />all from
-                    one powerful workspace.</p>
+                  <p class="nx-hero-sub">Fast, secure multi-protocol terminal &amp; workspace manager.</p>
                   <div class="nx-hero-actions">
-                    <button id="newSSHSessionBigBtn" class="nx-btn nx-btn-primary" type="button">
+                    <button id="startLocalTerminalBigBtn" class="nx-btn nx-btn-emerald" type="button" title="Start Local Terminal (PowerShell / CMD)">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="4 17 10 11 4 5"></polyline>
                         <line x1="12" y1="19" x2="20" y2="19"></line>
                       </svg>
+                      <span>Start Local Terminal</span>
+                    </button>
+                    <button id="newSSHSessionBigBtn" class="nx-btn nx-btn-primary" type="button" title="Connect to SSH server">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="3" width="20" height="8" rx="2"></rect>
+                        <rect x="2" y="13" width="20" height="8" rx="2"></rect>
+                        <line x1="6" y1="7" x2="6.01" y2="7"></line>
+                        <line x1="6" y1="17" x2="6.01" y2="17"></line>
+                      </svg>
                       <span>New Session</span>
-                      <svg class="nx-btn-arrow" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                      <svg class="nx-btn-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                         <polyline points="12 5 19 12 12 19"></polyline>
                       </svg>
                     </button>
-                    <button id="homeViewDocsBtn" class="nx-btn nx-btn-ghost" type="button">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    <button id="homeViewDocsBtn" class="nx-btn nx-btn-ghost" type="button" title="Documentation">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
                         <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                       </svg>
-                      <span>View Documentation</span>
+                      <span>Docs</span>
                     </button>
                   </div>
                 </div>
                 <div class="nx-hero-right">
                   <div class="nx-hero-art" role="img"
-                    aria-label="NexTerm — a better terminal for a more productive you"></div>
+                    aria-label="NexTerm Planetary Workspace Viewport"></div>
                 </div>
               </section>
 
@@ -1197,7 +1205,7 @@
               <section class="nx-feature-grid">
                 <button id="startLocalTerminalBtn" class="nx-feature-card" type="button">
                   <span class="nx-feat-icon feat-emerald">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                       stroke-linecap="round" stroke-linejoin="round">
                       <polyline points="4 17 10 11 4 5"></polyline>
                       <line x1="12" y1="19" x2="20" y2="19"></line>
@@ -1205,9 +1213,9 @@
                   </span>
                   <span class="nx-feat-body">
                     <span class="nx-feat-title">Local Terminal</span>
-                    <span class="nx-feat-desc">Run PowerShell, CMD or WSL with a modern interface.</span>
+                    <span class="nx-feat-desc">PowerShell · CMD · WSL</span>
                   </span>
-                  <svg class="nx-feat-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  <svg class="nx-feat-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
@@ -1215,7 +1223,7 @@
                 </button>
                 <button id="homeToolSSH" class="nx-feature-card" type="button">
                   <span class="nx-feat-icon feat-blue">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                       stroke-linecap="round" stroke-linejoin="round">
                       <rect x="2" y="3" width="20" height="8" rx="2"></rect>
                       <rect x="2" y="13" width="20" height="8" rx="2"></rect>
@@ -1225,9 +1233,9 @@
                   </span>
                   <span class="nx-feat-body">
                     <span class="nx-feat-title">SSH Connection</span>
-                    <span class="nx-feat-desc">Connect to remote servers with keys or password.</span>
+                    <span class="nx-feat-desc">Keys &amp; Password</span>
                   </span>
-                  <svg class="nx-feat-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  <svg class="nx-feat-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
@@ -1235,16 +1243,16 @@
                 </button>
                 <button id="homeToolSFTP" class="nx-feature-card" type="button">
                   <span class="nx-feat-icon feat-purple">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                       stroke-linecap="round" stroke-linejoin="round">
                       <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                     </svg>
                   </span>
                   <span class="nx-feat-body">
                     <span class="nx-feat-title">SFTP Explorer</span>
-                    <span class="nx-feat-desc">Browse, transfer and edit files seamlessly.</span>
+                    <span class="nx-feat-desc">Dual File Manager</span>
                   </span>
-                  <svg class="nx-feat-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  <svg class="nx-feat-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
@@ -1252,7 +1260,7 @@
                 </button>
                 <button id="homeMultiConnectBtn" class="nx-feature-card" type="button">
                   <span class="nx-feat-icon feat-rose">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                       stroke-linecap="round" stroke-linejoin="round">
                       <circle cx="12" cy="12" r="2"></circle>
                       <path
@@ -1261,10 +1269,10 @@
                     </svg>
                   </span>
                   <span class="nx-feat-body">
-                    <span class="nx-feat-title">Multi-Server Broadcast</span>
-                    <span class="nx-feat-desc">Run commands on multiple servers at once.</span>
+                    <span class="nx-feat-title">Broadcast</span>
+                    <span class="nx-feat-desc">Multi-Server Exec</span>
                   </span>
-                  <svg class="nx-feat-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  <svg class="nx-feat-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                     <polyline points="12 5 19 12 12 19"></polyline>
@@ -1307,6 +1315,8 @@
                       </svg>
                     </button>
                   </div>
+                  <!-- Environment Quick-Filter Chips -->
+                  <div class="nx-env-filter-chips" id="nxEnvFilterChips"></div>
                   <div class="nx-saved-list" id="recentSessionsGrid">
                     <!-- Populated dynamically by updateRecentSessionsGrid() -->
                   </div>
