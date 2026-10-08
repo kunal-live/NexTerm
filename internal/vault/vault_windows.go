@@ -104,6 +104,26 @@ func (v *Vault) Delete(key string) error {
 	return err
 }
 
+// ClearAll removes all stored secrets from the vault.
+func (v *Vault) ClearAll() error {
+	if v.dir == "" {
+		return nil
+	}
+	entries, err := os.ReadDir(v.dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	for _, e := range entries {
+		if !e.IsDir() {
+			_ = os.Remove(filepath.Join(v.dir, e.Name()))
+		}
+	}
+	return nil
+}
+
 // --- thin wrappers around CryptProtectData / CryptUnprotectData ---
 
 type dataBlob struct {

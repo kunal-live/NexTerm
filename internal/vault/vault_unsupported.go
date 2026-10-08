@@ -30,3 +30,7 @@ func (v *Vault) Load(key string) (string, bool, error) {
 func (v *Vault) Delete(key string) error {
 	return ErrUnsupportedPlatform
 }
+
+func (v *Vault) ClearAll() error {
+	return ErrUnsupportedPlatform
+}

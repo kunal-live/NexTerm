@@ -83,3 +83,10 @@ func (v *Vault) Delete(key string) error {
 	}
 	return nil
 }
+
+// ClearAll removes all stored secrets from the vault.
+func (v *Vault) ClearAll() error {
+	cmd := exec.Command("/usr/bin/security", "delete-generic-password", "-s", v.service)
+	_ = cmd.Run()
+	return nil
+}

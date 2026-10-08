@@ -38,6 +38,7 @@ import {
   syncSFTPToCurrentTerminalCwd
 } from "./terminal.js";
 import { userSettings, THEMES } from "../settings/settings.js";
+import { setFocusMode } from "../ui/focusMode.js";
 import { showToast, updateStatus, escapeHtml, registerNotifTabSwitcher } from "../ui/notifications.js";
 import {
   notifyProcessStarted,
@@ -965,6 +966,12 @@ export function createTab(tabId, profile, isLocal = false, initialState = "Conne
     if (e.key === "Escape" && tabs[tabId] && tabs[tabId].searchState && tabs[tabId].searchState.isOpen) {
       if (e.type === "keydown") {
         closeTerminalSearch(tabId);
+      }
+      return false;
+    }
+    if (e.key === "Escape" && document.body.classList.contains("focus-mode")) {
+      if (e.type === "keydown") {
+        setFocusMode(false);
       }
       return false;
     }

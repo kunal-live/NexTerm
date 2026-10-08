@@ -127,11 +127,15 @@ func (a *App) startup(ctx context.Context) {
 	}
 
 	// 2. Vault
-	v, err := vault.NewVault()
-	if err != nil {
-		a.logRuntimeError("vault init failed: %v", err)
-	} else {
-		a.credentialService.SetVault(v)
+	if a.credentialService.Vault() == nil {
+		v, err := vault.NewVault()
+		if err != nil {
+			a.logRuntimeError("vault init failed: %v", err)
+		} else {
+			a.credentialService.SetVault(v)
+		}
+	}
+	if a.sessionService != nil {
 		a.credentialService.SetTreeProvider(func() *model.TreeNode {
 			return a.sessionService.GetSessionTree()
 		})
@@ -151,6 +155,11 @@ func (a *App) startup(ctx context.Context) {
 	if _, err := a.sessionService.LoadRoot(); err != nil {
 		a.logRuntimeError("load session tree failed: %v", err)
 	}
+
+	// Wire security wipe callback
+	a.credentialService.SetOnSecurityWipe(func() error {
+		return a.WipeAllDataAndRestart()
+	})
 }
 
 // =========================================================================
@@ -582,6 +591,131 @@ func (a *App) ChangeMasterPassword(currentPassword, newPassword, newHint string)
 		a.loggingService.LogAudit("MASTER_PASSWORD_CHANGED", "vault", "", "", "master", "SUCCESS", "Master password updated")
 	}
 	return err
+}
+
+func (a *App) GetLockoutStatus() (*service.LockoutStatus, error) {
+	return a.credentialService.GetLockoutStatus()
+}
+
+func (a *App) HasPreviousMasterPasswords() (bool, int, error) {
+	return a.credentialService.HasPreviousMasterPasswords()
+}
+
+func (a *App) ResetMasterPasswordWithPrevious(previousPassword, newPassword, newHint string) error {
+	err := a.credentialService.ResetMasterPasswordWithPrevious(previousPassword, newPassword, newHint)
+	if err == nil {
+		a.loggingService.LogAudit("MASTER_PASSWORD_RECOVERED", "vault", "", "", "master", "SUCCESS", "Master password reset via previous password verification")
+	}
+	return err
+}
+
+func (a *App) HasAppPassword() (bool, error) {
+	return a.credentialService.HasAppPassword()
+}
+
+func (a *App) IsAppLockEnabled() (bool, error) {
+	return a.credentialService.IsAppLockEnabled()
+}
+
+func (a *App) SetAppLockEnabled(enabled bool) error {
+	err := a.credentialService.SetAppLockEnabled(enabled)
+	if err == nil {
+		action := "APP_LOCK_DISABLED"
+		if enabled {
+			action = "APP_LOCK_ENABLED"
+		}
+		a.loggingService.LogAudit(action, "applock", "", "", "user", "SUCCESS", fmt.Sprintf("App lock enabled set to %v", enabled))
+	}
+	return err
+}
+
+func (a *App) SetAppPassword(password, hint string) error {
+	err := a.credentialService.SetAppPassword(password, hint)
+	if err == nil {
+		a.loggingService.LogAudit("APP_PASSWORD_SET", "applock", "", "", "user", "SUCCESS", "App lock password set")
+	}
+	return err
+}
+
+func (a *App) VerifyAppPassword(password string) (bool, error) {
+	valid, err := a.credentialService.VerifyAppPassword(password)
+	if err == nil {
+		status := "DENIED"
+		if valid {
+			status = "SUCCESS"
+		}
+		a.loggingService.LogAudit("APP_PASSWORD_VERIFY", "applock", "", "", "user", status, "App password authentication attempt")
+	}
+	return valid, err
+}
+
+func (a *App) GetAppPasswordHint() (string, error) {
+	return a.credentialService.GetAppPasswordHint()
+}
+
+func (a *App) ChangeAppPassword(currentPassword, newPassword, newHint string) error {
+	err := a.credentialService.ChangeAppPassword(currentPassword, newPassword, newHint)
+	if err == nil {
+		a.loggingService.LogAudit("APP_PASSWORD_CHANGED", "applock", "", "", "user", "SUCCESS", "App password changed")
+	}
+	return err
+}
+
+func (a *App) RemoveAppPassword(currentPassword string) error {
+	err := a.credentialService.RemoveAppPassword(currentPassword)
+	if err == nil {
+		a.loggingService.LogAudit("APP_PASSWORD_REMOVED", "applock", "", "", "user", "SUCCESS", "App password removed and app lock disabled")
+	}
+	return err
+}
+
+func (a *App) ResetAppPasswordWithPrevious(previousPassword, newPassword, newHint string) error {
+	err := a.credentialService.ResetAppPasswordWithPrevious(previousPassword, newPassword, newHint)
+	if err == nil {
+		a.loggingService.LogAudit("APP_PASSWORD_RECOVERED", "applock", "", "", "user", "SUCCESS", "App password reset via previous password verification")
+	}
+	return err
+}
+
+func (a *App) GetAppLockoutStatus() (*service.LockoutStatus, error) {
+	return a.credentialService.GetAppLockoutStatus()
+}
+
+func (a *App) ResetAllData() error {
+	if err := a.credentialService.ClearAll(); err != nil {
+		a.logRuntimeError("vault clear failed: %v", err)
+	}
+	if _, err := a.sessionService.ResetToDefault(); err != nil {
+		a.logRuntimeError("session reset failed: %v", err)
+	}
+	a.loggingService.LogAudit("FACTORY_RESET", "system", "", "", "admin", "SUCCESS", "All server credentials and sessions reset to clean state")
+	return nil
+}
+
+func (a *App) RestartApp() error {
+	exe, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("failed to get executable path: %w", err)
+	}
+	cmd := exec.Command(exe)
+	cmd.Dir = filepath.Dir(exe)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to restart application: %w", err)
+	}
+	go func() {
+		time.Sleep(300 * time.Millisecond)
+		if a.ctx != nil {
+			wailsruntime.Quit(a.ctx)
+		} else {
+			os.Exit(0)
+		}
+	}()
+	return nil
+}
+
+func (a *App) WipeAllDataAndRestart() error {
+	_ = a.ResetAllData()
+	return a.RestartApp()
 }
 
 func (a *App) GenerateSecurePassword(length int, includeSymbols bool) string {
@@ -1142,6 +1276,14 @@ func (a *App) NetPortScan(host string, ports []int) []nettools.PortScanResult {
 
 func (a *App) NetCalculateHash(input, algorithm string) string {
 	return nettools.CalculateHash(input, algorithm)
+}
+
+func (a *App) CheckServersReachability(targets []nettools.TargetQuery, timeoutMs int) []nettools.ServerReachability {
+	return nettools.CheckServersReachability(targets, timeoutMs)
+}
+
+func (a *App) PingTarget(host string, port int, timeoutMs int) nettools.ServerReachability {
+	return nettools.PingTarget(host, port, timeoutMs)
 }
 
 // =========================================================================

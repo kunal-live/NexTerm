@@ -2,12 +2,15 @@ package service
 
 import (
 	"context"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
 	"nexterm/internal/model"
 	"nexterm/internal/protocol"
 	"nexterm/internal/security"
 	"nexterm/internal/vault"
-	"strings"
-	"testing"
 )
 
 type testEmitter struct {
@@ -684,5 +687,238 @@ func TestMasterPasswordAndGenerator(t *testing.T) {
 	has, _ = svc.HasMasterPassword()
 	if has {
 		t.Fatal("expected HasMasterPassword=false after removal")
+	}
+}
+
+func TestMasterPasswordLockoutStagesAndSecurityWipe(t *testing.T) {
+	tempDir := t.TempDir()
+	v, err := vault.NewVaultAt(tempDir)
+	if err != nil {
+		t.Fatalf("failed to create vault: %v", err)
+	}
+	svc := NewCredentialService(v)
+	svc.SetLockoutFilePath(filepath.Join(tempDir, "lockout.json"))
+
+	wiped := false
+	svc.SetOnSecurityWipe(func() error {
+		wiped = true
+		return nil
+	})
+
+	masterPwd := "ValidMaster#123"
+	if err := svc.SetMasterPassword(masterPwd, "hint"); err != nil {
+		t.Fatalf("SetMasterPassword failed: %v", err)
+	}
+
+	// Initial status
+	st, err := svc.GetLockoutStatus()
+	if err != nil || st.CurrentStage != 1 || st.FailedAttempts != 0 || st.MaxAttempts != 5 {
+		t.Fatalf("unexpected initial lockout status: %+v, err=%v", st, err)
+	}
+
+	// STAGE 1: 4 wrong attempts should NOT lock out
+	for i := 1; i <= 4; i++ {
+		ok, err := svc.VerifyMasterPassword("Wrong1")
+		if ok || err != nil {
+			t.Fatalf("attempt %d: expected ok=false, err=nil, got ok=%v, err=%v", i, ok, err)
+		}
+	}
+	st, _ = svc.GetLockoutStatus()
+	if st.FailedAttempts != 4 || st.CurrentStage != 1 || st.IsLockedOut {
+		t.Fatalf("expected stage 1 with 4 failed attempts, got %+v", st)
+	}
+
+	// 5th wrong attempt triggers 30s lockout and advances to stage 2
+	ok, err := svc.VerifyMasterPassword("Wrong1")
+	if ok || err == nil {
+		t.Fatalf("5th attempt should error with lockout, got ok=%v, err=%v", ok, err)
+	}
+	st, _ = svc.GetLockoutStatus()
+	if !st.IsLockedOut || st.CurrentStage != 2 || st.RemainingSeconds <= 0 {
+		t.Fatalf("expected 30s lockout and stage 2, got %+v", st)
+	}
+
+	// Subsequent attempt while locked out is rejected without advancing attempts
+	ok, err = svc.VerifyMasterPassword(masterPwd)
+	if ok || err == nil || !strings.Contains(err.Error(), "locked") {
+		t.Fatalf("expected locked out rejection, got ok=%v, err=%v", ok, err)
+	}
+
+	// Simulate expiration of 30s lockout
+	svc.mu.Lock()
+	svc.lockoutUntil = time.Now().Add(-1 * time.Second)
+	svc.mu.Unlock()
+
+	st, _ = svc.GetLockoutStatus()
+	if st.IsLockedOut || st.CurrentStage != 2 || st.MaxAttempts != 5 {
+		t.Fatalf("expected stage 2 unlocked, got %+v", st)
+	}
+
+	// STAGE 2: 5 wrong attempts triggers 2m lockout and advances to stage 3
+	for i := 1; i <= 4; i++ {
+		ok, err := svc.VerifyMasterPassword("Wrong2")
+		if ok || err != nil {
+			t.Fatalf("stage 2 attempt %d: expected ok=false, err=nil, got ok=%v, err=%v", i, ok, err)
+		}
+	}
+	ok, err = svc.VerifyMasterPassword("Wrong2")
+	if ok || err == nil {
+		t.Fatalf("stage 2 5th attempt should trigger 2m lockout, got ok=%v, err=%v", ok, err)
+	}
+	st, _ = svc.GetLockoutStatus()
+	if !st.IsLockedOut || st.CurrentStage != 3 {
+		t.Fatalf("expected stage 3 lockout, got %+v", st)
+	}
+
+	// Simulate expiration of 2m lockout
+	svc.mu.Lock()
+	svc.lockoutUntil = time.Now().Add(-1 * time.Second)
+	svc.mu.Unlock()
+
+	// STAGE 3: 3 wrong attempts triggers 30m lockout and advances to stage 4
+	st, _ = svc.GetLockoutStatus()
+	if st.MaxAttempts != 3 || st.CurrentStage != 3 {
+		t.Fatalf("expected stage 3 maxAttempts=3, got %+v", st)
+	}
+	for i := 1; i <= 2; i++ {
+		ok, err := svc.VerifyMasterPassword("Wrong3")
+		if ok || err != nil {
+			t.Fatalf("stage 3 attempt %d: expected ok=false, err=nil, got ok=%v, err=%v", i, ok, err)
+		}
+	}
+	ok, err = svc.VerifyMasterPassword("Wrong3")
+	if ok || err == nil {
+		t.Fatalf("stage 3 3rd attempt should trigger 30m lockout, got ok=%v, err=%v", ok, err)
+	}
+	st, _ = svc.GetLockoutStatus()
+	if !st.IsLockedOut || st.CurrentStage != 4 || !st.IsFinalStage {
+		t.Fatalf("expected stage 4 final stage, got %+v", st)
+	}
+
+	// Simulate expiration of 30m lockout
+	svc.mu.Lock()
+	svc.lockoutUntil = time.Now().Add(-1 * time.Second)
+	svc.mu.Unlock()
+
+	st, _ = svc.GetLockoutStatus()
+	if st.CurrentStage != 4 || st.MaxAttempts != 1 || st.AttemptsRemaining != 1 {
+		t.Fatalf("expected stage 4 with 1 attempt remaining, got %+v", st)
+	}
+
+	// STAGE 4: Final attempt failure triggers security wipe
+	ok, err = svc.VerifyMasterPassword("FinalWrong")
+	if ok || err == nil || !strings.Contains(err.Error(), "SECURITY_WIPE") {
+		t.Fatalf("expected SECURITY_WIPE on 4th stage failure, got ok=%v, err=%v", ok, err)
+	}
+
+	// Wait briefly for security wipe callback goroutine
+	time.Sleep(50 * time.Millisecond)
+	if !wiped {
+		t.Fatal("expected onSecurityWipe callback to be executed")
+	}
+
+	// Vault should be cleared
+	has, _ := svc.HasMasterPassword()
+	if has {
+		t.Fatal("expected master password to be wiped")
+	}
+}
+
+func TestMasterPasswordHistoryAndRecovery(t *testing.T) {
+	tempDir := t.TempDir()
+	v, err := vault.NewVaultAt(tempDir)
+	if err != nil {
+		t.Fatalf("failed to create vault: %v", err)
+	}
+	svc := NewCredentialService(v)
+	svc.SetLockoutFilePath(filepath.Join(tempDir, "lockout.json"))
+
+	pwd1 := "PasswordAlpha#1"
+	if err := svc.SetMasterPassword(pwd1, "alpha"); err != nil {
+		t.Fatalf("SetMasterPassword failed: %v", err)
+	}
+
+	// New user has NO previous passwords
+	hasHist, count, err := svc.HasPreviousMasterPasswords()
+	if err != nil || hasHist || count != 0 {
+		t.Fatalf("expected new user to have 0 history, got has=%v, count=%d, err=%v", hasHist, count, err)
+	}
+
+	// New user cannot use ResetMasterPasswordWithPrevious
+	err = svc.ResetMasterPasswordWithPrevious(pwd1, "NewPwd#999", "hint")
+	if err == nil || !strings.Contains(err.Error(), "no master password history") {
+		t.Fatalf("expected error for new user recovery, got: %v", err)
+	}
+
+	// User changes password -> pwd1 moves to history (count = 1)
+	pwd2 := "PasswordBeta#2"
+	if err := svc.ChangeMasterPassword(pwd1, pwd2, "beta"); err != nil {
+		t.Fatalf("ChangeMasterPassword failed: %v", err)
+	}
+	hasHist, count, _ = svc.HasPreviousMasterPasswords()
+	if !hasHist || count != 1 {
+		t.Fatalf("expected 1 history item, got has=%v, count=%d", hasHist, count)
+	}
+
+	// User changes password again -> pwd2, pwd1 in history (count = 2)
+	pwd3 := "PasswordGamma#3"
+	if err := svc.ChangeMasterPassword(pwd2, pwd3, "gamma"); err != nil {
+		t.Fatalf("ChangeMasterPassword failed: %v", err)
+	}
+	hasHist, count, _ = svc.HasPreviousMasterPasswords()
+	if count != 2 {
+		t.Fatalf("expected 2 history items, got %d", count)
+	}
+
+	// User changes password again -> pwd3, pwd2, pwd1 in history (count = 3)
+	pwd4 := "PasswordDelta#4"
+	if err := svc.ChangeMasterPassword(pwd3, pwd4, "delta"); err != nil {
+		t.Fatalf("ChangeMasterPassword failed: %v", err)
+	}
+	hasHist, count, _ = svc.HasPreviousMasterPasswords()
+	if count != 3 {
+		t.Fatalf("expected 3 history items, got %d", count)
+	}
+
+	// User changes password a 4th time -> pwd4, pwd3, pwd2 in history (pwd1 dropped, capped at 3)
+	pwd5 := "PasswordEpsilon#5"
+	if err := svc.ChangeMasterPassword(pwd4, pwd5, "epsilon"); err != nil {
+		t.Fatalf("ChangeMasterPassword failed: %v", err)
+	}
+	hasHist, count, _ = svc.HasPreviousMasterPasswords()
+	if count != 3 {
+		t.Fatalf("expected 3 history items capped, got %d", count)
+	}
+
+	// Recovery with pwd1 should now fail (it was dropped as older than last 3)
+	err = svc.ResetMasterPasswordWithPrevious(pwd1, "RecoveredPwd#1", "hint")
+	if err == nil {
+		t.Fatal("expected pwd1 to fail as it is beyond the last 3 passwords")
+	}
+
+	// Recovery with pwd3 (which is in the last 3) succeeds!
+	recoveredPwd := "NewRecoveredPass#888"
+	err = svc.ResetMasterPasswordWithPrevious(pwd3, recoveredPwd, "recovered hint")
+	if err != nil {
+		t.Fatalf("expected recovery with pwd3 to succeed, got: %v", err)
+	}
+
+	// New master password works
+	ok, err := svc.VerifyMasterPassword(recoveredPwd)
+	if err != nil || !ok {
+		t.Fatalf("expected new master password to verify, got ok=%v, err=%v", ok, err)
+	}
+
+	// ClearAll resets everything
+	if err := svc.ClearAll(); err != nil {
+		t.Fatalf("ClearAll failed: %v", err)
+	}
+	has, _ := svc.HasMasterPassword()
+	if has {
+		t.Fatal("expected HasMasterPassword=false after ClearAll")
+	}
+	hasHist, count, _ = svc.HasPreviousMasterPasswords()
+	if hasHist || count != 0 {
+		t.Fatal("expected 0 history items after ClearAll")
 	}
 }

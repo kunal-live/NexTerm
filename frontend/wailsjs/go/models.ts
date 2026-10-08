@@ -829,6 +829,40 @@ export namespace service {
 	        this.resolutions = source["resolutions"];
 	    }
 	}
+	export class LockoutStatus {
+	    isLockedOut: boolean;
+	    remainingSeconds: number;
+	    currentStage: number;
+	    failedAttempts: number;
+	    maxAttempts: number;
+	    attemptsRemaining: number;
+	    hasMasterPassword: boolean;
+	    hasAppPassword: boolean;
+	    isAppLockEnabled: boolean;
+	    hasHistory: boolean;
+	    historyCount: number;
+	    isFinalStage: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new LockoutStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.isLockedOut = source["isLockedOut"];
+	        this.remainingSeconds = source["remainingSeconds"];
+	        this.currentStage = source["currentStage"];
+	        this.failedAttempts = source["failedAttempts"];
+	        this.maxAttempts = source["maxAttempts"];
+	        this.attemptsRemaining = source["attemptsRemaining"];
+	        this.hasMasterPassword = source["hasMasterPassword"];
+	        this.hasAppPassword = source["hasAppPassword"];
+	        this.isAppLockEnabled = source["isAppLockEnabled"];
+	        this.hasHistory = source["hasHistory"];
+	        this.historyCount = source["historyCount"];
+	        this.isFinalStage = source["isFinalStage"];
+	    }
+	}
 	export class LogEntry {
 	    // Go type: time
 	    timestamp: any;

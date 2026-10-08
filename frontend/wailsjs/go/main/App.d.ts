@@ -42,9 +42,15 @@ export function CancelAuthChallenge(arg1:string):Promise<void>;
 
 export function CancelBroadcast(arg1:string):Promise<void>;
 
+export function ChangeAppPassword(arg1:string,arg2:string,arg3:string):Promise<void>;
+
 export function ChangeMasterPassword(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function CheckSSHAgent():Promise<Record<string, any>>;
+
+export function CheckServersReachability(arg1:Array<any>,arg2:number):Promise<Array<any>>;
+
+export function PingTarget(arg1:string,arg2:number,arg3:number):Promise<any>;
 
 export function ClassifyConnectionError(arg1:string):Promise<sshsession.ClassifiedError>;
 
@@ -92,6 +98,10 @@ export function GenerateSSHKey(arg1:string,arg2:string,arg3:string,arg4:string):
 
 export function GenerateSecurePassword(arg1:number,arg2:boolean):Promise<string>;
 
+export function GetAppLockoutStatus():Promise<service.LockoutStatus>;
+
+export function GetAppPasswordHint():Promise<string>;
+
 export function GetAuditLogs(arg1:number):Promise<Array<service.AuditEvent>>;
 
 export function GetAvailableSerialPorts():Promise<Array<string>>;
@@ -99,6 +109,8 @@ export function GetAvailableSerialPorts():Promise<Array<string>>;
 export function GetCustomizerConfig():Promise<security.CustomizerConfig>;
 
 export function GetKnownHosts():Promise<Array<hostkey.HostKeyEntry>>;
+
+export function GetLockoutStatus():Promise<service.LockoutStatus>;
 
 export function GetMacros():Promise<Array<macro.Macro>>;
 
@@ -122,13 +134,19 @@ export function GetTunnels():Promise<Array<tunnel.TunnelConfig>>;
 
 export function GetWorkspace():Promise<model.Workspace>;
 
+export function HasAppPassword():Promise<boolean>;
+
 export function HasMasterPassword():Promise<boolean>;
+
+export function HasPreviousMasterPasswords():Promise<boolean>;
 
 export function HasSavedPassword(arg1:string):Promise<boolean>;
 
 export function ImportSessions(arg1:string):Promise<model.TreeNode>;
 
 export function ImportSessionsFromFile():Promise<model.TreeNode>;
+
+export function IsAppLockEnabled():Promise<boolean>;
 
 export function IsXServerRunning():Promise<boolean>;
 
@@ -164,17 +182,27 @@ export function OpenSessionWithTabIDAndJumpSecret(arg1:string,arg2:model.Session
 
 export function QuickConnect(arg1:string,arg2:number,arg3:string,arg4:string,arg5:string):Promise<string>;
 
+export function RemoveAppPassword(arg1:string):Promise<void>;
+
 export function RemoveMasterPassword(arg1:string):Promise<void>;
 
 export function RenameNode(arg1:string,arg2:string):Promise<model.TreeNode>;
 
+export function ResetAllData():Promise<void>;
+
+export function ResetAppPasswordWithPrevious(arg1:string,arg2:string,arg3:string):Promise<void>;
+
 export function ResetMasterPassword():Promise<void>;
+
+export function ResetMasterPasswordWithPrevious(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function ResizeTerminal(arg1:string,arg2:number,arg3:number):Promise<void>;
 
 export function RespondAuthChallenge(arg1:string,arg2:Array<string>):Promise<void>;
 
 export function RespondHostKey(arg1:string,arg2:string):Promise<void>;
+
+export function RestartApp():Promise<void>;
 
 export function RunSSHCommand(arg1:string,arg2:string):Promise<string>;
 
@@ -238,6 +266,10 @@ export function SelectPrivateKeyFile():Promise<string>;
 
 export function SelectUploadFile():Promise<string>;
 
+export function SetAppLockEnabled(arg1:boolean):Promise<void>;
+
+export function SetAppPassword(arg1:string,arg2:string):Promise<void>;
+
 export function SetMasterPassword(arg1:string,arg2:string):Promise<void>;
 
 export function SetWorkspaceActiveTab(arg1:string,arg2:string):Promise<void>;
@@ -258,6 +290,10 @@ export function UpdateSession(arg1:model.SessionProfile):Promise<model.TreeNode>
 
 export function ValidatePrivateKeyFile(arg1:string,arg2:string):Promise<sshsession.KeyInfo>;
 
+export function VerifyAppPassword(arg1:string):Promise<boolean>;
+
 export function VerifyMasterPassword(arg1:string):Promise<boolean>;
+
+export function WipeAllDataAndRestart():Promise<void>;
 
 export function WriteToTerminal(arg1:string,arg2:string):Promise<void>;

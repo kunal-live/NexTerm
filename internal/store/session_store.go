@@ -266,6 +266,11 @@ func ensureDefaultFolders(root *model.TreeNode) bool {
 	return modified
 }
 
+// SeedDefaultTree constructs a clean default session tree.
+func SeedDefaultTree() *model.TreeNode {
+	return seedDefaultTree()
+}
+
 func seedDefaultTree() *model.TreeNode {
 	children := make([]*model.TreeNode, 0, len(DefaultFolderNames))
 	for _, name := range DefaultFolderNames {

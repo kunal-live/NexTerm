@@ -1055,6 +1055,11 @@ export function updateRecentSessionsGrid(targetNode = null, filterText = "") {
       }
     });
   });
+
+  // Keep server reachability monitor in sync with saved sessions
+  try {
+    import('../monitor/serverReachability.js').then(m => m.updateServerReachability()).catch(() => {});
+  } catch (_) {}
 }
 
 export function switchSidebarView(view) {

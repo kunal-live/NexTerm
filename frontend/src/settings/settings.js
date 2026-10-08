@@ -7,7 +7,7 @@ import { getTabs } from "../state/tabState.js";
 import { showToast, escapeHtml } from "../ui/notifications.js";
 import { showModal, hideModal } from "../ui/modal.js";
 import { updatePlanetHero } from "../ui/planetHeroAnimation.js";
-import { isAppLockEnabled, setAppLockEnabled, getIdleMinutes, setIdleMinutes, isLockOnStartup, setLockOnStartup } from "../ui/appLock.js";
+import { isAppLockEnabled, setAppLockEnabled, getIdleMinutes, setIdleMinutes, isLockOnStartup, setLockOnStartup, lockNow } from "../ui/appLock.js";
 import {
   getKnowledgeFiles,
   getKnowledgeFolders,
@@ -947,6 +947,7 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
     <div class="modal-tabs">
       <button class="modal-tab-btn active" data-tab="tab-settings-term">🖥️ Terminal & UI</button>
       <button class="modal-tab-btn" data-tab="tab-settings-pwd">🔑 Passwords & Vault</button>
+      <button class="modal-tab-btn" data-tab="tab-settings-applock">🔒 App Lock</button>
       <button class="modal-tab-btn" data-tab="tab-settings-sec">🛡️ Security Policies</button>
       <button class="modal-tab-btn" data-tab="tab-settings-custom">🏢 Customizer</button>
       <button class="modal-tab-btn" data-tab="tab-settings-knownhosts">🛡️ Known Hosts</button>
@@ -1284,6 +1285,7 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
             <div class="vault-list-title">
               <span class="vault-section-title">Saved Session Credentials</span>
               <span id="vaultCredCount" class="vault-counter-badge">0</span>
+              <span id="vaultSecuredPill" class="vault-counter-badge" style="margin-left: 8px;">Checking...</span>
             </div>
             <div class="vault-list-actions">
               <div class="vault-search-box">
@@ -1295,6 +1297,203 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
           </div>
           <div id="pwdVaultList" class="pwd-vault-list">
             <div style="text-align: center; padding: 20px; color: var(--text-dim);">Loading vault credentials...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2b. App Lock & Auto-Lock Settings Tab -->
+      <div id="tab-settings-applock" class="tab-content hidden">
+        <!-- App Lock Status Hero Card -->
+        <div class="vault-hero-card" id="appLockHeroCard" style="margin-bottom: 14px;">
+          <div class="vault-hero-left">
+            <div class="vault-shield-avatar" id="appLockShieldAvatar">🔒</div>
+            <div class="vault-hero-text">
+              <div class="vault-hero-heading">
+                <span class="vault-hero-title">Application Lock & Idle Security</span>
+                <span id="appLockStatusBadge" class="vault-pulse-dot">● Loading...</span>
+              </div>
+              <div class="vault-hero-subtitle" id="appLockStatusText">
+                Protect active terminals and sessions behind your dedicated App Password.
+              </div>
+            </div>
+          </div>
+          <div class="vault-header-actions" style="display: flex; gap: 8px; align-items: center;">
+            <button type="button" class="btn btn-secondary btn-xs" id="btnAppLockToggleAction" title="Enable or Disable Application Lock">
+              Disable App Lock
+            </button>
+            <button type="button" class="btn btn-primary btn-xs btn-lock-vault" id="btnAppLockNow" title="Lock NexTerm immediately">
+              🔒 Lock Screen Now
+            </button>
+          </div>
+        </div>
+
+        <!-- Decoupled Architecture Explanation Card -->
+        <div style="margin-bottom: 14px; padding: 12px 14px; border-radius: 8px; font-size: 12px; background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.22); color: #cbd5e1;">
+          <div style="font-weight: 600; color: #38bdf8; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+            <span>ℹ️</span> Independent Passwords: App Password vs Vault Master Password
+          </div>
+          <div style="font-size: 11.5px; color: #94a3b8; line-height: 1.5; margin-bottom: 10px;">
+            The <strong>App Password</strong> and <strong>Vault Master Password</strong> are completely decoupled and can be different from each other.
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div style="background: rgba(15, 23, 42, 0.6); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+              <div style="font-weight: 600; color: #38bdf8; margin-bottom: 3px; display: flex; align-items: center; gap: 6px;">
+                <span>🔒</span> App Password (This Tab)
+              </div>
+              <div style="font-size: 11px; color: #94a3b8; line-height: 1.45;">
+                Protects the application screen on startup and when idle. Can be enabled, disabled, or changed anytime without affecting stored vault credentials.
+              </div>
+            </div>
+            <div style="background: rgba(15, 23, 42, 0.6); padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+              <div style="font-weight: 600; color: #a78bfa; margin-bottom: 3px; display: flex; align-items: center; gap: 6px;">
+                <span>🛡️</span> Vault Master Password (Password Manager)
+              </div>
+              <div style="font-size: 11px; color: #94a3b8; line-height: 1.45;">
+                Exclusively locks and encrypts stored session passwords in Windows DPAPI. Managed under the <strong>🔑 Password Manager</strong> tab.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section A: Dedicated App Password Setup Card (shown if App Password is NOT set) -->
+        <div id="appLockSetupCard" class="vault-form-box hidden" style="margin-bottom: 14px; border-color: rgba(56, 189, 248, 0.35);">
+          <div style="font-weight: 600; font-size: 13px; color: #38bdf8; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
+            <span>🔑</span> Set Dedicated App Password
+          </div>
+          <div style="font-size: 11.5px; color: var(--text-dim); margin-bottom: 12px; line-height: 1.45;">
+            Choose a password specifically for locking and unlocking the NexTerm desktop application. It does not need to match your Password Manager master password.
+          </div>
+          <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px;">
+            <div class="form-group">
+              <label for="newAppLockPwd" style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">New App Password (min 4 characters) <span style="color:#ef4444;">*</span></label>
+              <input type="password" id="newAppLockPwd" class="form-input" placeholder="Create App Password..." autocomplete="new-password" />
+            </div>
+            <div class="form-group">
+              <label for="confirmAppLockPwd" style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Confirm App Password <span style="color:#ef4444;">*</span></label>
+              <input type="password" id="confirmAppLockPwd" class="form-input" placeholder="Confirm App Password..." autocomplete="new-password" />
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label for="newAppLockHint" style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">Password Hint (optional)</label>
+            <input type="text" id="newAppLockHint" class="form-input" placeholder="e.g. Work badge pin + code" autocomplete="off" />
+          </div>
+          <div style="display: flex; justify-content: flex-end;">
+            <button type="button" class="btn btn-primary btn-sm btn-lock-vault" id="btnSaveAppLockPwd">
+              🔒 Set App Password & Enable Lock
+            </button>
+          </div>
+        </div>
+
+        <!-- Section B: Dedicated App Password Management Card (shown if App Password IS set) -->
+        <div id="appLockManageCard" class="vault-form-box hidden" style="margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div>
+              <div style="font-weight: 600; font-size: 13px; color: #f1f5f9; display: flex; align-items: center; gap: 6px;">
+                <span>🔑</span> App Password Configured
+              </div>
+              <div style="font-size: 11.5px; color: var(--text-dim);" id="appLockHintDisplay">
+                App Password is saved and active.
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn btn-secondary btn-xs" id="btnOpenChangeAppLock">🔑 Change App Password</button>
+              <button type="button" class="btn btn-danger btn-xs" id="btnOpenRemoveAppLock" style="background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); color: #f87171;">🗑️ Remove Password</button>
+            </div>
+          </div>
+
+          <!-- Sub-panel: Change App Password Drawer -->
+          <div id="appLockChangeDrawer" class="hidden" style="margin-top: 12px; padding: 12px; border-radius: 8px; background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.08);">
+            <div style="font-weight: 600; font-size: 12px; color: #38bdf8; margin-bottom: 8px;">Change App Password</div>
+            <div class="form-group" style="margin-bottom: 8px;">
+              <label for="chgCurrAppPwd" style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 3px;">Current App Password</label>
+              <input type="password" id="chgCurrAppPwd" class="form-input" placeholder="Enter current App Password..." autocomplete="current-password" />
+            </div>
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 8px;">
+              <div class="form-group">
+                <label for="chgNewAppPwd" style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 3px;">New App Password</label>
+                <input type="password" id="chgNewAppPwd" class="form-input" placeholder="New App Password (min 4 chars)..." autocomplete="new-password" />
+              </div>
+              <div class="form-group">
+                <label for="chgConfirmAppPwd" style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 3px;">Confirm New Password</label>
+                <input type="password" id="chgConfirmAppPwd" class="form-input" placeholder="Confirm new password..." autocomplete="new-password" />
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label for="chgNewAppHint" style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 3px;">New Password Hint (optional)</label>
+              <input type="text" id="chgNewAppHint" class="form-input" placeholder="Hint to remember new password..." autocomplete="off" />
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+              <button type="button" class="btn btn-secondary btn-xs" id="btnCancelChangeAppLock">Cancel</button>
+              <button type="button" class="btn btn-primary btn-xs" id="btnSubmitChangeAppLock">Update App Password</button>
+            </div>
+          </div>
+
+          <!-- Sub-panel: Remove App Password Drawer -->
+          <div id="appLockRemoveDrawer" class="hidden" style="margin-top: 12px; padding: 12px; border-radius: 8px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3);">
+            <div style="font-weight: 600; font-size: 12px; color: #f87171; margin-bottom: 4px;">⚠️ Remove Application Password</div>
+            <div style="font-size: 11px; color: #cbd5e1; margin-bottom: 8px;">
+              Removing the App Password will completely turn off screen locking and idle timeouts. Enter your current App Password to confirm.
+            </div>
+            <div class="form-group" style="margin-bottom: 8px;">
+              <input type="password" id="rmCurrAppPwd" class="form-input" placeholder="Current App Password..." autocomplete="current-password" />
+            </div>
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+              <button type="button" class="btn btn-secondary btn-xs" id="btnCancelRemoveAppLock">Cancel</button>
+              <button type="button" class="btn btn-danger btn-xs" id="btnSubmitRemoveAppLock" style="background:#dc2626; color:#fff;">Confirm & Remove Password</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section C: Application Lock Policies & Timers Box -->
+        <div class="vault-form-box" style="margin-bottom: 14px;">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600;">
+              <input type="checkbox" id="appLockMasterToggle" />
+              <span>Enable Application Lock</span>
+            </label>
+            <div style="font-size: 11.5px; color: var(--text-dim); margin-left: 24px; margin-top: 2px;">
+              When checked, NexTerm guards application access behind your App Password according to the trigger rules below.
+            </div>
+          </div>
+
+          <div id="appLockSettingsSub" style="margin-left: 24px; transition: opacity 0.2s;">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="appLockStartupToggle" />
+                <span>Lock on Startup (Prompt for App Password immediately when NexTerm launches)</span>
+              </label>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 10px;">
+              <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary); display: block; margin-bottom: 4px;">
+                Idle Inactivity Timeout
+              </label>
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                <input type="number" id="appLockIdleMinutesInput" min="0" max="240" style="width: 80px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-card); color: #fff;" />
+                <span style="font-size: 12px; color: var(--text-dim);">minutes of user inactivity before auto-locking (0 = disabled)</span>
+              </div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-secondary btn-xs btn-applock-preset" data-min="5">5 min</button>
+                <button type="button" class="btn btn-secondary btn-xs btn-applock-preset" data-min="15">15 min</button>
+                <button type="button" class="btn btn-secondary btn-xs btn-applock-preset" data-min="30">30 min</button>
+                <button type="button" class="btn btn-secondary btn-xs btn-applock-preset" data-min="60">1 hour</button>
+                <button type="button" class="btn btn-secondary btn-xs btn-applock-preset" data-min="0">Never (0 min)</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Multi-stage Lockout & Security Policy Info Box -->
+        <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px 14px;">
+          <div style="font-weight: 600; font-size: 12px; color: #38bdf8; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+            <span>🛡️ Rate Limiting & Multi-Stage Brute-Force Safeguard</span>
+          </div>
+          <div style="font-size: 11.5px; color: #94a3b8; line-height: 1.5;">
+            <div>• <strong>Stage 1:</strong> 5 failed attempts &rarr; 30 seconds cooldown timer.</div>
+            <div>• <strong>Stage 2:</strong> 5 failed attempts &rarr; 2 minutes cooldown timer.</div>
+            <div>• <strong>Stage 3:</strong> 3 failed attempts &rarr; 30 minutes cooldown timer.</div>
+            <div>• <strong>Stage 4:</strong> Final attempt &rarr; Automatic cryptographic wipe of stored credentials & app restart.</div>
+            <div>• <strong>Recovery:</strong> Forgotten passwords can be recovered using any of your last 3 App Passwords or via clean reset.</div>
           </div>
         </div>
       </div>
@@ -1988,6 +2187,8 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
         renderAiKnowledgeUI();
       } else if (btn.dataset.tab === "tab-settings-pwd") {
         refreshVaultView();
+      } else if (btn.dataset.tab === "tab-settings-applock") {
+        setupAppLockUI();
       }
     };
   });
@@ -2311,6 +2512,21 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
     const changeCardEl = box.querySelector("#vaultChangeCard");
     const contentSecEl = box.querySelector("#vaultContentSection");
 
+    const securedPillEl = box.querySelector("#vaultSecuredPill");
+    if (securedPillEl) {
+      if (hasMaster) {
+        securedPillEl.style.background = "rgba(16, 185, 129, 0.15)";
+        securedPillEl.style.color = "#34d399";
+        securedPillEl.style.border = "1px solid rgba(16, 185, 129, 0.3)";
+        securedPillEl.textContent = "🔒 Secured by Master Password Lock";
+      } else {
+        securedPillEl.style.background = "rgba(245, 158, 11, 0.15)";
+        securedPillEl.style.color = "#fbbf24";
+        securedPillEl.style.border = "1px solid rgba(245, 158, 11, 0.3)";
+        securedPillEl.textContent = "⚠️ Vault Lock Inactive (Master Password Recommended)";
+      }
+    }
+
     if (hasMaster) {
       if (!isVaultUnlocked) {
         // Protected & Locked
@@ -2319,13 +2535,13 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
           shieldAvatarEl.className = "vault-shield-avatar";
           shieldAvatarEl.innerHTML = "🔒";
         }
-        if (statusTitleEl) statusTitleEl.textContent = "Vault is Protected & Locked";
+        if (statusTitleEl) statusTitleEl.textContent = "Vault is Locked by Master Password";
         if (badgeEl) {
           badgeEl.className = "vault-pulse-dot dot-warning";
-          badgeEl.innerHTML = "● Locked";
+          badgeEl.innerHTML = "● Locked with Master Password";
         }
         if (statusTextEl) {
-          statusTextEl.textContent = "Vault is encrypted with Master Password. Unlock to manage credentials.";
+          statusTextEl.textContent = "Vault is secured with Master Password. Enter your password to unlock and manage stored credentials.";
         }
         if (actionsEl) {
           actionsEl.innerHTML = `
@@ -2345,13 +2561,13 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
           shieldAvatarEl.className = "vault-shield-avatar";
           shieldAvatarEl.innerHTML = "🛡️";
         }
-        if (statusTitleEl) statusTitleEl.textContent = "Dual-Layer Hardware Vault Active";
+        if (statusTitleEl) statusTitleEl.textContent = "Vault Secured with Master Password";
         if (badgeEl) {
           badgeEl.className = "vault-pulse-dot";
-          badgeEl.innerHTML = "● Protected";
+          badgeEl.innerHTML = "● Master Password Active";
         }
         if (statusTextEl) {
-          statusTextEl.textContent = "Hardware DPAPI (CryptProtectData) + Bcrypt Master Key Gate";
+          statusTextEl.textContent = "Dual-layer security active: Hardware DPAPI + Bcrypt Master Key Gate. All credentials are fully protected.";
         }
         if (actionsEl) {
           actionsEl.innerHTML = `
@@ -2388,13 +2604,13 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
         shieldAvatarEl.className = "vault-shield-avatar warning-shield";
         shieldAvatarEl.innerHTML = "⚠️";
       }
-      if (statusTitleEl) statusTitleEl.textContent = "Basic Protection Only (DPAPI Hardware)";
+      if (statusTitleEl) statusTitleEl.textContent = "⚠️ Master Password Not Set (Vault Lock Inactive)";
       if (badgeEl) {
         badgeEl.className = "vault-pulse-dot dot-warning";
-        badgeEl.innerHTML = "● Master Password Recommended";
+        badgeEl.innerHTML = "● Master Password Required to Lock";
       }
       if (statusTextEl) {
-        statusTextEl.textContent = "Protect your stored passwords with your own Master Password.";
+        statusTextEl.textContent = "Create your own Master Password below to secure your vault lock, enable auto-lock, and encrypt credentials.";
       }
       if (actionsEl) {
         actionsEl.innerHTML = `
@@ -2439,13 +2655,31 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
             showToast("Vault unlocked successfully!", "success");
             await refreshVaultView();
           } else {
-            showToast("Incorrect master password. Please try again.", "error");
+            const status = window.go.main.App.GetLockoutStatus ? await window.go.main.App.GetLockoutStatus() : null;
+            if (status && status.isLockedOut) {
+              showToast(`Account locked: cooldown active (${status.remainingSeconds}s remaining).`, "error");
+            } else if (status && status.currentStage >= 4) {
+              showToast(`⚠️ Final attempt remaining! Next failure will wipe all credentials and restart the app.`, "error");
+            } else if (status) {
+              showToast(`Incorrect master password. ${status.attemptsRemaining} attempt(s) remaining in Stage ${status.currentStage}.`, "error");
+            } else {
+              showToast("Incorrect master password. Please try again.", "error");
+            }
             unlockInput.classList.add("shake-error");
             setTimeout(() => unlockInput.classList.remove("shake-error"), 500);
             unlockInput.select();
           }
         } catch (err) {
-          showToast("Error verifying password: " + err, "error");
+          const msg = err && err.message ? err.message : String(err);
+          if (msg.includes("SECURITY_WIPE")) {
+            showToast("🚨 SECURITY PROTOCOL TRIGGERED: Credentials wiped. Restarting...", "error");
+            if (window.go && window.go.main && window.go.main.App && window.go.main.App.RestartApp) {
+              window.go.main.App.RestartApp().catch(() => {});
+            }
+            setTimeout(() => window.location.reload(), 1500);
+            return;
+          }
+          showToast(msg, "error");
         }
       }
     };
@@ -2766,8 +3000,360 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
     if (btnRefVault) btnRefVault.onclick = () => loadVaultPasswords();
   };
 
+  const setupAppLockUI = async () => {
+    const lockMasterToggle = box.querySelector("#appLockMasterToggle");
+    const lockStartupToggle = box.querySelector("#appLockStartupToggle");
+    const lockIdleInput = box.querySelector("#appLockIdleMinutesInput");
+    const lockSubContainer = box.querySelector("#appLockSettingsSub");
+    const lockStatusBadge = box.querySelector("#appLockStatusBadge");
+    const lockStatusText = box.querySelector("#appLockStatusText");
+    const btnAppLockToggleAction = box.querySelector("#btnAppLockToggleAction");
+    const btnLockNow = box.querySelector("#btnAppLockNow");
+
+    const appLockSetupCard = box.querySelector("#appLockSetupCard");
+    const appLockManageCard = box.querySelector("#appLockManageCard");
+    const appLockHintDisplay = box.querySelector("#appLockHintDisplay");
+
+    const newAppLockPwd = box.querySelector("#newAppLockPwd");
+    const confirmAppLockPwd = box.querySelector("#confirmAppLockPwd");
+    const newAppLockHint = box.querySelector("#newAppLockHint");
+    const btnSaveAppLockPwd = box.querySelector("#btnSaveAppLockPwd");
+
+    const btnOpenChangeAppLock = box.querySelector("#btnOpenChangeAppLock");
+    const appLockChangeDrawer = box.querySelector("#appLockChangeDrawer");
+    const chgCurrAppPwd = box.querySelector("#chgCurrAppPwd");
+    const chgNewAppPwd = box.querySelector("#chgNewAppPwd");
+    const chgConfirmAppPwd = box.querySelector("#chgConfirmAppPwd");
+    const chgNewAppHint = box.querySelector("#chgNewAppHint");
+    const btnCancelChangeAppLock = box.querySelector("#btnCancelChangeAppLock");
+    const btnSubmitChangeAppLock = box.querySelector("#btnSubmitChangeAppLock");
+
+    const btnOpenRemoveAppLock = box.querySelector("#btnOpenRemoveAppLock");
+    const appLockRemoveDrawer = box.querySelector("#appLockRemoveDrawer");
+    const rmCurrAppPwd = box.querySelector("#rmCurrAppPwd");
+    const btnCancelRemoveAppLock = box.querySelector("#btnCancelRemoveAppLock");
+    const btnSubmitRemoveAppLock = box.querySelector("#btnSubmitRemoveAppLock");
+
+    // Fetch backend state
+    let hasAppPwd = false;
+    let backendLockEnabled = true;
+    let appHint = "";
+
+    try {
+      if (window.go && window.go.main && window.go.main.App) {
+        if (window.go.main.App.HasAppPassword) {
+          hasAppPwd = await window.go.main.App.HasAppPassword();
+        }
+        if (window.go.main.App.IsAppLockEnabled) {
+          backendLockEnabled = await window.go.main.App.IsAppLockEnabled();
+        }
+        if (window.go.main.App.GetAppPasswordHint) {
+          appHint = await window.go.main.App.GetAppPasswordHint();
+        }
+      }
+    } catch (_) {}
+
+    const localLockEnabled = isAppLockEnabled();
+    const effectiveLockEnabled = hasAppPwd ? (backendLockEnabled && localLockEnabled) : false;
+    const currentStartup = isLockOnStartup();
+    const currentIdle = getIdleMinutes();
+
+    if (lockMasterToggle) lockMasterToggle.checked = effectiveLockEnabled;
+    if (lockStartupToggle) lockStartupToggle.checked = currentStartup;
+    if (lockIdleInput) lockIdleInput.value = currentIdle;
+
+    const updateBadgeAndButtons = (enabled, hasPwd) => {
+      if (!hasPwd) {
+        if (lockStatusBadge) {
+          lockStatusBadge.className = "vault-pulse-dot dot-warning";
+          lockStatusBadge.textContent = "⚠️ App Password Required";
+        }
+        if (lockStatusText) {
+          lockStatusText.textContent = "Create an App Password below to enable application screen locking.";
+        }
+        if (btnAppLockToggleAction) {
+          btnAppLockToggleAction.textContent = "Set Password to Enable";
+          btnAppLockToggleAction.className = "btn btn-secondary btn-xs";
+          btnAppLockToggleAction.onclick = () => {
+            if (newAppLockPwd) newAppLockPwd.focus();
+          };
+        }
+        if (btnLockNow) {
+          btnLockNow.disabled = true;
+          btnLockNow.style.opacity = "0.5";
+        }
+      } else if (enabled) {
+        if (lockStatusBadge) {
+          lockStatusBadge.className = "vault-pulse-dot";
+          lockStatusBadge.textContent = "● App Lock Enabled";
+        }
+        if (lockStatusText) {
+          lockStatusText.textContent = "Application UI is secured. Will lock on startup and after idle inactivity.";
+        }
+        if (btnAppLockToggleAction) {
+          btnAppLockToggleAction.textContent = "Disable App Lock";
+          btnAppLockToggleAction.className = "btn btn-secondary btn-xs";
+          btnAppLockToggleAction.onclick = async () => {
+            await toggleLockState(false);
+          };
+        }
+        if (btnLockNow) {
+          btnLockNow.disabled = false;
+          btnLockNow.style.opacity = "1";
+        }
+      } else {
+        if (lockStatusBadge) {
+          lockStatusBadge.className = "vault-pulse-dot dot-inactive";
+          lockStatusBadge.textContent = "○ App Lock Disabled";
+        }
+        if (lockStatusText) {
+          lockStatusText.textContent = "App Password is saved, but lock enforcement is currently disabled.";
+        }
+        if (btnAppLockToggleAction) {
+          btnAppLockToggleAction.textContent = "Enable App Lock";
+          btnAppLockToggleAction.className = "btn btn-primary btn-xs";
+          btnAppLockToggleAction.onclick = async () => {
+            await toggleLockState(true);
+          };
+        }
+        if (btnLockNow) {
+          btnLockNow.disabled = false;
+          btnLockNow.style.opacity = "1";
+        }
+      }
+    };
+
+    const toggleLockState = async (turnOn) => {
+      if (turnOn && !hasAppPwd) {
+        showToast("Please set an App Password first.", "warning");
+        if (newAppLockPwd) newAppLockPwd.focus();
+        return;
+      }
+      setAppLockEnabled(turnOn);
+      if (window.go && window.go.main && window.go.main.App && window.go.main.App.SetAppLockEnabled) {
+        try { await window.go.main.App.SetAppLockEnabled(turnOn); } catch (_) {}
+      }
+      if (lockMasterToggle) lockMasterToggle.checked = turnOn;
+      updateSubState(turnOn);
+      updateBadgeAndButtons(turnOn, hasAppPwd);
+      showToast(turnOn ? "App Lock enabled" : "App Lock disabled", "success");
+    };
+
+    const updateSubState = (enabled) => {
+      if (lockSubContainer) {
+        lockSubContainer.style.opacity = enabled ? "1" : "0.45";
+        lockSubContainer.style.pointerEvents = enabled ? "auto" : "none";
+      }
+      const secAppLockCb = box.querySelector("#secAppLockEnabled");
+      const secAppLockSub = box.querySelector("#secAppLockSub");
+      if (secAppLockCb && secAppLockCb.checked !== enabled) secAppLockCb.checked = enabled;
+      if (secAppLockSub) {
+        secAppLockSub.style.opacity = enabled ? "1" : "0.45";
+        secAppLockSub.style.pointerEvents = enabled ? "auto" : "none";
+      }
+    };
+
+    updateSubState(effectiveLockEnabled);
+    updateBadgeAndButtons(effectiveLockEnabled, hasAppPwd);
+
+    // Cards display
+    if (!hasAppPwd) {
+      if (appLockSetupCard) appLockSetupCard.classList.remove("hidden");
+      if (appLockManageCard) appLockManageCard.classList.add("hidden");
+    } else {
+      if (appLockSetupCard) appLockSetupCard.classList.add("hidden");
+      if (appLockManageCard) appLockManageCard.classList.remove("hidden");
+      if (appLockHintDisplay) {
+        appLockHintDisplay.textContent = appHint ? `Hint: "${appHint}"` : "Dedicated App Password is active (no hint saved).";
+      }
+    }
+
+    // Toggle handlers
+    if (lockMasterToggle) {
+      lockMasterToggle.onchange = async () => {
+        await toggleLockState(lockMasterToggle.checked);
+      };
+    }
+
+    if (lockStartupToggle) {
+      lockStartupToggle.onchange = () => {
+        const secStart = box.querySelector("#secLockOnStart");
+        if (secStart) secStart.checked = lockStartupToggle.checked;
+        setLockOnStartup(lockStartupToggle.checked);
+      };
+    }
+
+    if (lockIdleInput) {
+      lockIdleInput.oninput = () => {
+        const secIdle = box.querySelector("#secIdleMin");
+        if (secIdle) secIdle.value = lockIdleInput.value;
+      };
+    }
+
+    box.querySelectorAll(".btn-applock-preset").forEach(btn => {
+      btn.onclick = () => {
+        const val = btn.dataset.min;
+        if (lockIdleInput) lockIdleInput.value = val;
+        const secIdle = box.querySelector("#secIdleMin");
+        if (secIdle) secIdle.value = val;
+      };
+    });
+
+    if (btnLockNow) {
+      btnLockNow.onclick = () => {
+        hideModal();
+        lockNow();
+      };
+    }
+
+    // Set App Password
+    if (btnSaveAppLockPwd) {
+      btnSaveAppLockPwd.onclick = async () => {
+        const pwd = (newAppLockPwd ? newAppLockPwd.value : "").trim();
+        const conf = (confirmAppLockPwd ? confirmAppLockPwd.value : "").trim();
+        const hint = (newAppLockHint ? newAppLockHint.value : "").trim();
+
+        if (pwd.length < 4) {
+          showToast("App Password must be at least 4 characters", "error");
+          if (newAppLockPwd) newAppLockPwd.focus();
+          return;
+        }
+        if (pwd !== conf) {
+          showToast("Passwords do not match", "error");
+          if (confirmAppLockPwd) confirmAppLockPwd.focus();
+          return;
+        }
+
+        try {
+          btnSaveAppLockPwd.disabled = true;
+          btnSaveAppLockPwd.textContent = "Setting Password...";
+          if (window.go && window.go.main && window.go.main.App && window.go.main.App.SetAppPassword) {
+            await window.go.main.App.SetAppPassword(pwd, hint);
+            await window.go.main.App.SetAppLockEnabled(true);
+          }
+          setAppLockEnabled(true);
+          showToast("App Password saved and App Lock enabled!", "success");
+          if (newAppLockPwd) newAppLockPwd.value = "";
+          if (confirmAppLockPwd) confirmAppLockPwd.value = "";
+          if (newAppLockHint) newAppLockHint.value = "";
+          await setupAppLockUI();
+        } catch (err) {
+          showToast("Failed to set App Password: " + (err && err.message ? err.message : err), "error");
+        } finally {
+          btnSaveAppLockPwd.disabled = false;
+          btnSaveAppLockPwd.textContent = "🔒 Set App Password & Enable Lock";
+        }
+      };
+    }
+
+    // Change App Password drawer
+    if (btnOpenChangeAppLock && appLockChangeDrawer) {
+      btnOpenChangeAppLock.onclick = () => {
+        appLockChangeDrawer.classList.toggle("hidden");
+        if (appLockRemoveDrawer) appLockRemoveDrawer.classList.add("hidden");
+        if (!appLockChangeDrawer.classList.contains("hidden") && chgCurrAppPwd) {
+          chgCurrAppPwd.focus();
+        }
+      };
+    }
+    if (btnCancelChangeAppLock && appLockChangeDrawer) {
+      btnCancelChangeAppLock.onclick = () => {
+        appLockChangeDrawer.classList.add("hidden");
+      };
+    }
+    if (btnSubmitChangeAppLock) {
+      btnSubmitChangeAppLock.onclick = async () => {
+        const curr = (chgCurrAppPwd ? chgCurrAppPwd.value : "").trim();
+        const next = (chgNewAppPwd ? chgNewAppPwd.value : "").trim();
+        const conf = (chgConfirmAppPwd ? chgConfirmAppPwd.value : "").trim();
+        const hint = (chgNewAppHint ? chgNewAppHint.value : "").trim();
+
+        if (!curr) {
+          showToast("Please enter your current App Password", "error");
+          if (chgCurrAppPwd) chgCurrAppPwd.focus();
+          return;
+        }
+        if (next.length < 4) {
+          showToast("New password must be at least 4 characters", "error");
+          if (chgNewAppPwd) chgNewAppPwd.focus();
+          return;
+        }
+        if (next !== conf) {
+          showToast("New password and confirmation do not match", "error");
+          if (chgConfirmAppPwd) chgConfirmAppPwd.focus();
+          return;
+        }
+
+        try {
+          btnSubmitChangeAppLock.disabled = true;
+          btnSubmitChangeAppLock.textContent = "Updating...";
+          if (window.go && window.go.main && window.go.main.App && window.go.main.App.ChangeAppPassword) {
+            await window.go.main.App.ChangeAppPassword(curr, next, hint);
+          }
+          showToast("App Password changed successfully!", "success");
+          if (chgCurrAppPwd) chgCurrAppPwd.value = "";
+          if (chgNewAppPwd) chgNewAppPwd.value = "";
+          if (chgConfirmAppPwd) chgConfirmAppPwd.value = "";
+          if (chgNewAppHint) chgNewAppHint.value = "";
+          if (appLockChangeDrawer) appLockChangeDrawer.classList.add("hidden");
+          await setupAppLockUI();
+        } catch (err) {
+          showToast("Failed to change App Password: " + (err && err.message ? err.message : err), "error");
+        } finally {
+          btnSubmitChangeAppLock.disabled = false;
+          btnSubmitChangeAppLock.textContent = "Update App Password";
+        }
+      };
+    }
+
+    // Remove App Password drawer
+    if (btnOpenRemoveAppLock && appLockRemoveDrawer) {
+      btnOpenRemoveAppLock.onclick = () => {
+        appLockRemoveDrawer.classList.toggle("hidden");
+        if (appLockChangeDrawer) appLockChangeDrawer.classList.add("hidden");
+        if (!appLockRemoveDrawer.classList.contains("hidden") && rmCurrAppPwd) {
+          rmCurrAppPwd.focus();
+        }
+      };
+    }
+    if (btnCancelRemoveAppLock && appLockRemoveDrawer) {
+      btnCancelRemoveAppLock.onclick = () => {
+        appLockRemoveDrawer.classList.add("hidden");
+      };
+    }
+    if (btnSubmitRemoveAppLock) {
+      btnSubmitRemoveAppLock.onclick = async () => {
+        const curr = (rmCurrAppPwd ? rmCurrAppPwd.value : "").trim();
+        if (!curr) {
+          showToast("Please enter your current App Password to confirm removal", "error");
+          if (rmCurrAppPwd) rmCurrAppPwd.focus();
+          return;
+        }
+
+        try {
+          btnSubmitRemoveAppLock.disabled = true;
+          btnSubmitRemoveAppLock.textContent = "Removing...";
+          if (window.go && window.go.main && window.go.main.App && window.go.main.App.RemoveAppPassword) {
+            await window.go.main.App.RemoveAppPassword(curr);
+          }
+          setAppLockEnabled(false);
+          showToast("App Password removed and App Lock disabled.", "success");
+          if (rmCurrAppPwd) rmCurrAppPwd.value = "";
+          if (appLockRemoveDrawer) appLockRemoveDrawer.classList.add("hidden");
+          await setupAppLockUI();
+        } catch (err) {
+          showToast("Failed to remove App Password: " + (err && err.message ? err.message : err), "error");
+        } finally {
+          btnSubmitRemoveAppLock.disabled = false;
+          btnSubmitRemoveAppLock.textContent = "Confirm & Remove Password";
+        }
+      };
+    }
+  };
+
   setupVaultUI();
   refreshVaultView();
+  setupAppLockUI();
   triggerGeneratePassword();
 
   const initialTheme = userSettings.uiTheme || userSettings.theme || "dark-modern";
@@ -2785,6 +3371,15 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
     secAppLockCb.onchange = () => {
       secAppLockSub.style.opacity = secAppLockCb.checked ? '1' : '0.45';
       secAppLockSub.style.pointerEvents = secAppLockCb.checked ? 'auto' : 'none';
+      const masterTog = box.querySelector("#appLockMasterToggle");
+      if (masterTog && masterTog.checked !== secAppLockCb.checked) {
+        masterTog.checked = secAppLockCb.checked;
+        const appLockSub = box.querySelector("#appLockSettingsSub");
+        if (appLockSub) {
+          appLockSub.style.opacity = secAppLockCb.checked ? '1' : '0.45';
+          appLockSub.style.pointerEvents = secAppLockCb.checked ? 'auto' : 'none';
+        }
+      }
     };
   }
 
@@ -2829,10 +3424,20 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
 
       // 2b. App Lock & Idle Auto-Lock
       try {
-        const lockEnabled = box.querySelector("#secAppLockEnabled")?.checked ?? true;
+        const lockMasterEl = box.querySelector("#appLockMasterToggle");
+        const secMasterEl = box.querySelector("#secAppLockEnabled");
+        const lockEnabled = lockMasterEl ? lockMasterEl.checked : (secMasterEl ? secMasterEl.checked : true);
         setAppLockEnabled(lockEnabled);
-        setLockOnStartup(box.querySelector("#secLockOnStart")?.checked ?? true);
-        let idleVal = parseInt(box.querySelector("#secIdleMin")?.value, 10);
+
+        const lockStartEl = box.querySelector("#appLockStartupToggle");
+        const secStartEl = box.querySelector("#secLockOnStart");
+        const lockStartup = lockStartEl ? lockStartEl.checked : (secStartEl ? secStartEl.checked : true);
+        setLockOnStartup(lockStartup);
+
+        const lockIdleEl = box.querySelector("#appLockIdleMinutesInput");
+        const secIdleEl = box.querySelector("#secIdleMin");
+        const rawIdleVal = lockIdleEl ? lockIdleEl.value : (secIdleEl ? secIdleEl.value : "15");
+        let idleVal = parseInt(rawIdleVal, 10);
         if (isNaN(idleVal) || idleVal < 0) idleVal = 0;
         if (idleVal > 240) idleVal = 240;
         setIdleMinutes(idleVal);

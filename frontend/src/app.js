@@ -52,6 +52,7 @@ import {
 import { showMultiExecutionModal } from './terminal/multiExecution.js';
 import { openBroadcastDialog } from './terminal/broadcast.js';
 import { openServerMonitor } from './monitor/serverMonitor.js';
+import { initServerReachability, updateServerReachability } from './monitor/serverReachability.js';
 import { promptSaveGroup, showGroupsDialog, maybeAutoStartGroups } from './sessions/sessionGroups.js';
 import { showSnippetsDialog } from './terminal/snippets.js';
 import { showRecorderDialog, toggleRecording } from './terminal/sessionRecorder.js';
@@ -67,6 +68,7 @@ import { showDocumentation } from './ui/docs.js';
 import { initUniverseAnimation } from './ui/universeAnimation.js';
 import { initPlanetHero } from './ui/planetHeroAnimation.js';
 import { initConsentBanner } from './ui/consentBanner.js';
+import { initFocusMode, isFocusMode, setFocusMode } from './ui/focusMode.js';
 import { toggleSessionLogging, isAutoLogEnabled, setAutoLog } from './terminal/terminalManager.js';
 import { showNewSessionDialog, showFolderDialog } from './sessions/sessionDialog.js';
 import { showMultiServerConnectDialog } from './sessions/multiServerConnect.js';
@@ -244,10 +246,10 @@ registerCommandPaletteActions([
   {
     id: "cmd-autolock-settings",
     category: "Security",
-    title: "Auto-Lock Settings...",
-    subtitle: "Idle timeout and lock-on-startup",
-    icon: "⏲",
-    action: () => showAutoLockSettings()
+    title: "App Lock & Auto-Lock Settings...",
+    subtitle: "Configure master password lock, startup lock, and idle timeout",
+    icon: "🔒",
+    action: () => showSettingsDialog("tab-settings-applock")
   },
   {
     id: "cmd-theme",
@@ -368,6 +370,7 @@ export function setupEventListeners() {
   safeClick("mSwitchTheme", showThemePickerDialog);
   safeClick("mOpenTunneling", showTunnelingDialog);
   safeClick("mOpenSettings", showSettingsDialog);
+  safeClick("mOpenAppLock", () => showSettingsDialog("tab-settings-applock"));
   safeClick("mOpenPasswordsVault", () => showSettingsDialog("tab-settings-pwd"));
   safeClick("mRecordMacro", showRecordMacroDialog);
   safeClick("mStartXServer", async () => {
@@ -613,29 +616,8 @@ export function setupEventListeners() {
   safeClick("tbmSettings", () => { setMobaActive("tbmSettings"); showSettingsDialog(); });
   safeClick("tbmHelp", () => { setMobaActive("tbmHelp"); showDocumentation(); });
 
-  // ---- System Overview live counts ----
-  function updateSystemOverview() {
-    const active = document.getElementById("sysActiveSessions");
-    const saved = document.getElementById("sysSavedServers");
-    const targetBadge = document.getElementById("sysTargetBadge");
-    if (active) {
-      const n = Object.keys(tabs).filter(id => id !== "home" && id !== "welcome").length;
-      active.textContent = String(n);
-    }
-    if (saved) {
-      const cards = document.querySelectorAll("#recentSessionsGrid .recent-session-card").length;
-      saved.textContent = String(cards || 1);
-    }
-    if (targetBadge) {
-      if (activeTabId && tabs[activeTabId] && tabs[activeTabId].profile) {
-        targetBadge.textContent = tabs[activeTabId].profile.name || tabs[activeTabId].profile.host || "prod-web-01";
-      } else {
-        targetBadge.textContent = "prod-web-01";
-      }
-    }
-  }
-  updateSystemOverview();
-  setInterval(updateSystemOverview, 3000);
+  // ---- Saved Server Reachability & Health Monitor ----
+  initServerReachability();
 
   // MultiExec
   safeClick("multiExecSendBtn", sendMultiExec);
@@ -1261,9 +1243,20 @@ export function setupEventListeners() {
   // Global Shortcuts
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
+      const modalOverlay = document.getElementById("modalOverlay");
+      const hasModal = modalOverlay && !modalOverlay.classList.contains("hidden");
+      const ctxMenu = document.getElementById("contextMenu");
+      const hasMenu = ctxMenu && !ctxMenu.classList.contains("hidden");
+      const cmdPal = document.getElementById("commandPalette");
+      const hasPalette = cmdPal && !cmdPal.classList.contains("hidden");
+
       hideContextMenu();
       hideModal();
       closeCommandPalette();
+
+      if (!hasModal && !hasMenu && !hasPalette && isFocusMode()) {
+        setFocusMode(false);
+      }
     }
     // F1 or Shift+? → keyboard cheat-sheet (ignore while typing in a field)
     const typingInField = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || "");
@@ -1407,6 +1400,9 @@ export async function init() {
 
   // Application lock / idle auto-lock (only engages when a master password is set)
   try { initAppLock(); } catch (e) { console.warn("Failed to init App Lock:", e); }
+
+  // Focus Mode (Zen Workspace)
+  try { initFocusMode(); } catch (e) { console.warn("Failed to init Focus Mode:", e); }
 }
 
 // Auto-run on DOMContentLoaded

@@ -3,11 +3,13 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"strings"
+	"sync"
+
 	"nexterm/internal/model"
 	"nexterm/internal/sshsession"
 	"nexterm/internal/store"
-	"strings"
-	"sync"
 
 	"github.com/google/uuid"
 )
@@ -86,6 +88,25 @@ func (s *SessionService) GetSessionTree() *model.TreeNode {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.root
+}
+
+// ResetToDefault resets the session tree back to the default empty folder categories,
+// persisting the fresh tree to disk and removing any backup file.
+func (s *SessionService) ResetToDefault() (*model.TreeNode, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	cleanRoot := store.SeedDefaultTree()
+	s.root = cleanRoot
+
+	if s.store != nil {
+		if err := s.store.Save(cleanRoot); err != nil {
+			return cleanRoot, err
+		}
+		bakPath := s.store.FilePath() + ".bak"
+		_ = os.Remove(bakPath)
+	}
+	return cleanRoot, nil
 }
 
 // AddFolder adds a new subfolder under parentID.

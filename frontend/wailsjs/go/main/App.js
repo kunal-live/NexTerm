@@ -66,12 +66,24 @@ export function CancelBroadcast(arg1) {
   return window['go']['main']['App']['CancelBroadcast'](arg1);
 }
 
+export function ChangeAppPassword(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ChangeAppPassword'](arg1, arg2, arg3);
+}
+
 export function ChangeMasterPassword(arg1, arg2, arg3) {
   return window['go']['main']['App']['ChangeMasterPassword'](arg1, arg2, arg3);
 }
 
 export function CheckSSHAgent() {
   return window['go']['main']['App']['CheckSSHAgent']();
+}
+
+export function CheckServersReachability(arg1, arg2) {
+  return window['go']['main']['App']['CheckServersReachability'](arg1, arg2);
+}
+
+export function PingTarget(arg1, arg2, arg3) {
+  return window['go']['main']['App']['PingTarget'](arg1, arg2, arg3);
 }
 
 export function ClassifyConnectionError(arg1) {
@@ -166,6 +178,14 @@ export function GenerateSecurePassword(arg1, arg2) {
   return window['go']['main']['App']['GenerateSecurePassword'](arg1, arg2);
 }
 
+export function GetAppLockoutStatus() {
+  return window['go']['main']['App']['GetAppLockoutStatus']();
+}
+
+export function GetAppPasswordHint() {
+  return window['go']['main']['App']['GetAppPasswordHint']();
+}
+
 export function GetAuditLogs(arg1) {
   return window['go']['main']['App']['GetAuditLogs'](arg1);
 }
@@ -180,6 +200,10 @@ export function GetCustomizerConfig() {
 
 export function GetKnownHosts() {
   return window['go']['main']['App']['GetKnownHosts']();
+}
+
+export function GetLockoutStatus() {
+  return window['go']['main']['App']['GetLockoutStatus']();
 }
 
 export function GetMacros() {
@@ -226,8 +250,16 @@ export function GetWorkspace() {
   return window['go']['main']['App']['GetWorkspace']();
 }
 
+export function HasAppPassword() {
+  return window['go']['main']['App']['HasAppPassword']();
+}
+
 export function HasMasterPassword() {
   return window['go']['main']['App']['HasMasterPassword']();
+}
+
+export function HasPreviousMasterPasswords() {
+  return window['go']['main']['App']['HasPreviousMasterPasswords']();
 }
 
 export function HasSavedPassword(arg1) {
@@ -240,6 +272,10 @@ export function ImportSessions(arg1) {
 
 export function ImportSessionsFromFile() {
   return window['go']['main']['App']['ImportSessionsFromFile']();
+}
+
+export function IsAppLockEnabled() {
+  return window['go']['main']['App']['IsAppLockEnabled']();
 }
 
 export function IsXServerRunning() {
@@ -310,6 +346,10 @@ export function QuickConnect(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['QuickConnect'](arg1, arg2, arg3, arg4, arg5);
 }
 
+export function RemoveAppPassword(arg1) {
+  return window['go']['main']['App']['RemoveAppPassword'](arg1);
+}
+
 export function RemoveMasterPassword(arg1) {
   return window['go']['main']['App']['RemoveMasterPassword'](arg1);
 }
@@ -318,8 +358,20 @@ export function RenameNode(arg1, arg2) {
   return window['go']['main']['App']['RenameNode'](arg1, arg2);
 }
 
+export function ResetAllData() {
+  return window['go']['main']['App']['ResetAllData']();
+}
+
+export function ResetAppPasswordWithPrevious(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ResetAppPasswordWithPrevious'](arg1, arg2, arg3);
+}
+
 export function ResetMasterPassword() {
   return window['go']['main']['App']['ResetMasterPassword']();
+}
+
+export function ResetMasterPasswordWithPrevious(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ResetMasterPasswordWithPrevious'](arg1, arg2, arg3);
 }
 
 export function ResizeTerminal(arg1, arg2, arg3) {
@@ -332,6 +384,10 @@ export function RespondAuthChallenge(arg1, arg2) {
 
 export function RespondHostKey(arg1, arg2) {
   return window['go']['main']['App']['RespondHostKey'](arg1, arg2);
+}
+
+export function RestartApp() {
+  return window['go']['main']['App']['RestartApp']();
 }
 
 export function RunSSHCommand(arg1, arg2) {
@@ -458,6 +514,14 @@ export function SelectUploadFile() {
   return window['go']['main']['App']['SelectUploadFile']();
 }
 
+export function SetAppLockEnabled(arg1) {
+  return window['go']['main']['App']['SetAppLockEnabled'](arg1);
+}
+
+export function SetAppPassword(arg1, arg2) {
+  return window['go']['main']['App']['SetAppPassword'](arg1, arg2);
+}
+
 export function SetMasterPassword(arg1, arg2) {
   return window['go']['main']['App']['SetMasterPassword'](arg1, arg2);
 }
@@ -498,8 +562,16 @@ export function ValidatePrivateKeyFile(arg1, arg2) {
   return window['go']['main']['App']['ValidatePrivateKeyFile'](arg1, arg2);
 }
 
+export function VerifyAppPassword(arg1) {
+  return window['go']['main']['App']['VerifyAppPassword'](arg1);
+}
+
 export function VerifyMasterPassword(arg1) {
   return window['go']['main']['App']['VerifyMasterPassword'](arg1);
+}
+
+export function WipeAllDataAndRestart() {
+  return window['go']['main']['App']['WipeAllDataAndRestart']();
 }
 
 export function WriteToTerminal(arg1, arg2) {

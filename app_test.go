@@ -6,6 +6,7 @@ import (
 	"nexterm/internal/security"
 	"nexterm/internal/service"
 	"nexterm/internal/store"
+	"nexterm/internal/vault"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -26,6 +27,14 @@ func createTestApp(t *testing.T) *App {
 	app.sessionService = service.NewSessionService(sessStore)
 	secMgr := security.NewSecurityManagerAt(filepath.Join(tempDir, "security_policy.json"))
 	app.settingsService = service.NewSettingsService(secMgr)
+
+	testVault, err := vault.NewVaultAt(filepath.Join(tempDir, "vault"))
+	if err != nil {
+		t.Fatalf("NewVaultAt failed: %v", err)
+	}
+	app.credentialService.SetVault(testVault)
+	app.credentialService.SetLockoutFilePath(filepath.Join(tempDir, "lockout.json"))
+
 	app.startup(context.Background())
 	return app
 }
@@ -317,6 +326,74 @@ func TestOpenSessionWithTabIDAndJumpSecret_PolicyGating(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "security policy denied") {
 		t.Errorf("expected policy denial error, got: %v", err)
+	}
+}
+
+func TestAppLockoutAndReset(t *testing.T) {
+	app := createTestApp(t)
+
+	// Isolate vault and lockout file in temporary folders
+	tempVault, err := vault.NewVaultAt(filepath.Join(t.TempDir(), "vault"))
+	if err != nil {
+		t.Fatalf("failed to create temp vault: %v", err)
+	}
+	app.credentialService.SetVault(tempVault)
+
+	tempLockoutFile := filepath.Join(t.TempDir(), "lockout.json")
+	app.credentialService.SetLockoutFilePath(tempLockoutFile)
+
+	// Check initial lockout status
+	status, err := app.GetLockoutStatus()
+	if err != nil {
+		t.Fatalf("GetLockoutStatus failed: %v", err)
+	}
+	if status.IsLockedOut {
+		t.Errorf("expected initially not locked out")
+	}
+
+	// Set master password
+	pwd1 := "InitialPass#123"
+	if err := app.SetMasterPassword(pwd1, "test hint"); err != nil {
+		t.Fatalf("SetMasterPassword failed: %v", err)
+	}
+
+	// New user has no previous passwords
+	hasHist, count, err := app.HasPreviousMasterPasswords()
+	if err != nil || hasHist || count != 0 {
+		t.Fatalf("expected new user to have no history, got has=%v, count=%d, err=%v", hasHist, count, err)
+	}
+
+	// Change password to create history
+	pwd2 := "SecondPass#456"
+	if err := app.ChangeMasterPassword(pwd1, pwd2, "second hint"); err != nil {
+		t.Fatalf("ChangeMasterPassword failed: %v", err)
+	}
+
+	hasHist, count, _ = app.HasPreviousMasterPasswords()
+	if !hasHist || count != 1 {
+		t.Fatalf("expected 1 history item, got %d", count)
+	}
+
+	// Recovery with old password
+	pwd3 := "ThirdPass#789"
+	if err := app.ResetMasterPasswordWithPrevious(pwd1, pwd3, "third hint"); err != nil {
+		t.Fatalf("ResetMasterPasswordWithPrevious failed: %v", err)
+	}
+
+	// Verify new password
+	ok, err := app.VerifyMasterPassword(pwd3)
+	if err != nil || !ok {
+		t.Fatalf("expected verified password, got ok=%v, err=%v", ok, err)
+	}
+
+	// Reset all data
+	if err := app.ResetAllData(); err != nil {
+		t.Fatalf("ResetAllData failed: %v", err)
+	}
+
+	hasMaster, _ := app.HasMasterPassword()
+	if hasMaster {
+		t.Errorf("expected HasMasterPassword=false after ResetAllData")
 	}
 }
 

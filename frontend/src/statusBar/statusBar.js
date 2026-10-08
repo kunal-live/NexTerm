@@ -24,8 +24,8 @@ export function initStatusBar() {
   if (!bar) return;
 
   bar.addEventListener("click", (e) => {
-    // Only trigger popover when clicking the server status area
-    if (e.target.closest(".status-server-pill") || e.target.closest("#activeTargetText")) {
+    // Trigger popover when clicking the creative capsule or server pill
+    if (e.target.closest("#statusCreativeCapsule") || e.target.closest(".status-server-pill") || e.target.closest("#activeTargetText")) {
       toggleServerDetailsPopover();
     }
   });
@@ -46,42 +46,106 @@ export function updateStatusBarDisplay() {
 
   const countEl = document.getElementById("activeSessionsCount");
   if (countEl) {
-    countEl.textContent = `${activeCount} active tab${activeCount === 1 ? '' : 's'}`;
+    countEl.textContent = `${activeCount} tab${activeCount === 1 ? '' : 's'}`;
   }
 
-  const targetEl = document.getElementById("activeTargetText");
-  if (!targetEl) return;
+  const orbEl = document.getElementById("statusBeaconOrb");
+  const msgEl = document.getElementById("statusMessage");
+  const envBadgeEl = document.getElementById("statusEnvBadge");
+  const capsuleTextEl = document.getElementById("capsuleTelemetryText");
+  const capsuleChipEl = document.getElementById("capsuleSubChip");
+  const protoBadgeEl = document.getElementById("statusProtoBadge");
+  const capsuleBtn = document.getElementById("statusCreativeCapsule");
 
   if (!activeTab || !activeTab.profile) {
-    targetEl.innerHTML = `<span class="status-idle-pill">○ Workspace Ready</span>`;
+    if (orbEl) {
+      orbEl.className = "status-dot-ready";
+      orbEl.style.background = "#64748b";
+      orbEl.style.boxShadow = "none";
+    }
+    if (msgEl) msgEl.textContent = "Workspace Ready";
+    if (envBadgeEl) envBadgeEl.style.display = "none";
+    if (capsuleTextEl) capsuleTextEl.textContent = "✨ NexTerm Core · Ready";
+    if (capsuleChipEl) capsuleChipEl.textContent = "Idle";
+    if (protoBadgeEl) protoBadgeEl.style.display = "none";
     return;
   }
 
   const p = activeTab.profile;
   const isConn = activeTab.isConnected;
-  const env = activeTab.environment || { label: "DEV", color: "#3b82f6" };
   const proto = (p.protocol || "ssh").toUpperCase();
   const serialPrefix = activeTab.serialNo ? `[${activeTab.serialNo}] ` : "";
   const host = activeTab.remoteHostname || ((p.name && p.name !== "New Server" && p.name !== "New Session") ? p.name : (p.host || "Terminal"));
   const hostDisplay = `${serialPrefix}${host}`;
 
-  targetEl.innerHTML = `
-    <div class="status-server-pill" title="Click for Server Metrics & Resource Details">
-      <span class="status-dot ${isConn ? 'connected' : 'disconnected'}">●</span>
-      <span class="status-server-name">${escapeHtml(hostDisplay)}</span>
-      <span class="status-env-tag" style="color:${env.color};">${env.label}</span>
-      <span class="status-divider">│</span>
-      <span class="status-proto-tag">${proto}</span>
-      <span class="status-divider">│</span>
-      <span class="status-metric">CPU ${currentMetrics.cpu}</span>
-      <span class="status-divider">│</span>
-      <span class="status-metric">RAM ${currentMetrics.ram}</span>
-      <span class="status-divider">│</span>
-      <span class="status-metric">↑ ${currentMetrics.netUp} ↓ ${currentMetrics.netDown}</span>
-      <span class="status-divider">│</span>
-      <span class="status-metric">${currentMetrics.uptime}</span>
-    </div>
-  `;
+  // Resolve environment label cleanly without undefined
+  let envLabel = "";
+  let envColor = "#38bdf8";
+  if (typeof activeTab.environment === "string" && activeTab.environment && activeTab.environment !== "undefined") {
+    envLabel = activeTab.environment;
+  } else if (activeTab.environment && typeof activeTab.environment === "object") {
+    envLabel = activeTab.environment.label || activeTab.environment.name || "";
+    envColor = activeTab.environment.color || envColor;
+  } else if (p.environment) {
+    envLabel = typeof p.environment === "string" ? p.environment : (p.environment.label || "");
+  }
+
+  if (envLabel && envLabel !== "undefined") {
+    const upper = envLabel.toUpperCase();
+    if (upper === "UAT") envColor = "#f59e0b";
+    else if (upper === "PROD" || upper === "PRODUCTION") envColor = "#f43f5e";
+    else if (upper === "TESTING" || upper === "TEST") envColor = "#a855f7";
+    else if (upper === "LOCAL") envColor = "#10b981";
+  }
+
+  // 1. Connection orb & message
+  if (orbEl) {
+    orbEl.className = "status-dot-ready";
+    if (isConn) {
+      orbEl.style.background = "#10b981";
+      orbEl.style.boxShadow = "0 0 8px #10b981";
+    } else {
+      orbEl.style.background = "#f59e0b";
+      orbEl.style.boxShadow = "0 0 6px #f59e0b";
+    }
+  }
+
+  if (msgEl) {
+    if (activeTab.isLocal) {
+      msgEl.textContent = isConn ? "Local Terminal" : "Local Terminal (Closed)";
+    } else {
+      const userHost = p.username ? `${p.username}@${p.host || host}` : host;
+      msgEl.textContent = `${isConn ? '' : 'Connecting: '}${hostDisplay} (${userHost})`;
+    }
+  }
+
+  // 2. Environment pill
+  if (envBadgeEl) {
+    if (envLabel && envLabel !== "undefined") {
+      envBadgeEl.textContent = envLabel.toUpperCase();
+      envBadgeEl.style.display = "inline-flex";
+      envBadgeEl.style.color = envColor;
+      envBadgeEl.style.borderColor = `${envColor}40`;
+      envBadgeEl.style.backgroundColor = `${envColor}15`;
+    } else {
+      envBadgeEl.style.display = "none";
+    }
+  }
+
+  // 3. Creative Telemetry Capsule in Center
+  if (capsuleTextEl) {
+    const memShort = (currentMetrics.ram || "").split('/')[0].trim();
+    capsuleTextEl.textContent = `⚡ CPU ${currentMetrics.cpu} · RAM ${memShort || '11.6 GB'} · ↑${currentMetrics.netUp} ↓${currentMetrics.netDown}`;
+  }
+  if (capsuleChipEl) {
+    capsuleChipEl.textContent = "Live Telemetry";
+  }
+
+  // 4. Protocol badge in right
+  if (protoBadgeEl) {
+    protoBadgeEl.textContent = proto;
+    protoBadgeEl.style.display = "inline-flex";
+  }
 }
 
 export function toggleServerDetailsPopover() {
@@ -95,11 +159,27 @@ export function toggleServerDetailsPopover() {
   if (!activeTab || !activeTab.profile) return;
 
   const p = activeTab.profile;
-  const env = activeTab.environment || { label: "DEV", name: "Development", color: "#3b82f6" };
   const serialPrefix = activeTab.serialNo ? `[${activeTab.serialNo}] ` : "";
   const host = activeTab.remoteHostname || ((p.name && p.name !== "New Server" && p.name !== "New Session") ? p.name : (p.host || "Terminal"));
   const hostDisplay = `${serialPrefix}${host}`;
   const userHost = `${p.username ? p.username + '@' : ''}${p.host || 'localhost'}${p.port ? ':' + p.port : ''}`;
+
+  let envLabel = "DEV";
+  let envColor = "#38bdf8";
+  if (typeof activeTab.environment === "string" && activeTab.environment && activeTab.environment !== "undefined") {
+    envLabel = activeTab.environment;
+  } else if (activeTab.environment && typeof activeTab.environment === "object") {
+    envLabel = activeTab.environment.label || activeTab.environment.name || "DEV";
+    envColor = activeTab.environment.color || envColor;
+  } else if (p.environment) {
+    envLabel = typeof p.environment === "string" ? p.environment : (p.environment.label || "DEV");
+  }
+
+  const upper = envLabel.toUpperCase();
+  if (upper === "UAT") envColor = "#f59e0b";
+  else if (upper === "PROD" || upper === "PRODUCTION") envColor = "#f43f5e";
+  else if (upper === "TESTING" || upper === "TEST") envColor = "#a855f7";
+  else if (upper === "LOCAL") envColor = "#10b981";
 
   popover = document.createElement("div");
   popover.id = "serverDetailsPopover";
@@ -108,7 +188,7 @@ export function toggleServerDetailsPopover() {
     <div class="popover-header">
       <div class="popover-title-row">
         <span class="popover-host">${escapeHtml(hostDisplay)}</span>
-        <span class="popover-env" style="color:${env.color};">${env.label}</span>
+        <span class="popover-env" style="color:${envColor}; border-color:${envColor}40; background:${envColor}18;">${escapeHtml(upper)}</span>
       </div>
       <span class="popover-conn-info">${escapeHtml(userHost)}</span>
       <button class="popover-close-btn" type="button">&times;</button>
@@ -151,7 +231,7 @@ export function toggleServerDetailsPopover() {
   });
 
   const dismissHandler = (evt) => {
-    if (!popover.contains(evt.target) && !evt.target.closest(".status-server-pill")) {
+    if (!popover.contains(evt.target) && !evt.target.closest(".status-server-pill") && !evt.target.closest("#statusCreativeCapsule")) {
       popover.remove();
       window.removeEventListener("click", dismissHandler);
     }

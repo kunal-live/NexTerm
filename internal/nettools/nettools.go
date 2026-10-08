@@ -175,3 +175,67 @@ func CalculateHash(input string, algorithm string) string {
 		return hex.EncodeToString(h[:])
 	}
 }
+
+// ServerReachability represents the connectivity probe result for a host and port.
+type ServerReachability struct {
+	Host      string `json:"host"`
+	Port      int    `json:"port"`
+	Online    bool   `json:"online"`
+	LatencyMs int64  `json:"latencyMs"`
+	Error     string `json:"error,omitempty"`
+}
+
+// TargetQuery specifies a host and port to probe.
+type TargetQuery struct {
+	Host string `json:"host"`
+	Port int    `json:"port"`
+}
+
+// PingTarget probes a single host/port with a given timeout.
+func PingTarget(host string, port int, timeoutMs int) ServerReachability {
+	if timeoutMs <= 0 {
+		timeoutMs = 1500
+	}
+	if port <= 0 {
+		port = 22
+	}
+	target := fmt.Sprintf("%s:%d", host, port)
+	start := time.Now()
+	conn, err := net.DialTimeout("tcp", target, time.Duration(timeoutMs)*time.Millisecond)
+	dur := time.Since(start).Milliseconds()
+	if err != nil {
+		return ServerReachability{
+			Host:      host,
+			Port:      port,
+			Online:    false,
+			LatencyMs: -1,
+			Error:     err.Error(),
+		}
+	}
+	_ = conn.Close()
+	return ServerReachability{
+		Host:      host,
+		Port:      port,
+		Online:    true,
+		LatencyMs: dur,
+	}
+}
+
+// CheckServersReachability probes multiple targets in parallel with a timeout.
+func CheckServersReachability(targets []TargetQuery, timeoutMs int) []ServerReachability {
+	if timeoutMs <= 0 {
+		timeoutMs = 1500
+	}
+	results := make([]ServerReachability, len(targets))
+	var wg sync.WaitGroup
+	for i, t := range targets {
+		wg.Add(1)
+		go func(idx int, target TargetQuery) {
+			defer wg.Done()
+			results[idx] = PingTarget(target.Host, target.Port, timeoutMs)
+		}(i, t)
+	}
+	wg.Wait()
+	return results
+}
+
