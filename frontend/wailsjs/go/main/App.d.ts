@@ -9,6 +9,7 @@ import {hostkey} from '../models';
 import {macro} from '../models';
 import {tunnel} from '../models';
 import {sftpmanager} from '../models';
+import {main} from '../models';
 
 export function AddFolder(arg1:string,arg2:string):Promise<model.TreeNode>;
 
@@ -19,6 +20,8 @@ export function AddSession(arg1:string,arg2:model.SessionProfile):Promise<model.
 export function AddWorkspacePane(arg1:string):Promise<model.Pane>;
 
 export function AppendSessionLog(arg1:string,arg2:string,arg3:string):Promise<string>;
+
+export function ApplyUpdate(arg1:string):Promise<void>;
 
 export function BRMClassifyQuestion(arg1:string):Promise<string>;
 
@@ -45,6 +48,8 @@ export function CancelBroadcast(arg1:string):Promise<void>;
 export function ChangeAppPassword(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function ChangeMasterPassword(arg1:string,arg2:string,arg3:string):Promise<void>;
+
+export function CheckForUpdates():Promise<service.UpdateInfo>;
 
 export function CheckSSHAgent():Promise<Record<string, any>>;
 
@@ -99,6 +104,8 @@ export function GenerateSecurePassword(arg1:number,arg2:boolean):Promise<string>
 export function GetAppLockoutStatus():Promise<service.LockoutStatus>;
 
 export function GetAppPasswordHint():Promise<string>;
+
+export function GetAppVersion():Promise<string>;
 
 export function GetAuditLogs(arg1:number):Promise<Array<service.AuditEvent>>;
 
@@ -260,6 +267,8 @@ export function SaveTerminalOutput(arg1:string,arg2:string):Promise<string>;
 
 export function SaveTunnel(arg1:tunnel.TunnelConfig):Promise<void>;
 
+export function ScanPorts(arg1:string,arg2:string,arg3:number):Promise<Array<nettools.PortScanResult>>;
+
 export function SelectDownloadDest(arg1:string):Promise<string>;
 
 export function SelectPrivateKeyFile():Promise<string>;
@@ -276,15 +285,13 @@ export function SetWorkspaceActiveTab(arg1:string,arg2:string):Promise<void>;
 
 export function SetWorkspaceLayout(arg1:string):Promise<model.Workspace>;
 
-export function ScanPorts(arg1:string,arg2:string,arg3:number):Promise<Array<any>>;
-
-export function TestSessionConnection(arg1:model.SessionProfile,arg2:string):Promise<any>;
-
 export function StartTunnel(arg1:string,arg2:string):Promise<void>;
 
 export function StopSessionLog(arg1:string):Promise<string>;
 
 export function StopTunnel(arg1:string):Promise<void>;
+
+export function TestSessionConnection(arg1:model.SessionProfile,arg2:string):Promise<main.ConnectionTestResult>;
 
 export function ToggleFolder(arg1:string,arg2:boolean):Promise<model.TreeNode>;
 

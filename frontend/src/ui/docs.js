@@ -48,7 +48,7 @@ export function showDocumentation() {
 
         <h2>1 · How the app is laid out</h2>
         <div class="doc-flow">
-          <div class="doc-flow-step"><b>Top bar</b><span>Menu (☰), global search / command palette (Ctrl+K), X Server, theme toggle, notifications, settings.</span></div>
+          <div class="doc-flow-step"><b>Top bar</b><span>Menu (☰), global search / command palette (Ctrl+K), X Server, notifications, settings.</span></div>
           <div class="doc-flow-arrow">→</div>
           <div class="doc-flow-step"><b>Left sidebar</b><span>Your Saved Sessions tree (folders by environment) + Quick Connect + the SFTP dual file manager.</span></div>
           <div class="doc-flow-arrow">→</div>
@@ -98,7 +98,7 @@ export function showDocumentation() {
           ${feature("🗄️", "Workspaces / Groups", "Save a set of open tabs as a named group and reopen (or auto-start) them together.")}
           ${feature("🔀", "Tunneling", "Set up SSH local / remote / dynamic port forwarding.")}
           ${feature("🎬", "Macros &amp; Snippets", "Reusable command snippets with <span class='doc-mono'>{{variables}}</span>, and record/replay macros.")}
-          ${feature("🎨", "Themes", "Switch dark / light with the sun-moon toggle, or pick from many built-in themes.")}
+          ${feature("🎨", "Themes", "Pick from developer and solar system dark themes in Settings or the Themes palette.")}
           ${feature("🖼️", "X Server", "Start a local X server (top-bar icon) so remote Linux GUI apps display on your machine via X11 forwarding.")}
         </div>
 

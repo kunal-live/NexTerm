@@ -95,6 +95,7 @@ import { initStatusBar, updateStatusBarDisplay } from './statusBar/statusBar.js'
 import { initModernNavigation } from './navigation/navigation.js';
 import { initBRMAssistant, detectCurrentEnvironment } from './brm/brmAssistant.js';
 import { initAppLock, lockNow, isAppLockEnabled, showAutoLockSettings } from './ui/appLock.js';
+import { initAutoUpdater, checkForUpdates } from './ui/autoUpdater.js';
 
 // Hook up workspace tab actions
 registerWorkspaceTabActions({
@@ -226,6 +227,14 @@ registerCommandPaletteActions([
     subtitle: "Configure themes, fonts, credentials and audit logging",
     icon: "⚙",
     action: () => showSettingsDialog()
+  },
+  {
+    id: "cmd-check-updates",
+    category: "Help",
+    title: "Check for Updates...",
+    subtitle: "Check GitHub for latest NexTerm release and install in-place",
+    icon: "🔄",
+    action: () => checkForUpdates(true)
   },
   {
     id: "cmd-passwords-vault",
@@ -403,6 +412,7 @@ export function setupEventListeners() {
   // Session logging + snippets
   safeClick("mSnippets", () => showSnippetsDialog());
   safeClick("mShortcuts", () => showShortcutsOverlay());
+  safeClick("mCheckUpdates", () => checkForUpdates(true));
   safeClick("mAbout", () => showToast("NexTerm — Professional SSH & Terminal Manager (Connect Beyond Limits)", "info"));
   safeClick("mToggleLogging", () => {
     if (activeTabId && activeTabId !== "home") toggleSessionLogging(activeTabId);
@@ -491,41 +501,14 @@ export function setupEventListeners() {
   navRailAction("navRailWorkspaces", () => showGroupsDialog(), false);
   navRailAction("navRailSettings", () => showSettingsDialog(), false);
 
-  // Quick light/dark theme toggle (sun/moon) — remembers your last dark theme
-  function isLightTheme() {
-    return (document.documentElement.getAttribute("data-theme") || "") === "light-modern";
+  // Ensure the app stays in dark mode and resets any legacy light-modern state
+  if ((document.documentElement.getAttribute("data-theme") || "") === "light-modern") {
+    applyUITheme("dark-modern", true);
   }
-  function syncThemeToggleIcon() {
-    const icon = document.getElementById("tbThemeToggleIcon");
-    const btn = document.getElementById("tbThemeToggleBtn");
-    if (!icon) return;
-    if (isLightTheme()) {
-      icon.innerHTML = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
-      if (btn) btn.title = "Light mode — click for Dark";
-    } else {
-      icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
-      if (btn) btn.title = "Dark mode — click for Light";
-    }
-  }
-  function toggleLightDarkTheme() {
-    if (isLightTheme()) {
-      let back = "dark-modern";
-      try { back = localStorage.getItem("nexterm_last_dark_theme") || "dark-modern"; } catch (_) { }
-      if (back === "light-modern") back = "dark-modern";
-      applyUITheme(back, true);
-    } else {
-      const cur = document.documentElement.getAttribute("data-theme") || "dark-modern";
-      try { localStorage.setItem("nexterm_last_dark_theme", cur); } catch (_) { }
-      applyUITheme("light-modern", true);
-    }
-    syncThemeToggleIcon();
-  }
-  syncThemeToggleIcon();
   initNotificationCenter();
 
   // Toolbar buttons
   safeClick("connectedBroadcastBtn", () => openBroadcastDialog("all"));
-  safeClick("tbThemeToggleBtn", toggleLightDarkTheme);
   safeClick("tbNotifBtn", toggleNotificationPanel);
   safeClick("tbSettingsBtn", showSettingsDialog);
   safeClick("tbXServerBtn", async () => {
@@ -1403,6 +1386,9 @@ export async function init() {
 
   // Focus Mode (Zen Workspace)
   try { initFocusMode(); } catch (e) { console.warn("Failed to init Focus Mode:", e); }
+
+  // Auto-Update Background Check
+  try { initAutoUpdater(); } catch (e) { console.warn("Failed to init Auto Updater:", e); }
 }
 
 // Auto-run on DOMContentLoaded

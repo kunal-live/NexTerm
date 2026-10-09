@@ -20,6 +20,7 @@ import {
   formatFileSize,
   MAX_KNOWLEDGE_FILES
 } from "../brm/aiKnowledgeStore.js";
+import { checkForUpdates } from "../ui/autoUpdater.js";
 
 // Default user settings
 export let userSettings = {
@@ -48,6 +49,8 @@ export function loadSettings() {
       console.warn("Failed to parse saved nexterm_settings:", e);
     }
   }
+  if (userSettings.theme === "light-modern") userSettings.theme = "dark-modern";
+  if (userSettings.uiTheme === "light-modern") userSettings.uiTheme = "dark-modern";
   return userSettings;
 }
 
@@ -638,12 +641,6 @@ export const THEME_METADATA = {
     icon: "🐧",
     swatches: ["#000000", "#111111", "#4e9a06", "#3465a4", "#ffffff"]
   },
-  "light-modern": {
-    name: "Modern Light",
-    desc: "Clean porcelain white with high-contrast text and crisp cyan highlights",
-    icon: "☀️",
-    swatches: ["#f1f5f9", "#ffffff", "#0284c7", "#16a34a", "#0f172a"]
-  },
   // ======================== PLANET THEMES ========================
   "planet-mercury": {
     name: "Mercury",
@@ -712,6 +709,7 @@ export const THEME_METADATA = {
 
 export function applyUITheme(themeKey, persist = true) {
   const LEGACY_ALIASES = {
+    "light-modern": "dark-modern",
     "one-dark": "dark-modern",
     "github-dark": "dark-modern",
     "avisys-navy": "dark-modern",
@@ -719,25 +717,12 @@ export function applyUITheme(themeKey, persist = true) {
     "catppuccin-mocha": "tokyo-night"
   };
   if (LEGACY_ALIASES[themeKey]) themeKey = LEGACY_ALIASES[themeKey];
-  if (!THEMES[themeKey]) themeKey = "dark-modern";
+  if (themeKey === "light-modern" || !THEMES[themeKey]) themeKey = "dark-modern";
   userSettings.uiTheme = themeKey;
   userSettings.theme = themeKey;
 
   document.documentElement.setAttribute("data-theme", themeKey);
   document.body.setAttribute("data-theme", themeKey);
-
-  // Sync toolbar sun/moon toggle icon immediately
-  const icon = document.getElementById("tbThemeToggleIcon");
-  const btn = document.getElementById("tbThemeToggleBtn");
-  if (icon) {
-    if (themeKey === "light-modern") {
-      icon.innerHTML = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
-      if (btn) btn.title = "Light mode — click for Dark";
-    } else {
-      icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
-      if (btn) btn.title = "Dark mode — click for Light";
-    }
-  }
 
   if (persist) {
     saveSettings();
@@ -954,6 +939,7 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
       <button class="modal-tab-btn" data-tab="tab-settings-audit">📜 Audit Log</button>
       <button class="modal-tab-btn" data-tab="tab-settings-ai">🤖 AI Assistant</button>
       <button class="modal-tab-btn" data-tab="tab-settings-privacy">🔒 Privacy & Compliance</button>
+      <button class="modal-tab-btn" data-tab="tab-settings-updates">🔄 Updates</button>
     </div>
     <div class="modal-body" style="max-height: 480px; overflow-y: auto;">
       <!-- 1. Terminal & UI Settings Tab -->
@@ -978,7 +964,6 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
               <option value="avisys-navy" ${userSettings.theme === 'avisys-navy' ? 'selected' : ''}>⚓ Avisys Corporate Navy (Midnight Enterprise)</option>
               <option value="slack-dark" ${userSettings.theme === 'slack-dark' ? 'selected' : ''}>💬 Slack Theme Dark Mode (Classic Aubergine & Cyan)</option>
               <option value="linux-black" ${userSettings.theme === 'linux-black' ? 'selected' : ''}>🐧 Linux Console (Pure Black)</option>
-              <option value="light-modern" ${userSettings.theme === 'light-modern' ? 'selected' : ''}>☀️ Modern Light (Clean Porcelain White)</option>
             </optgroup>
             <optgroup label="🪐 Solar System Collection (Planetary Contrast)">
               <option value="planet-mercury" ${userSettings.theme === 'planet-mercury' ? 'selected' : ''}>☿️ Mercury (Scorched Basalt & Molten Amber)</option>
@@ -1580,7 +1565,6 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
               <option value="avisys-navy">⚓ Avisys Corporate Navy (Midnight Enterprise)</option>
               <option value="slack-dark">💬 Slack Theme Dark Mode (Classic Aubergine & Cyan)</option>
               <option value="linux-black">🐧 Linux Console (Pure Black)</option>
-              <option value="light-modern">☀️ Modern Light (Clean Porcelain White)</option>
             </select>
           </div>
         </div>
@@ -1705,6 +1689,40 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
           <div style="margin-top: 6px; font-weight: 500; color: #38bdf8;">
             📄 <b>PRIVACY.md</b> &nbsp;|&nbsp; 📋 <b>TERMS.md</b> &nbsp;|&nbsp; 🍪 <b>COOKIE_POLICY.md</b>
           </div>
+        </div>
+      </div>
+
+      <!-- 10. Auto Updates Tab -->
+      <div id="tab-settings-updates" class="tab-content hidden">
+        <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 14px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="font-size: 28px;">⚡</div>
+            <div>
+              <div style="font-weight: 700; color: #f1f5f9; font-size: 14px;">NexTerm Automatic Updates</div>
+              <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Keep NexTerm up to date with bug fixes and new features seamlessly.</div>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary" id="btnSettingsCheckUpdate" style="padding: 7px 14px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+            🔄 Check for Updates Now
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+          <div style="background: #11141e; border: 1px solid #1e2433; border-radius: 6px; padding: 12px;">
+            <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; letter-spacing: 0.5px;">Current Version</div>
+            <div id="settingsInstalledVer" style="font-size: 15px; font-weight: 700; color: #38bdf8; margin-top: 4px;">v1.3.0</div>
+          </div>
+          <div style="background: #11141e; border: 1px solid #1e2433; border-radius: 6px; padding: 12px;">
+            <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; letter-spacing: 0.5px;">Release Channel</div>
+            <div style="font-size: 13.5px; font-weight: 600; color: #10b981; margin-top: 4px;">GitHub Releases (kunal-live/NexTerm)</div>
+          </div>
+        </div>
+
+        <div style="background: #11141e; border: 1px solid #1e2433; border-radius: 6px; padding: 14px; font-size: 12px; color: #cbd5e1; line-height: 1.6;">
+          <div style="font-weight: 600; color: #f1f5f9; margin-bottom: 6px;">How team updates work:</div>
+          <div>1. When you push bug fixes or new features and publish a GitHub release (e.g. <code>v1.3.1</code>), NexTerm automatically discovers it.</div>
+          <div style="margin-top: 4px;">2. Any teammate running NexTerm will receive an update prompt showing the release notes and fixes.</div>
+          <div style="margin-top: 4px;">3. Clicking <b>Update &amp; Restart</b> downloads the replacement executable and reboots NexTerm instantly.</div>
         </div>
       </div>
     </div>
@@ -3490,6 +3508,18 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
     applyUITheme(initialTheme, false);
     hideModal();
   };
+  // Updates Tab wiring
+  const btnSettingsCheckUpdate = box.querySelector("#btnSettingsCheckUpdate");
+  if (btnSettingsCheckUpdate) {
+    btnSettingsCheckUpdate.onclick = () => checkForUpdates(true);
+  }
+  if (window.go && window.go.main && window.go.main.App && window.go.main.App.GetAppVersion) {
+    window.go.main.App.GetAppVersion().then(v => {
+      const el = box.querySelector("#settingsInstalledVer");
+      if (el && v) el.textContent = "v" + v;
+    }).catch(() => {});
+  }
+
   box.querySelector("#modalCancel").onclick = handleCancelSettings;
   box.querySelector("#modalClose").onclick = handleCancelSettings;
 }

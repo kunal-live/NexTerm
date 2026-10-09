@@ -50,6 +50,35 @@ export namespace macro {
 
 }
 
+export namespace main {
+	
+	export class ConnectionTestResult {
+	    success: boolean;
+	    reachable: boolean;
+	    authenticated: boolean;
+	    latencyMs: number;
+	    banner?: string;
+	    message: string;
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ConnectionTestResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.success = source["success"];
+	        this.reachable = source["reachable"];
+	        this.authenticated = source["authenticated"];
+	        this.latencyMs = source["latencyMs"];
+	        this.banner = source["banner"];
+	        this.message = source["message"];
+	        this.error = source["error"];
+	    }
+	}
+
+}
+
 export namespace model {
 	
 	export class SessionProfile {
@@ -1010,6 +1039,36 @@ export namespace service {
 	        this.username = source["username"];
 	        this.vaultKey = source["vaultKey"];
 	        this.password = source["password"];
+	    }
+	}
+	export class UpdateInfo {
+	    currentVersion: string;
+	    latestVersion: string;
+	    hasUpdate: boolean;
+	    releaseName: string;
+	    releaseNotes: string;
+	    publishedAt: string;
+	    downloadURL: string;
+	    assetSize: number;
+	    assetName: string;
+	    htmlURL: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.currentVersion = source["currentVersion"];
+	        this.latestVersion = source["latestVersion"];
+	        this.hasUpdate = source["hasUpdate"];
+	        this.releaseName = source["releaseName"];
+	        this.releaseNotes = source["releaseNotes"];
+	        this.publishedAt = source["publishedAt"];
+	        this.downloadURL = source["downloadURL"];
+	        this.assetSize = source["assetSize"];
+	        this.assetName = source["assetName"];
+	        this.htmlURL = source["htmlURL"];
 	    }
 	}
 

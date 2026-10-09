@@ -22,6 +22,10 @@ export function AppendSessionLog(arg1, arg2, arg3) {
   return window['go']['main']['App']['AppendSessionLog'](arg1, arg2, arg3);
 }
 
+export function ApplyUpdate(arg1) {
+  return window['go']['main']['App']['ApplyUpdate'](arg1);
+}
+
 export function BRMClassifyQuestion(arg1) {
   return window['go']['main']['App']['BRMClassifyQuestion'](arg1);
 }
@@ -72,6 +76,10 @@ export function ChangeAppPassword(arg1, arg2, arg3) {
 
 export function ChangeMasterPassword(arg1, arg2, arg3) {
   return window['go']['main']['App']['ChangeMasterPassword'](arg1, arg2, arg3);
+}
+
+export function CheckForUpdates() {
+  return window['go']['main']['App']['CheckForUpdates']();
 }
 
 export function CheckSSHAgent() {
@@ -180,6 +188,10 @@ export function GetAppLockoutStatus() {
 
 export function GetAppPasswordHint() {
   return window['go']['main']['App']['GetAppPasswordHint']();
+}
+
+export function GetAppVersion() {
+  return window['go']['main']['App']['GetAppVersion']();
 }
 
 export function GetAuditLogs(arg1) {
@@ -502,6 +514,10 @@ export function SaveTunnel(arg1) {
   return window['go']['main']['App']['SaveTunnel'](arg1);
 }
 
+export function ScanPorts(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ScanPorts'](arg1, arg2, arg3);
+}
+
 export function SelectDownloadDest(arg1) {
   return window['go']['main']['App']['SelectDownloadDest'](arg1);
 }
@@ -534,14 +550,6 @@ export function SetWorkspaceLayout(arg1) {
   return window['go']['main']['App']['SetWorkspaceLayout'](arg1);
 }
 
-export function ScanPorts(arg1, arg2, arg3) {
-  return window['go']['main']['App']['ScanPorts'](arg1, arg2, arg3);
-}
-
-export function TestSessionConnection(arg1, arg2) {
-  return window['go']['main']['App']['TestSessionConnection'](arg1, arg2);
-}
-
 export function StartTunnel(arg1, arg2) {
   return window['go']['main']['App']['StartTunnel'](arg1, arg2);
 }
@@ -552,6 +560,10 @@ export function StopSessionLog(arg1) {
 
 export function StopTunnel(arg1) {
   return window['go']['main']['App']['StopTunnel'](arg1);
+}
+
+export function TestSessionConnection(arg1, arg2) {
+  return window['go']['main']['App']['TestSessionConnection'](arg1, arg2);
 }
 
 export function ToggleFolder(arg1, arg2) {

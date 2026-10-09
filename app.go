@@ -77,6 +77,7 @@ type App struct {
 	hostKeyService    *service.HostKeyService
 	loggingService    *service.LoggingService
 	brmService        *service.BRMAssistantService
+	updateService     *service.UpdateService
 
 	tunnelMgr *tunnel.TunnelManager
 	macroMgr  *macro.MacroManager
@@ -99,6 +100,7 @@ func NewApp() *App {
 	a.settingsService = service.NewSettingsService(nil)
 	a.sessionService = service.NewSessionService(nil)
 	a.brmService = service.NewBRMAssistantService(a.connectionManager, a.loggingService)
+	a.updateService = service.NewUpdateService(emitter)
 
 	// Clean up workspace tabs and watchers on disconnect
 	a.connectionManager.SetOnSessionClosed(func(tabID string) {
@@ -1612,4 +1614,37 @@ func (a *App) BRMGetOpcodeKnowledge(op string) service.OpcodeInfo {
 
 func (a *App) BRMGetErrorKnowledge(code string) service.ErrorKnowledge {
 	return a.brmService.GetErrorKnowledge(code)
+}
+
+// =========================================================================
+// In-App Auto-Update System
+// =========================================================================
+
+// CheckForUpdates queries release sources for newer versions.
+func (a *App) CheckForUpdates() (*service.UpdateInfo, error) {
+	ctx := context.Background()
+	if a.ctx != nil {
+		ctx = a.ctx
+	}
+	info, err := a.updateService.CheckForUpdates(ctx)
+	if err != nil {
+		a.loggingService.LogAudit("CHECK_UPDATE_FAILED", "system", "", "", "", "FAILURE", err.Error())
+		return nil, err
+	}
+	return info, nil
+}
+
+// ApplyUpdate downloads the new release binary, stages replacement, and restarts the application.
+func (a *App) ApplyUpdate(downloadURL string) error {
+	ctx := context.Background()
+	if a.ctx != nil {
+		ctx = a.ctx
+	}
+	a.loggingService.LogAudit("APPLY_UPDATE_INITIATED", "system", "", "", "", "SUCCESS", downloadURL)
+	return a.updateService.DownloadAndApplyUpdate(ctx, downloadURL)
+}
+
+// GetAppVersion returns the current running application version.
+func (a *App) GetAppVersion() string {
+	return a.updateService.CurrentVersion()
 }
