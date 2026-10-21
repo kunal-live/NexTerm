@@ -146,6 +146,14 @@ export namespace model {
 	    rdpWidth?: number;
 	    rdpHeight?: number;
 	    rdpFullScreen?: boolean;
+	    rdpRedirectDrives?: boolean;
+	    rdpRedirectClipboard?: boolean;
+	    rdpRedirectPrinters?: boolean;
+	    rdpRedirectPorts?: boolean;
+	    rdpRedirectSmartCards?: boolean;
+	    rdpAudioMode?: number;
+	    rdpAudioCapture?: boolean;
+	    rdpPerformanceFlags?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new SessionProfile(source);
@@ -217,6 +225,14 @@ export namespace model {
 	        this.rdpWidth = source["rdpWidth"];
 	        this.rdpHeight = source["rdpHeight"];
 	        this.rdpFullScreen = source["rdpFullScreen"];
+	        this.rdpRedirectDrives = source["rdpRedirectDrives"];
+	        this.rdpRedirectClipboard = source["rdpRedirectClipboard"];
+	        this.rdpRedirectPrinters = source["rdpRedirectPrinters"];
+	        this.rdpRedirectPorts = source["rdpRedirectPorts"];
+	        this.rdpRedirectSmartCards = source["rdpRedirectSmartCards"];
+	        this.rdpAudioMode = source["rdpAudioMode"];
+	        this.rdpAudioCapture = source["rdpAudioCapture"];
+	        this.rdpPerformanceFlags = source["rdpPerformanceFlags"];
 	    }
 	}
 	export class TabSession {

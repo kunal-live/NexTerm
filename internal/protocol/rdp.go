@@ -28,7 +28,59 @@ func NewRDPSession(id string, profile model.SessionProfile) *RDPSession {
 	}
 }
 
-// Connect generates the RDP configuration file and launches mstsc.exe.
+// GenerateRDPProfileContent builds the content of an .rdp configuration file with
+// advanced device redirection, audio, display, and performance flags.
+func GenerateRDPProfileContent(p model.SessionProfile, port int) string {
+	content := fmt.Sprintf("full address:s:%s:%d\r\nprompt for credentials:i:1\r\n", p.Host, port)
+	if p.Username != "" {
+		content += fmt.Sprintf("username:s:%s\r\n", p.Username)
+	}
+	if p.RDPDomain != "" {
+		content += fmt.Sprintf("domain:s:%s\r\n", p.RDPDomain)
+	}
+	if p.RDPFullScreen {
+		content += "screen mode id:i:2\r\n"
+	} else if p.RDPWidth > 0 && p.RDPHeight > 0 {
+		content += fmt.Sprintf("desktopwidth:i:%d\r\ndesktopheight:i:%d\r\nscreen mode id:i:1\r\n", p.RDPWidth, p.RDPHeight)
+	}
+
+	// Advanced Redirections (MobaXterm parity)
+	if p.RDPRedirectDrives {
+		content += "drivestoredirect:s:*\r\n"
+	}
+	// Clipboard redirection: enabled by default unless explicitly disabled
+	if p.RDPRedirectClipboard == nil || *p.RDPRedirectClipboard {
+		content += "redirectclipboard:i:1\r\n"
+	} else {
+		content += "redirectclipboard:i:0\r\n"
+	}
+	if p.RDPRedirectPrinters {
+		content += "redirectprinters:i:1\r\n"
+	}
+	if p.RDPRedirectPorts {
+		content += "redirectcomports:i:1\r\n"
+	}
+	if p.RDPRedirectSmartCards {
+		content += "redirectsmartcards:i:1\r\n"
+	}
+
+	// Audio Redirection: 0 = play on client, 1 = play on remote, 2 = do not play
+	content += fmt.Sprintf("audiomode:i:%d\r\n", p.RDPAudioMode)
+	if p.RDPAudioCapture {
+		content += "audiocapturemode:i:1\r\n"
+	}
+
+	// Network Performance Auto-detection & Experience Flags
+	perf := p.RDPPerformanceFlags
+	if perf <= 0 {
+		perf = 7 // Default LAN experience for high responsiveness
+	}
+	content += fmt.Sprintf("connection type:i:%d\r\nnetworkautodetect:i:1\r\nbandwidthautodetect:i:1\r\n", perf)
+
+	return content
+}
+
+// Connect generates the RDP configuration file and launches mstsc.exe or xfreerdp.
 func (r *RDPSession) Connect(ctx context.Context) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -47,18 +99,7 @@ func (r *RDPSession) Connect(ctx context.Context) error {
 
 	// Generate .rdp file content
 	tempRDP := filepath.Join(os.TempDir(), fmt.Sprintf("nexterm_%s.rdp", r.ID()))
-	rdpContent := fmt.Sprintf("full address:s:%s:%d\r\nprompt for credentials:i:1\r\n", p.Host, port)
-	if p.Username != "" {
-		rdpContent += fmt.Sprintf("username:s:%s\r\n", p.Username)
-	}
-	if p.RDPDomain != "" {
-		rdpContent += fmt.Sprintf("domain:s:%s\r\n", p.RDPDomain)
-	}
-	if p.RDPFullScreen {
-		rdpContent += "screen mode id:i:2\r\n"
-	} else if p.RDPWidth > 0 && p.RDPHeight > 0 {
-		rdpContent += fmt.Sprintf("desktopwidth:i:%d\r\ndesktopheight:i:%d\r\nscreen mode id:i:1\r\n", p.RDPWidth, p.RDPHeight)
-	}
+	rdpContent := GenerateRDPProfileContent(p, port)
 
 	if err := os.WriteFile(tempRDP, []byte(rdpContent), 0600); err != nil {
 		r.SetConnected(false)
@@ -79,6 +120,18 @@ func (r *RDPSession) Connect(ctx context.Context) error {
 			args := []string{fmt.Sprintf("/v:%s:%d", p.Host, port)}
 			if p.Username != "" {
 				args = append(args, fmt.Sprintf("/u:%s", p.Username))
+			}
+			if p.RDPRedirectDrives {
+				args = append(args, "/drive:hotplug,*")
+			}
+			if p.RDPRedirectClipboard == nil || *p.RDPRedirectClipboard {
+				args = append(args, "+clipboard")
+			}
+			if p.RDPAudioMode == 0 {
+				args = append(args, "/sound:sys:alsa")
+			}
+			if p.RDPAudioCapture {
+				args = append(args, "/microphone:sys:alsa")
 			}
 			cmd = exec.Command("xfreerdp", args...)
 		} else if _, err := exec.LookPath("remmina"); err == nil {

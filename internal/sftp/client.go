@@ -37,13 +37,18 @@ func NewClientManager() *ClientManager {
 // stale SFTP session is closed and a fresh one is created over the new
 // connection. This is what makes the SFTP panel recover after a disconnect /
 // reconnect instead of failing with "connection lost".
+//
+// SFTP sessions are tuned to MobaXterm-grade high-throughput specifications:
+// - 32KB max packet payload (MaxPacketChecked: 32768)
+// - Concurrent asynchronous writes (UseConcurrentWrites: true)
+// - Concurrent asynchronous reads (UseConcurrentReads: true)
 func (cm *ClientManager) GetOrCreate(tabID string, sshClient *ssh.Client) (*sftp.Client, error) {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 
 	if entry, ok := cm.clients[tabID]; ok && entry != nil && entry.sftp != nil {
 		if entry.ssh == sshClient && sshClient != nil {
-			// Same live connection — reuse the existing SFTP session.
+			// Same live connection - reuse the existing SFTP session.
 			return entry.sftp, nil
 		}
 		// The underlying SSH connection changed (reconnect) or is gone.
@@ -56,7 +61,13 @@ func (cm *ClientManager) GetOrCreate(tabID string, sshClient *ssh.Client) (*sftp
 		return nil, fmt.Errorf("underlying SSH client is disconnected")
 	}
 
-	client, err := sftp.NewClient(sshClient)
+	// Initialize SFTP client with high-throughput options (MobaXterm parity)
+	client, err := sftp.NewClient(
+		sshClient,
+		sftp.MaxPacketChecked(32768),
+		sftp.UseConcurrentWrites(true),
+		sftp.UseConcurrentReads(true),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create SFTP subsystem: %w", err)
 	}

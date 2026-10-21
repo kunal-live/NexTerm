@@ -195,7 +195,7 @@ func Connect(opts ConnectOptions) (*Session, error) {
 			Timeout:         15 * time.Second,
 		}
 		jumpAddr := net.JoinHostPort(opts.JumpHost, strconv.Itoa(opts.JumpPort))
-		bastionDirectConn, bErr := net.DialTimeout("tcp", jumpAddr, timeout)
+		bastionDirectConn, bErr := dialEndpoint(jumpAddr, opts, timeout)
 		if bErr != nil {
 			return nil, fmt.Errorf("bastion connection failed to %s: %w", jumpAddr, bErr)
 		}
@@ -214,7 +214,7 @@ func Connect(opts ConnectOptions) (*Session, error) {
 		}
 		conn = proxiedConn
 	} else {
-		directConn, dErr := net.DialTimeout("tcp", addr, timeout)
+		directConn, dErr := dialEndpoint(addr, opts, timeout)
 		if dErr != nil {
 			return nil, fmt.Errorf("connection failed to %s: %w", addr, dErr)
 		}
@@ -505,3 +505,4 @@ func (s *Session) Client() *ssh.Client {
 func ReadPrivateKeyFile(path string) ([]byte, error) {
 	return os.ReadFile(path)
 }
+

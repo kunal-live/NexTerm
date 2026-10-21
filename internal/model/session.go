@@ -86,6 +86,16 @@ type SessionProfile struct {
 	RDPWidth      int    `json:"rdpWidth,omitempty"`
 	RDPHeight     int    `json:"rdpHeight,omitempty"`
 	RDPFullScreen bool   `json:"rdpFullScreen,omitempty"`
+
+	// Advanced RDP Configuration (MobaXterm parity)
+	RDPRedirectDrives     bool   `json:"rdpRedirectDrives,omitempty"`
+	RDPRedirectClipboard  *bool  `json:"rdpRedirectClipboard,omitempty"`
+	RDPRedirectPrinters   bool   `json:"rdpRedirectPrinters,omitempty"`
+	RDPRedirectPorts      bool   `json:"rdpRedirectPorts,omitempty"`
+	RDPRedirectSmartCards bool   `json:"rdpRedirectSmartCards,omitempty"`
+	RDPAudioMode          int    `json:"rdpAudioMode,omitempty"`      // 0: local, 1: remote, 2: none
+	RDPAudioCapture       bool   `json:"rdpAudioCapture,omitempty"`   // microphone redirection
+	RDPPerformanceFlags   int    `json:"rdpPerformanceFlags,omitempty"` // 1-7 (7 = LAN)
 }
 
 // TreeNode is either a folder (Children populated, Session nil) or a leaf
@@ -105,4 +115,5 @@ type TreeNode struct {
 func (n *TreeNode) IsFolder() bool {
 	return n.Session == nil
 }
+
 

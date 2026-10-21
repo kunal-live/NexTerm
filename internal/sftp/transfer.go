@@ -2,7 +2,6 @@ package sftpmanager
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -82,7 +81,8 @@ func uploadSingleFile(client *sftp.Client, localFile, remoteFile string) error {
 	}
 	defer dst.Close()
 
-	_, err = io.Copy(dst, src)
+	// High-throughput concurrent pipeline: ReadFrom triggers parallel SFTP write chunks
+	_, err = dst.ReadFrom(src)
 	return err
 }
 
@@ -170,6 +170,7 @@ func downloadSingleFile(client *sftp.Client, remoteFile, localFile string) error
 	}
 	defer dst.Close()
 
-	_, err = io.Copy(dst, src)
+	// High-throughput concurrent pipeline: WriteTo triggers parallel SFTP read chunks
+	_, err = src.WriteTo(dst)
 	return err
 }
