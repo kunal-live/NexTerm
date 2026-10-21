@@ -1,7 +1,7 @@
 # Cookie Policy for NexTerm
 
-**Last Updated:** September 28, 2026  
-**Effective Date:** September 28, 2026
+**Last Updated:** October 21, 2026  
+**Effective Date:** October 21, 2026
 
 This Cookie Policy explains how **NexTerm** treats cookies and similar local storage technologies.
 
@@ -24,6 +24,8 @@ To deliver a responsive, personalized desktop user experience, NexTerm uses stan
 | **`localStorage`** | `nexterm_settings` | Stores your UI layout choices, selected theme (e.g. Dark Modern, Tokyo Night), terminal font size, cursor styles, and notification level. | Persistent until manually cleared | Local machine only |
 | **`localStorage`** | `nexterm_ui_state` | Stores sidebar collapsed state, split pane positions, and recent view preferences. | Persistent until manually cleared | Local machine only |
 | **`localStorage`** | `nexterm_consent_acknowledged` | Records user acknowledgment of local storage and privacy disclosures. | Persistent until manually cleared | Local machine only |
+| **`localStorage`** | `nexterm_app_lock_*` | Stores local App Lock status, PIN/password hash, and exponential lockout timers. | Persistent until manually cleared | Local machine only |
+| **`localStorage`** | `nexterm_auto_updater` | Stores auto-update check frequency preferences and dismissed release versions. | Persistent until manually cleared | Local machine only |
 | **In-Memory** | Tab & Terminal State | Holds active PTY buffers, current tab titles, and active process pointers. | Duration of application run | RAM only |
 
 **Important:** None of the data saved in `localStorage` is ever transmitted over the network or shared with any external entity.

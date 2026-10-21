@@ -44,10 +44,22 @@
 
 ---
 
-## 🚀 What's New in v1.3.0
+## 🚀 What's New in v1.4.0
 
-> **Release Name**: *Enterprise Security, Custom Themes & Dynamic Workspaces*  
-> Full release log available in **[CHANGELOG.md](CHANGELOG.md)**.
+> **Release Name**: *Network Proxies, MobaXterm RDP Parity & High-Throughput SFTP*  
+> Full release history available in **[CHANGELOG.md](CHANGELOG.md)**.
+
+- 🌐 **Network Proxy Routing (SOCKS5, SOCKS4, HTTP CONNECT)**: Native proxy client supporting direct SSH connections and chained bastion jump hosts with full credential authentication.
+- 🖥️ **MobaXterm RDP Feature Parity**: Device redirection (local drives/hotplug, clipboard, printers, COM ports, smart cards), remote/local audio playback & microphone capture, and network performance bandwidth auto-detection.
+- ⚡ **High-Throughput Concurrent SFTP Pipelines**: 32KB max packet payloads with concurrent asynchronous streaming (`UseConcurrentWrites`, `UseConcurrentReads`) and pipeline-driven transfers via `ReadFrom` and `WriteTo`.
+- 🔄 **In-App Auto-Updater with Hot-Restart**: Automated background update checks via GitHub Releases, 1-click in-app upgrades, and instant application restart.
+- 🔍 **Live Session Connection Tester (`TestSessionConnection`)**: Pre-flight validation of SSH credentials, reachability, and round-trip latency (ms) directly inside the session configuration dialog.
+- 🛡️ **Independent App Lock & Multi-Stage Lockout**: Dedicated workstation lock with PIN/password protection, exponential cooldowns against brute-force attempts, and a live background server reachability monitor.
+- 🎨 **Home Dashboard & Hero Enhancements**: Refreshed dashboard with environment filtering (Production, Staging, Dev) and celestial hero animations.
+- 🧹 **Binary Optimization**: Removed redundant assets and dependencies to reduce embedded binary size and memory footprint.
+
+<details>
+<summary><b>Previous: What's New in v1.3.0</b></summary>
 
 - 🔒 **Master Password Vault Protection**: Optional Master Password encryption layer over the native DPAPI vault, featuring password hint recovery and a built-in cryptographic password generator.
 - 🛡️ **App Lock & Idle Inactivity Auto-Lock**: Instantly lock the entire workstation with a master toggle or configure automated idle timeout locks to safeguard active terminal connections.
@@ -57,6 +69,8 @@
 - 🤖 **Universal AI DevOps Assistant**: Integrated diagnostic AI companion to assist with shell commands, log debugging, and automation scripts.
 - ♿ **Full WCAG 2.1 Accessibility & Compliance**: Added complete ARIA semantics, interactive GDPR privacy consent controls, and enterprise documentation ([PRIVACY.md](PRIVACY.md), [TERMS.md](TERMS.md), [COOKIE_POLICY.md](COOKIE_POLICY.md)).
 - 📥 **Direct Platform Downloads**: Windows setup installer and portable archive, macOS app bundle, and Linux binary archive are attached to each GitHub release. Linux requires GTK 3 and WebKit2GTK runtime libraries.
+
+</details>
 
 ---
 
@@ -86,6 +100,7 @@
 ```
 
 ### 📁 1. Graphical SFTP Browser & Embedded Editor (Nexterm Editor)
+- **High-Throughput Concurrent Pipelines**: Tuned to MobaXterm-grade performance with 32KB max packet payloads, parallel asynchronous read/write streams, and zero-bottleneck `ReadFrom` / `WriteTo` transfer pipelines.
 - **Shared Authentication**: Reuses the active SSH connection seamlessly without asking for passwords again.
 - **Remote File Management**: Browse remote directory trees, create folders (`mkdir`), delete, rename, and download with native file save dialogs.
 - **Drag-and-Drop Remote Upload**: Drop local files or directories directly onto the SFTP grid to upload in background.
@@ -97,9 +112,11 @@
 - **Dynamic SOCKS5 Proxy**: Turn any remote SSH server into a secure local SOCKS5 proxy (e.g., `127.0.0.1:1080`).
 - **Visual Status Management**: Real-time 🟢 Active / ⚪ Inactive status indicators, persistent configuration in `tunnels.json`, and 1-click start/stop.
 
-### 🛡️ 3. SSH Gateway / Bastion Jump Host
+### 🛡️ 3. SSH Gateway, Bastion Jump Host & Network Proxies
+- **Universal Proxy Client**: Built-in support for **SOCKS5**, **SOCKS4**, and **HTTP CONNECT** forward proxies (`Proxy-Authorization: Basic`) with encrypted credential vaulting.
 - **Transparent Bastion Tunnels**: Connect to private hosts within isolated VPCs through intermediate Jump / Bastion hosts.
 - **Two-Stage Multi-Stage Authentication**: Independent credential configuration for Bastion and Target hosts (Passwords, Vault Keys, or Private Key files).
+- **Proxy Chaining**: Traverse corporate forward proxies to reach external bastions or target servers.
 
 ### 🪟 4. Split Terminals (2-Way & 4-Way 2x2 Grid)
 - **Flexible Layouts**:
@@ -125,9 +142,14 @@
   - `Network Ports Diagnostics`: `ss -tulpn; ip addr; netstat -rn`
 
 ### 🖥️ 7. Multi-Protocol Session Wizard
-- **SSH**: Interactive PTY with Keep-Alive, Bastion Jump Host, and DPAPI password vault.
-- **SFTP**: Standalone remote file explorer session.
-- **RDP (Remote Desktop)**: Native Windows hardware-accelerated `mstsc.exe` integration with automated credential passing and multi-monitor settings.
+- **SSH**: Interactive PTY with Keep-Alive, Bastion Jump Host, SOCKS4/5/HTTP proxy support, and live latency validation (`TestSessionConnection`).
+- **SFTP**: Standalone remote file explorer session with high-throughput 32KB concurrent pipelines.
+- **RDP (Remote Desktop — MobaXterm Parity)**: Native Windows hardware-accelerated `mstsc.exe` and Linux `xfreerdp`/`remmina` integration with:
+  - Local disk and folder redirection (`drivestoredirect:s:*`)
+  - Bidirectional clipboard sync (`redirectclipboard:i:1`)
+  - Remote and local audio playback (`audiomode`) with microphone capture (`audiocapturemode:i:1`)
+  - Redirected printers, COM ports, and smart cards
+  - Experience performance presets (LAN, Broadband, WAN auto-detection)
 - **Serial (COM)**: Automated COM port discovery (`COM1`–`COM8`) with configurable Baud Rates (9600 to 115200), Parity, Data Bits, and Stop Bits.
 - **Local Shells**: Native PowerShell, Command Prompt (CMD), and WSL (Ubuntu/Debian) via ConPTY.
 
@@ -138,7 +160,10 @@
 - **Checksum & Hash Generator**: Computes SHA256, SHA1, and MD5 hashes.
 - **SSH KeyGen**: Generates 2048/4096-bit RSA SSH key pairs in PEM and OpenSSH formats.
 
-### 🔒 9. Enterprise Security Policies & NexTerm Customizer
+### 🔒 9. Enterprise Security, App Lock & NexTerm Customizer
+- **Independent App Lock**: Lock the entire workstation on demand or on idle timeout with a dedicated PIN or Master Password.
+- **Multi-Stage Brute Force Lockout**: Progressive exponential backoff timers protecting active sessions against unauthorized physical access.
+- **Live Server Reachability Monitor**: Background reachability polling with visual status pings on the home dashboard.
 - **Security Policy Enforcement**: Administrator toggles to allow or forbid specific protocols (SSH, SFTP, Telnet, FTP, RDP, VNC, Serial), enforce password complexity, or disable dangerous commands.
 - **NexTerm Customizer**: Corporate white-label branding (Application Name, Logo Text, custom Startup/Splash messaging, and default company session catalogs).
 
@@ -173,6 +198,11 @@
 - **Interactive State Feedback**: Active state indicators with neon purple glow (`border: 1px solid rgba(168, 85, 247, 0.6)`), live tab counts, and smooth dropdown animations.
 - **Adaptive Theme Switcher**: 1-click toggle between sleek dark glassmorphism (Dark Modern) and bright readable desktop styling (Light Modern).
 
+### 🔄 16. In-App Auto-Updater with Hot-Restart
+- **Background Release Detection**: Direct integration with official GitHub Releases API to detect new tagged releases.
+- **Seamless Self-Update**: Download new version packages in the background and hot-restart into the updated application with a single click.
+- **Channel Controls**: Toggle between automated check-on-launch or manual on-demand checks from the Help & Settings menu.
+
 ---
 
 ## 🏗️ Architecture
@@ -186,6 +216,7 @@ graph TD
         MacroUI[Macro Recorder & Runner]
         ToolsUI[Network Toolbox Modal]
         SplitMgr[Split Layout Controller]
+        UpdaterUI[Auto-Updater Modal]
     end
 
     subgraph Wails ["Wails v2 Desktop Bridge"]
@@ -193,14 +224,15 @@ graph TD
     end
 
     subgraph Backend ["Go Backend (internal/)"]
-        SSH[sshsession: SSH & Bastion Engine]
-        SFTPMgr[sftp: SFTP Manager]
+        SSH[sshsession: SSH, Bastion & Proxy Engine]
+        SFTPMgr[sftp: High-Throughput SFTP Manager]
         TunnelMgr[tunnel: SSH Tunnel Engine]
         MacroMgr[macro: Macro Manager]
         NetTools[nettools: Ping, DNS, PortScan, Hash]
-        SecMgr[security: Policy & Customizer]
-        Vault[vault: Windows DPAPI Vault]
+        SecMgr[security: Policy & App Lock]
+        Vault[vault: Windows DPAPI / Keyring Vault]
         Store[store: Session Tree Store]
+        Updater[service: Auto-Updater Engine]
     end
 
     UI --> Bridge
@@ -209,6 +241,7 @@ graph TD
     MacroUI --> Bridge
     ToolsUI --> Bridge
     SplitMgr --> Bridge
+    UpdaterUI --> Bridge
 
     Bridge --> SSH
     Bridge --> SFTPMgr
@@ -218,6 +251,7 @@ graph TD
     Bridge --> SecMgr
     Bridge --> Vault
     Bridge --> Store
+    Bridge --> Updater
 
     SSH -->|Jump Host Proxy| Bastion[SSH Bastion Gateway]
     Bastion --> Target[Remote Linux/Unix Hosts]

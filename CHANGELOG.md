@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [v1.4.0] — 2026-10-21
+
+### 🌟 Release Overview: Network Proxies, MobaXterm RDP Parity, High-Throughput SFTP & Auto-Updater
+NexTerm **v1.4.0** delivers full MobaXterm-grade connectivity parity, introducing native network proxy routing (SOCKS5, SOCKS4, HTTP CONNECT), advanced RDP device and audio redirection, high-throughput concurrent SFTP transfer pipelines, live SSH connection latency testing, an in-app auto-updater with hot-restart, and independent multi-stage App Lock security.
+
+### 🌐 Network Proxy Routing (SOCKS4 / SOCKS5 / HTTP CONNECT)
+- **Universal Proxy Client**: Added native proxy support for direct SSH sessions and multi-stage bastion jump hosts.
+- **Supported Proxy Protocols**: SOCKS5, SOCKS4, and HTTP CONNECT (`Proxy-Authorization: Basic`).
+- **Encrypted Proxy Vaulting**: Proxy credentials (host, port, username, password) are securely encrypted in the platform credential vault.
+- **Jump Host Proxy Chaining**: Connect to isolated bastions behind corporate enterprise forward proxies.
+
+### 🖥️ Advanced RDP Configuration (MobaXterm Parity)
+- **Device & Resource Redirection**: Full support for redirecting local storage drives (`drivestoredirect:s:*`), clipboard (`redirectclipboard:i:1`), printers, COM ports, and smart cards.
+- **Bidirectional Audio Redirection**: Remote and local audio playback (`audiomode`) with full microphone audio capture (`audiocapturemode:i:1`).
+- **Network Performance Auto-Detection**: Configurable connection experience flags (`connection type:i:7` for LAN, high-speed broadband, WAN) with automated bandwidth detection.
+- **Cross-Platform RDP Launchers**: Generates `.rdp` profiles for native Windows `mstsc.exe`, Linux `xfreerdp` with hotplug drive/clipboard arguments, and `remmina`.
+
+### ⚡ High-Throughput Concurrent SFTP Pipelines
+- **MobaXterm-Tuned Packet Payload**: Upgraded SFTP client subsystem with 32KB packet payloads (`MaxPacketChecked: 32768`).
+- **Concurrent Asynchronous Streaming**: Enabled `UseConcurrentWrites` and `UseConcurrentReads` for pipelined file transfers.
+- **Pipelined Transfer Primitives**: Migrated single-file uploads and downloads to `dst.ReadFrom(src)` and `src.WriteTo(dst)` to eliminate transfer bottlenecks on high-latency links.
+
+### 🔄 In-App Auto-Updater with Hot-Restart
+- **GitHub Releases Integration**: Automated background checking against the official GitHub releases API (`kunal-live/NexTerm`).
+- **1-Click In-App Upgrade**: Download, verify, and hot-restart NexTerm into the newest release without manual web browser downloads.
+- **Configurable Update Channel**: Toggle between automated release checks and manual updates in Settings.
+
+### 🛡️ Independent App Lock & Multi-Stage Security
+- **PIN & Password App Lock**: Lock the entire workstation instantly or after inactivity with a dedicated PIN or password.
+- **Progressive Multi-Stage Lockout**: Protects against unauthorized physical access with exponential cooldowns on repeated invalid attempts.
+- **Focus Mode & Server Reachability**: Minimalist distraction-free focus mode and live background ping/reachability monitoring with dashboard visual indicators.
+
+### 🔍 Live Session Connection Tester (`TestSessionConnection`)
+- **Pre-Flight Validation**: Test SSH credentials, port reachability, and network response time directly from the Session creation/edit dialog before saving.
+- **Live Latency Benchmark**: Displays round-trip connection latency in milliseconds with clear visual badges.
+
+### 🧹 Binary Optimization & Workspace Cleanup
+- **Purged Duplicate Assets**: Removed redundant `frontend/public/` duplicate vendor assets, significantly reducing embedded binary size.
+- **Streamlined Repository**: Cleaned up leftover build artifacts and simplified dependencies for a fast, clean build pipeline.
+
+---
+
 ## [v1.3.0] — 2026-10-04
 
 ### 🌟 Release Overview: Enterprise Security, Custom Themes & Dynamic Workspaces

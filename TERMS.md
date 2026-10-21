@@ -1,7 +1,7 @@
 # Terms and Conditions of Use for NexTerm
 
-**Last Updated:** September 28, 2026  
-**Effective Date:** September 28, 2026
+**Last Updated:** October 21, 2026  
+**Effective Date:** October 21, 2026
 
 Please read these Terms and Conditions ("Terms", "Agreement") carefully before downloading, compiling, installing, or using the **NexTerm** software application ("Software", "Service"), created and maintained by the NexTerm contributors ("we", "us", or "our").
 
@@ -22,8 +22,8 @@ NexTerm is free and open-source software distributed under the terms of the **MI
 
 You agree to use NexTerm solely for lawful purposes and in compliance with all applicable local, national, and international laws, regulations, and organizational security policies.
 
-### A. Authorized Remote Server Access
-- You represent and warrant that you possess valid, explicit authorization and permission to access, monitor, manage, or execute commands on any remote computer, server, port, network interface, or bastion host with which you interact using NexTerm.
+### A. Authorized Remote Server & Proxy Access
+- You represent and warrant that you possess valid, explicit authorization and permission to access, monitor, manage, proxy through, or execute commands on any remote computer, server, port, network proxy, interface, or bastion host with which you interact using NexTerm.
 - Unauthorized access, penetration testing without prior written consent, port scanning of non-authorized third-party networks, or attempts to disrupt computing services using NexTerm is strictly prohibited.
 
 ### B. Command Broadcasting and Multi-Execution Caution

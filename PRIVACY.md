@@ -1,7 +1,7 @@
 # Privacy Policy for NexTerm
 
-**Last Updated:** September 28, 2026  
-**Effective Date:** September 28, 2026
+**Last Updated:** October 21, 2026  
+**Effective Date:** October 21, 2026
 
 At **NexTerm**, privacy, security, and digital sovereignty are foundational principles. NexTerm is designed and built as a **local-first, offline-capable desktop application**. We do not operate tracking servers, telemetry pipelines, or data collection services.
 
@@ -13,7 +13,7 @@ This Privacy Policy explains clearly and transparently what data is handled by N
 
 - **Zero Telemetry**: NexTerm does not collect, log, or transmit telemetry, usage analytics, crash reports, or device identifiers.
 - **No Third-Party Embeds**: NexTerm does not load third-party trackers, external fonts, remote analytics scripts, or advertising widgets.
-- **Hardware-Backed Credential Security**: Authentication secrets (passwords, private key passphrases) are encrypted using native operating system vaults (Windows DPAPI, macOS Keychain, Linux Secret Service).
+- **Hardware-Backed Credential Security**: Authentication secrets (passwords, private key passphrases, proxy credentials) are encrypted using native operating system vaults (Windows DPAPI, macOS Keychain, Linux Secret Service).
 - **Local Data Sovereignty**: All your connection profiles, server trees, and session logs reside solely on your local device.
 
 ---
@@ -23,19 +23,19 @@ This Privacy Policy explains clearly and transparently what data is handled by N
 Because NexTerm is a desktop client for managing remote systems (SSH, SFTP, Tunnels, Serial, RDP), it manages configuration and authentication data locally on your computer:
 
 ### A. Server & Session Configuration Metadata
-- **What is handled:** Hostnames/IP addresses, port numbers, usernames, connection labels, folder structures, terminal color schemes, and custom port forward definitions.
+- **What is handled:** Hostnames/IP addresses, port numbers, usernames, connection labels, folder structures, terminal color schemes, proxy configurations, and custom port forward definitions.
 - **Where it is stored:** Saved locally in plain JSON format within your user profile directory:
   - **Windows:** `%APPDATA%\Nexterm\sessions.json` and `%APPDATA%\Nexterm\tunnels.json`
   - **macOS / Linux:** `~/.config/nexterm/sessions.json` and `~/.config/nexterm/tunnels.json`
 - **Purpose:** Enables you to quickly reconnect to your servers without re-entering configuration parameters.
 
 ### B. Authentication Credentials & Secrets
-- **What is handled:** SSH passwords, private key passphrases, and Jump Host credentials.
+- **What is handled:** SSH passwords, private key passphrases, Jump Host bastion credentials, and network proxy credentials (HTTP CONNECT, SOCKS5, SOCKS4).
 - **Where it is stored:** Credentials are **never** stored in plain text. They are encrypted using your operating system's native hardware-bound encryption:
   - **Windows:** Windows Data Protection API (DPAPI via `CryptProtectData`), tied directly to your Windows user account.
   - **macOS:** Native macOS Keychain Services.
   - **Linux:** Freedesktop Secret Service API / system Keyring.
-- **Transmission:** Credentials are transmitted **exclusively and directly** over encrypted SSH channels to the specific remote host you have instructed NexTerm to connect to. They are never sent to NexTerm developers or any third party.
+- **Transmission:** Credentials are transmitted **exclusively and directly** over encrypted channels to the specific remote host or proxy server you have instructed NexTerm to connect to. They are never sent to NexTerm developers or any third party.
 
 ### C. Terminal Logs & Session Output
 - **What is handled:** Keystrokes, terminal outputs, and command history.
@@ -69,7 +69,8 @@ To be unequivocal:
 NexTerm is engineered to minimize unsolicited network access:
 - **Zero Third-Party Scripts**: No CDNs, tracking pixels, or remote JavaScript libraries are embedded in the application. All core libraries (`xterm.js`, UI styling) are bundled locally inside the compiled application binary.
 - **Offline System Typography**: Fonts are sourced strictly from local system font stacks (`Segoe UI`, `SF Pro Display`, `Inter`, `Cascadia Code`, `Consolas`, `SF Mono`). No external font servers (such as Google Fonts) are contacted.
-- **User-Directed Outbound Connections**: The only outbound network connections initiated by NexTerm are those explicitly requested by you (e.g., establishing an SSH session to `your-server.com`, opening an SFTP session, running a network ping/port scan in the Network Toolbox, or connecting through a configured Bastion host).
+- **User-Directed Outbound Connections**: The outbound network connections initiated by NexTerm are those explicitly requested by you (e.g., establishing an SSH session to `your-server.com`, opening an SFTP session, running a network ping/port scan in the Network Toolbox, connecting through a configured Bastion/Proxy host).
+- **In-App Auto-Updater (Optional)**: If enabled, NexTerm checks the official GitHub Releases API (`api.github.com/repos/kunal-live/NexTerm/releases/latest`) over HTTPS to check for new version tags and download official release binaries. No user data, server credentials, telemetry, or machine identifiers are transmitted during update checks. Auto-updates can be disabled at any time in Settings.
 
 ---
 
