@@ -47,7 +47,7 @@
 ## 🚀 What's New in v1.4.0
 
 > **Release Name**: *Network Proxies, MobaXterm RDP Parity & High-Throughput SFTP*  
-> Full release history available in **[CHANGELOG.md](CHANGELOG.md)**.
+> Full release history for all previous versions is documented below.
 
 - 🌐 **Network Proxy Routing (SOCKS5, SOCKS4, HTTP CONNECT)**: Native proxy client supporting direct SSH connections and chained bastion jump hosts with full credential authentication.
 - 🖥️ **MobaXterm RDP Feature Parity**: Device redirection (local drives/hotplug, clipboard, printers, COM ports, smart cards), remote/local audio playback & microphone capture, and network performance bandwidth auto-detection.
@@ -59,7 +59,7 @@
 - 🧹 **Binary Optimization**: Removed redundant assets and dependencies to reduce embedded binary size and memory footprint.
 
 <details>
-<summary><b>Previous: What's New in v1.3.0</b></summary>
+<summary><b>Previous: What's New in v1.3.0 (2026-10-04)</b></summary>
 
 - 🔒 **Master Password Vault Protection**: Optional Master Password encryption layer over the native DPAPI vault, featuring password hint recovery and a built-in cryptographic password generator.
 - 🛡️ **App Lock & Idle Inactivity Auto-Lock**: Instantly lock the entire workstation with a master toggle or configure automated idle timeout locks to safeguard active terminal connections.
@@ -69,6 +69,39 @@
 - 🤖 **Universal AI DevOps Assistant**: Integrated diagnostic AI companion to assist with shell commands, log debugging, and automation scripts.
 - ♿ **Full WCAG 2.1 Accessibility & Compliance**: Added complete ARIA semantics, interactive GDPR privacy consent controls, and enterprise documentation ([PRIVACY.md](PRIVACY.md), [TERMS.md](TERMS.md), [COOKIE_POLICY.md](COOKIE_POLICY.md)).
 - 📥 **Direct Platform Downloads**: Windows setup installer and portable archive, macOS app bundle, and Linux binary archive are attached to each GitHub release. Linux requires GTK 3 and WebKit2GTK runtime libraries.
+
+</details>
+
+<details>
+<summary><b>Previous: What's New in v1.2.0 (2026-09-18)</b></summary>
+
+- ⚡ **Wails v2.15.0 Core Engine Upgrade**: Upgraded underlying desktop runtime for faster window rendering and reduced memory footprint.
+- 🪟 **Adaptive Maximized Startup**: Application launches directly into an optimized maximized desktop state.
+- 🧙 **Multi-Protocol Session Wizards**: Dedicated connection wizards for SSH, SFTP, Serial (COM), RDP (`mstsc.exe`), and ConPTY Local Shells.
+- 🖥️ **X11 Forwarding & Local X Server Manager**: Automated detection and tunneling for local Windows X servers (VcXsrv, Xming, GWSL).
+- 💾 **Portable Session Tree Backup**: Native JSON session tree backup, export, and import with merge capabilities.
+
+</details>
+
+<details>
+<summary><b>Previous: What's New in v1.1.0 (2026-08-10)</b></summary>
+
+- 📁 **Graphical SFTP Browser & Embedded Editor**: File tree navigation, drag-and-drop remote uploads, and in-app code editor for remote file editing.
+- 🪟 **Split Terminals**: 2-Way Vertical, 2-Way Horizontal, and 4-Way 2x2 terminal layouts with dynamic `xterm-addon-fit` recalculation.
+- ⚡ **MultiExec Command Broadcasting**: Real-time simultaneous command broadcasting across connected sessions.
+- 📜 **Terminal Macro Automation Engine**: Keystroke recording and replay playbooks for system diagnostics.
+- 📈 **Live Server Performance Dashboard**: Visual sparklines for CPU utilization, RAM usage, and network RX/TX bandwidth.
+
+</details>
+
+<details>
+<summary><b>Previous: What's New in v1.0.0 (2026-07-01)</b></summary>
+
+- 🚀 **Initial Open Source Release**: Native cross-platform SSH client built with Go, Wails v2, and xterm.js.
+- 🔑 **Platform Credential Vault**: Native Windows DPAPI encryption for zero plain-text storage.
+- ⇄ **Visual SSH Port Forwarding**: Local, Remote, and SOCKS5 dynamic proxy tunneling manager.
+- 🛡️ **SSH Bastion / Jump Host**: Multi-stage jump proxy authentication.
+- 🛠️ **Network Toolbox**: Integrated ICMP Ping, DNS Resolver, TCP Port Scanner, and SHA/MD5 hash calculator.
 
 </details>
 
