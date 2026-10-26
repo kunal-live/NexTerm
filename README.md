@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://golang.org)
+[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://go.dev)
 [![Wails v2](https://img.shields.io/badge/Wails-v2.9+-df1a5a?style=for-the-badge&logo=wails&logoColor=white)](https://wails.io)
 [![xterm.js](https://img.shields.io/badge/xterm.js-v5.3+-000000?style=for-the-badge&logo=gnometerminal&logoColor=white)](https://xtermjs.org)
 [![Windows](https://img.shields.io/badge/Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://microsoft.com/windows)
@@ -10,8 +10,9 @@
 [![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://kernel.org)
 [![License](https://img.shields.io/badge/License-MIT-green.badge?style=for-the-badge)](#license)
 [![GitHub Release](https://img.shields.io/github/v/release/kunal-live/NexTerm?style=for-the-badge&color=8b5cf6&logo=github)](https://github.com/kunal-live/NexTerm/releases/latest)
+[![Launch Video](https://img.shields.io/badge/Launch_Video-1080p_Tour-8b5cf6?style=for-the-badge&logo=youtube&logoColor=white)](#-video-showcase-connect-beyond-limits)
 [![Download NexTerm for Windows](https://img.shields.io/badge/Download-NexTerm_for_Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/latest/download/NexTerm-Setup.exe)
-[![Windows Portable](https://img.shields.io/badge/Download-Windows_Portable_(.zip)-005A9E?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-windows-x64-portable.zip)
+[![Windows Portable](https://img.shields.io/badge/Download-Windows_Portable_%28.zip%29-005A9E?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-windows-x64-portable.zip)
 [![macOS Download](https://img.shields.io/badge/Download-macOS_Apple_Silicon-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-macos-arm64.zip)
 [![Linux Download](https://img.shields.io/badge/Download-Linux_x64-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-linux-x64.tar.gz)
 
@@ -30,7 +31,7 @@
 
 > ⚠️ **Important Note for Non-Developers**: Do **NOT** click the green **`Code ➔ Download ZIP`** button on GitHub. That button only downloads raw source code. Use the platform download above instead.
 
-**[👉 Download NexTerm for another platform or view all release files](https://github.com/kunal-live/NexTerm/releases/latest)**
+**[👉 Download NexTerm for another platform or view all release files](https://github.com/kunal-live/NexTerm/releases/latest)** • **[🎬 Watch the 2-Minute Video Tour](#-video-showcase-connect-beyond-limits)**
 
 </div>
 
@@ -303,7 +304,7 @@ NexTerm is designed and tested for native execution across:
 - **Linux**: Ubuntu, Debian, Fedora, Arch Linux, RHEL, openSUSE (`x86_64`, `arm64`)
 
 ### Prerequisites
-- **Go 1.25+** ([golang.org](https://golang.org/dl/))
+- **Go 1.22+** ([go.dev](https://go.dev/dl/))
 - **Wails CLI v2.9+** ([wails.io](https://wails.io/docs/gettingstarted/installation))
   ```bash
   go install github.com/wailsapp/wails/v2/cmd/wails@latest
@@ -397,6 +398,30 @@ NexTerm is engineered around **local-first privacy and complete data sovereignty
 - **[Privacy Policy](PRIVACY.md)**: Full disclosure on local data storage, zero telemetry, and platform credential vault security.
 - **[Terms & Conditions](TERMS.md)**: Open-source usage guidelines, acceptable use for remote systems, and limitation of liability.
 - **[Cookie Policy](COOKIE_POLICY.md)**: Verification of zero HTTP/tracking cookies, local browser storage usage, and X11 Magic Cookie clarification.
+
+---
+
+## 🎬 Video Showcase: Connect Beyond Limits
+
+Experience the official 2-minute feature tour of NexTerm with professional keynote voiceover, demonstrating native Go/Wails performance, multi-protocol session wizards, visual SSH tunneling, high-throughput concurrent SFTP, 4-way split terminals, real-time command broadcasting, and DPAPI vault security:
+
+<div align="center">
+
+<video src="https://github.com/kunal-live/NexTerm/raw/main/assets/nexterm-launch-video.mp4" controls="controls" width="100%" poster="assets/nexterm-launch-poster.jpg">
+  Your browser does not support the video tag.
+</video>
+
+<br/>
+
+[![Watch NexTerm Launch Video](assets/nexterm-launch-poster.jpg)](https://github.com/kunal-live/NexTerm/raw/main/assets/nexterm-launch-video.mp4)
+
+<p>
+  <a href="https://github.com/kunal-live/NexTerm/raw/main/assets/nexterm-launch-video.mp4"><b>▶️ Watch / Download Direct Video (1080p MP4)</b></a> • 
+  <a href="https://github.com/kunal-live/NexTerm/releases/latest"><b>📥 Download Latest Release</b></a> • 
+  <a href="https://github.com/kunal-live/NexTerm/releases"><b>📦 View All Releases</b></a>
+</p>
+
+</div>
 
 ---
 

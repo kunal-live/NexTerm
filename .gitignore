@@ -49,6 +49,7 @@ docs/
 brag-output/
 brag-output*/
 *.mp4
+!assets/nexterm-launch-video.mp4
 .e2e/
 *.zip
 .cursor/
