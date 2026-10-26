@@ -103,12 +103,6 @@ export const INTERACTIVE_TOOLS = [
 // Legacy export for backward-compatibility
 export const DANGEROUS_PATTERNS = CRITICAL_PATTERNS;
 
-export function isDestructiveCommand(cmd) {
-  if (!cmd || typeof cmd !== 'string') return false;
-  const trimmed = cmd.trim();
-  return CRITICAL_PATTERNS.some(rx => rx.test(trimmed));
-}
-
 // --------------------------------------------------------------------------
 // Global Broadcast State Machine
 // --------------------------------------------------------------------------
@@ -285,12 +279,6 @@ export function discoverBroadcastTargets() {
   }
 
   return discovered;
-}
-
-// Backward compatible export
-export function getConnectedSessions() {
-  const discovered = discoverBroadcastTargets();
-  return discovered.filter(t => t.isLive && t.tabId);
 }
 
 // --------------------------------------------------------------------------

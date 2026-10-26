@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 	"time"
 )
@@ -21,6 +22,7 @@ type Macro struct {
 type MacroManager struct {
 	mu       sync.Mutex
 	macros   map[string]Macro
+	removed  map[string]bool // built-in snippet IDs the user deleted
 	filePath string
 }
 
@@ -34,13 +36,35 @@ func NewMacroManager() *MacroManager {
 
 	mm := &MacroManager{
 		macros:   make(map[string]Macro),
+		removed:  make(map[string]bool),
 		filePath: filepath.Join(dir, "macros.json"),
 	}
-	_ = mm.load()
-	if len(mm.macros) == 0 {
-		mm.seedDefaults()
+	if err := mm.load(); err != nil {
+		if os.IsNotExist(err) {
+			mm.seedDefaults()
+		} else {
+			// Unreadable file: offer the built-ins without overwriting it yet.
+			for _, d := range mm.defaultSnippets() {
+				mm.macros[d.ID] = d
+			}
+		}
 	}
 	return mm
+}
+
+// removedFilePath stores which built-in snippets were deleted, so load() does
+// not restore them on the next start.
+func (mm *MacroManager) removedFilePath() string {
+	return filepath.Join(filepath.Dir(mm.filePath), "macros_removed.json")
+}
+
+func (mm *MacroManager) isDefaultID(id string) bool {
+	for _, d := range mm.defaultSnippets() {
+		if d.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 func (mm *MacroManager) defaultSnippets() []Macro {
@@ -140,10 +164,18 @@ func (mm *MacroManager) load() error {
 	for _, m := range list {
 		mm.macros[m.ID] = m
 	}
-	// Ensure standard snippets are present
+	if raw, err := os.ReadFile(mm.removedFilePath()); err == nil {
+		var ids []string
+		if json.Unmarshal(raw, &ids) == nil {
+			for _, id := range ids {
+				mm.removed[id] = true
+			}
+		}
+	}
+	// Ensure standard snippets are present, except ones the user deleted
 	hasNew := false
 	for _, d := range mm.defaultSnippets() {
-		if _, exists := mm.macros[d.ID]; !exists {
+		if _, exists := mm.macros[d.ID]; !exists && !mm.removed[d.ID] {
 			mm.macros[d.ID] = d
 			hasNew = true
 		}
@@ -178,6 +210,13 @@ func (mm *MacroManager) GetMacros() []Macro {
 	for _, m := range mm.macros {
 		list = append(list, m)
 	}
+	// Map iteration order is random; keep the UI list stable.
+	sort.Slice(list, func(i, j int) bool {
+		if list[i].Name != list[j].Name {
+			return list[i].Name < list[j].Name
+		}
+		return list[i].ID < list[j].ID
+	})
 	return list
 }
 
@@ -200,5 +239,16 @@ func (mm *MacroManager) DeleteMacro(id string) error {
 	defer mm.mu.Unlock()
 
 	delete(mm.macros, id)
+	if mm.isDefaultID(id) && !mm.removed[id] {
+		mm.removed[id] = true
+		ids := make([]string, 0, len(mm.removed))
+		for rid := range mm.removed {
+			ids = append(ids, rid)
+		}
+		sort.Strings(ids)
+		if data, err := json.Marshal(ids); err == nil {
+			_ = os.WriteFile(mm.removedFilePath(), data, 0600)
+		}
+	}
 	return mm.save()
 }

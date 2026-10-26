@@ -4,13 +4,24 @@ package vault
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"os/exec"
+	"regexp"
 	"strings"
 )
 
 const keychainServiceName = "Nexterm"
+
+// keychainEncodedPrefix marks secrets stored base64-encoded. Values without it
+// were written by older versions and are returned as-is.
+const keychainEncodedPrefix = "nexterm-b64:"
+
+// securityMaxCommandLen is the line limit of `security -i`.
+const securityMaxCommandLen = 4096
+
+var securitySafeArg = regexp.MustCompile(`^[\w@%+=:,./-]+$`)
 
 // Vault stores credentials directly in the native macOS Keychain via /usr/bin/security.
 // No plaintext or fake files are written to disk.
@@ -30,15 +41,48 @@ func NewVaultAt(dir string) (*Vault, error) {
 	return NewVault()
 }
 
+// quoteSecurityArg quotes s for the `security -i` command-line parser.
+func quoteSecurityArg(s string) string {
+	if s == "" {
+		return "''"
+	}
+	if securitySafeArg.MatchString(s) {
+		return s
+	}
+	return "'" + strings.ReplaceAll(s, "'", `'"'"'`) + "'"
+}
+
 func (v *Vault) Save(key, secret string) error {
 	if key == "" {
 		return errors.New("vault: key cannot be empty")
 	}
-	// /usr/bin/security add-generic-password -U -s <service> -a <account> -w <password>
-	cmd := exec.Command("/usr/bin/security", "add-generic-password", "-U", "-s", v.service, "-a", key, "-w", secret)
+
+	// `security add-generic-password -w <secret>` would expose the secret in the
+	// process list (ps), so the command is fed to `security -i` over stdin
+	// instead. Base64 keeps the line free of quoting issues and stops
+	// `find-generic-password -w` from hex-encoding non-ASCII secrets.
+	encoded := keychainEncodedPrefix + base64.StdEncoding.EncodeToString([]byte(secret))
+	command := fmt.Sprintf("add-generic-password -U -s %s -a %s -w %s\n",
+		quoteSecurityArg(v.service), quoteSecurityArg(key), encoded)
+	if len(command) > securityMaxCommandLen {
+		return errors.New("vault: secret is too large for the macOS Keychain CLI")
+	}
+
+	cmd := exec.Command("/usr/bin/security", "-i")
+	cmd.Stdin = strings.NewReader(command)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("keychain save failed: %w (output: %s)", err, strings.TrimSpace(string(out)))
+	}
+
+	// Interactive mode does not reflect a failed sub-command in its exit code,
+	// so confirm the item was written.
+	got, ok, err := v.Load(key)
+	if err != nil {
+		return fmt.Errorf("keychain save could not be verified: %w", err)
+	}
+	if !ok || got != secret {
+		return fmt.Errorf("keychain save failed (output: %s)", strings.TrimSpace(string(out)))
 	}
 	return nil
 }
@@ -62,6 +106,13 @@ func (v *Vault) Load(key string) (string, bool, error) {
 		return "", false, fmt.Errorf("keychain load failed: %w (%s)", err, strings.TrimSpace(errStr))
 	}
 	secret := strings.TrimRight(stdout.String(), "\r\n")
+	if strings.HasPrefix(secret, keychainEncodedPrefix) {
+		decoded, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(secret, keychainEncodedPrefix))
+		if err != nil {
+			return "", false, fmt.Errorf("keychain load failed: corrupt encoded secret: %w", err)
+		}
+		secret = string(decoded)
+	}
 	return secret, true, nil
 }
 
@@ -86,7 +137,13 @@ func (v *Vault) Delete(key string) error {
 
 // ClearAll removes all stored secrets from the vault.
 func (v *Vault) ClearAll() error {
-	cmd := exec.Command("/usr/bin/security", "delete-generic-password", "-s", v.service)
-	_ = cmd.Run()
+	// delete-generic-password removes one matching item per call; repeat until
+	// nothing is left for this service (bounded in case of a stuck item).
+	for i := 0; i < 10000; i++ {
+		cmd := exec.Command("/usr/bin/security", "delete-generic-password", "-s", v.service)
+		if err := cmd.Run(); err != nil {
+			break
+		}
+	}
 	return nil
 }

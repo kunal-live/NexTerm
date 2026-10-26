@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"nexterm/internal/model"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -22,10 +23,10 @@ const (
 	se   byte = 240
 
 	// Telnet options
-	optEcho             byte = 1
-	optSuppressGoAhead  byte = 3
-	optTerminalType     byte = 24
-	optNAWS             byte = 31 // RFC 1073: Negotiate About Window Size
+	optEcho            byte = 1
+	optSuppressGoAhead byte = 3
+	optTerminalType    byte = 24
+	optNAWS            byte = 31 // RFC 1073: Negotiate About Window Size
 )
 
 // TelnetSession implements ProtocolSession for unencrypted Telnet connections.
@@ -38,7 +39,11 @@ type TelnetSession struct {
 	rows        int
 	termType    string
 	nawsEnabled bool
-	mu          sync.Mutex
+	// Options we already announced (WILL) or requested (DO). Replies to them are
+	// acknowledgements and must not be answered again, or we loop (RFC 1143).
+	willSent map[byte]bool
+	doSent   map[byte]bool
+	mu       sync.Mutex
 }
 
 // NewTelnetSession constructs a new Telnet protocol session.
@@ -63,6 +68,8 @@ func NewTelnetSession(id string, profile model.SessionProfile) *TelnetSession {
 		rows:        rows,
 		termType:    termType,
 		stopChan:    make(chan struct{}),
+		willSent:    make(map[byte]bool),
+		doSent:      make(map[byte]bool),
 	}
 }
 
@@ -79,7 +86,7 @@ func (t *TelnetSession) Connect(ctx context.Context) error {
 
 	t.EmitStateChange("connecting", fmt.Sprintf("Connecting to %s:%d via Telnet...", host, port))
 
-	addr := fmt.Sprintf("%s:%d", host, port)
+	addr := net.JoinHostPort(host, strconv.Itoa(port))
 	dialer := net.Dialer{Timeout: 10 * time.Second}
 	conn, err := dialer.DialContext(ctx, "tcp", addr)
 	if err != nil {
@@ -93,48 +100,54 @@ func (t *TelnetSession) Connect(ctx context.Context) error {
 	t.EmitStateChange("connected", "Telnet connection established")
 
 	// Proactively offer NAWS and Terminal Type
-	t.sendTelnetCmd(will, optNAWS)
-	t.sendTelnetCmd(will, optTerminalType)
-	t.sendTelnetCmd(do, optSuppressGoAhead)
+	t.willSent[optNAWS] = true
+	t.willSent[optTerminalType] = true
+	t.doSent[optSuppressGoAhead] = true
+	sendTelnetCmd(conn, will, optNAWS)
+	sendTelnetCmd(conn, will, optTerminalType)
+	sendTelnetCmd(conn, do, optSuppressGoAhead)
 
-	go t.readLoop()
+	// The read loop owns its own reference to conn: Disconnect clears t.conn,
+	// and reading through the field would race with that.
+	go t.readLoop(conn)
 
 	return nil
 }
 
-func (t *TelnetSession) sendTelnetCmd(action, opt byte) {
-	if t.conn == nil {
-		return
-	}
-	_, _ = t.conn.Write([]byte{iac, action, opt})
+func sendTelnetCmd(conn net.Conn, action, opt byte) {
+	_, _ = conn.Write([]byte{iac, action, opt})
 }
 
-func (t *TelnetSession) sendNAWS(cols, rows int) {
-	if t.conn == nil {
-		return
-	}
+func sendNAWS(conn net.Conn, cols, rows int) {
 	buf := []byte{
 		iac, sb, optNAWS,
 		byte(cols >> 8), byte(cols & 0xff),
 		byte(rows >> 8), byte(rows & 0xff),
 		iac, se,
 	}
-	_, _ = t.conn.Write(buf)
+	_, _ = conn.Write(buf)
 }
 
-func (t *TelnetSession) readLoop() {
+func (t *TelnetSession) readLoop(conn net.Conn) {
 	buf := make([]byte, 4096)
 	var stateBuffer []byte
 
 	for {
-		select {
-		case <-t.stopChan:
-			return
-		default:
+		n, err := conn.Read(buf)
+		if n > 0 {
+			stateBuffer = append(stateBuffer, buf[:n]...)
+			cleaned := t.processTelnetBytes(conn, &stateBuffer)
+			if len(cleaned) > 0 {
+				t.EmitData(cleaned)
+			}
 		}
-
-		n, err := t.conn.Read(buf)
 		if err != nil {
+			select {
+			case <-t.stopChan:
+				// Closed locally via Disconnect; not a remote disconnect.
+				return
+			default:
+			}
 			t.SetConnected(false)
 			if err != io.EOF {
 				t.EmitDisconnect("Connection reset by peer", err)
@@ -144,19 +157,11 @@ func (t *TelnetSession) readLoop() {
 			_ = t.Disconnect()
 			return
 		}
-
-		if n > 0 {
-			stateBuffer = append(stateBuffer, buf[:n]...)
-			cleaned := t.processTelnetBytes(&stateBuffer)
-			if len(cleaned) > 0 {
-				t.EmitData(cleaned)
-			}
-		}
 	}
 }
 
 // processTelnetBytes handles Telnet command escapes (IAC) and returns pure terminal data.
-func (t *TelnetSession) processTelnetBytes(buf *[]byte) []byte {
+func (t *TelnetSession) processTelnetBytes(conn net.Conn, buf *[]byte) []byte {
 	var clean bytes.Buffer
 	data := *buf
 	i := 0
@@ -180,7 +185,7 @@ func (t *TelnetSession) processTelnetBytes(buf *[]byte) []byte {
 					break
 				}
 				opt := data[i+2]
-				t.handleNegotiation(cmd, opt)
+				t.handleNegotiation(conn, cmd, opt)
 				i += 3
 				continue
 			}
@@ -198,7 +203,7 @@ func (t *TelnetSession) processTelnetBytes(buf *[]byte) []byte {
 					// Incomplete subnegotiation
 					break
 				}
-				t.handleSubnegotiation(data[i+2 : seIdx-1])
+				t.handleSubnegotiation(conn, data[i+2:seIdx-1])
 				i = seIdx + 1
 				continue
 			}
@@ -216,38 +221,56 @@ func (t *TelnetSession) processTelnetBytes(buf *[]byte) []byte {
 	return clean.Bytes()
 }
 
-func (t *TelnetSession) handleNegotiation(cmd, opt byte) {
+func (t *TelnetSession) handleNegotiation(conn net.Conn, cmd, opt byte) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	switch cmd {
 	case do:
 		switch opt {
 		case optNAWS:
 			t.nawsEnabled = true
-			t.sendTelnetCmd(will, optNAWS)
-			t.sendNAWS(t.cols, t.rows)
-		case optTerminalType:
-			t.sendTelnetCmd(will, optTerminalType)
-		case optEcho:
-			t.sendTelnetCmd(will, optEcho)
-		case optSuppressGoAhead:
-			t.sendTelnetCmd(will, optSuppressGoAhead)
+			if !t.willSent[opt] {
+				t.willSent[opt] = true
+				sendTelnetCmd(conn, will, opt)
+			}
+			sendNAWS(conn, t.cols, t.rows)
+		case optTerminalType, optSuppressGoAhead:
+			if !t.willSent[opt] {
+				t.willSent[opt] = true
+				sendTelnetCmd(conn, will, opt)
+			}
 		default:
-			t.sendTelnetCmd(wont, opt)
+			// Includes ECHO: the client must not echo the server's output back.
+			sendTelnetCmd(conn, wont, opt)
 		}
 	case dont:
-		t.sendTelnetCmd(wont, opt)
+		if opt == optNAWS {
+			t.nawsEnabled = false
+		}
+		if t.willSent[opt] {
+			t.willSent[opt] = false
+			sendTelnetCmd(conn, wont, opt)
+		}
 	case will:
 		switch opt {
 		case optEcho, optSuppressGoAhead:
-			t.sendTelnetCmd(do, opt)
+			if !t.doSent[opt] {
+				t.doSent[opt] = true
+				sendTelnetCmd(conn, do, opt)
+			}
 		default:
-			t.sendTelnetCmd(dont, opt)
+			sendTelnetCmd(conn, dont, opt)
 		}
 	case wont:
-		t.sendTelnetCmd(dont, opt)
+		if t.doSent[opt] {
+			t.doSent[opt] = false
+			sendTelnetCmd(conn, dont, opt)
+		}
 	}
 }
 
-func (t *TelnetSession) handleSubnegotiation(sub []byte) {
+func (t *TelnetSession) handleSubnegotiation(conn net.Conn, sub []byte) {
 	if len(sub) == 0 {
 		return
 	}
@@ -257,9 +280,7 @@ func (t *TelnetSession) handleSubnegotiation(sub []byte) {
 		resp := []byte{iac, sb, optTerminalType, 0}
 		resp = append(resp, []byte(t.termType)...)
 		resp = append(resp, iac, se)
-		if t.conn != nil {
-			_, _ = t.conn.Write(resp)
-		}
+		_, _ = conn.Write(resp)
 	}
 }
 
@@ -312,7 +333,7 @@ func (t *TelnetSession) Resize(cols, rows int) error {
 	t.cols = cols
 	t.rows = rows
 	if t.nawsEnabled && t.conn != nil {
-		t.sendNAWS(cols, rows)
+		sendNAWS(t.conn, cols, rows)
 	}
 	return nil
 }

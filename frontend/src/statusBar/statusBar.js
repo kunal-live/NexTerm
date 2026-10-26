@@ -4,6 +4,7 @@
 // ==========================================================================
 
 import { getActiveTab, getTabs } from '../state/tabState.js';
+import { escapeHtml } from '../ui/notifications.js';
 
 let statusInterval = null;
 let currentMetrics = {
@@ -240,11 +241,4 @@ export function toggleServerDetailsPopover() {
   setTimeout(() => {
     window.addEventListener("click", dismissHandler);
   }, 10);
-}
-
-function escapeHtml(str) {
-  if (!str) return "";
-  return String(str).replace(/[&<>"']/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[c]));
 }

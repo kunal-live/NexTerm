@@ -4,6 +4,7 @@
 // ==========================================================================
 
 import { tabs } from '../state/tabState.js';
+import { escapeHtml } from '../ui/notifications.js';
 
 let commandActions = [];
 let isOpen = false;
@@ -12,10 +13,6 @@ let filteredItems = [];
 
 export function registerCommandPaletteActions(actions) {
   commandActions = actions;
-}
-
-export function isCommandPaletteOpen() {
-  return isOpen;
 }
 
 export function openCommandPalette() {
@@ -206,11 +203,4 @@ function executePaletteItem(item) {
       console.error("Error executing palette command:", err);
     }
   }
-}
-
-function escapeHtml(str) {
-  if (!str) return "";
-  return String(str).replace(/[&<>"']/g, c => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  }[c]));
 }

@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/crypto/ssh"
@@ -41,14 +42,14 @@ type wailsEventEmitter struct {
 }
 
 func (w *wailsEventEmitter) Emit(event string, optionalData ...interface{}) {
-	if w.app == nil || w.app.ctx == nil || w.app.ctx.Value("events") == nil {
+	if w.app == nil || w.app.ctx == nil || !w.app.wailsReady.Load() {
 		return
 	}
 	wailsruntime.EventsEmit(w.app.ctx, event, optionalData...)
 }
 
 func (a *App) logRuntimeError(format string, args ...interface{}) {
-	if a.ctx == nil || a.ctx.Value("logger") == nil {
+	if a.ctx == nil || !a.wailsReady.Load() {
 		log.Printf(format, args...)
 		return
 	}
@@ -66,7 +67,8 @@ func (a *App) logRuntimeError(format string, args ...interface{}) {
 //   - HostKeyService (known hosts, host key verification prompts)
 //   - LoggingService (structured audit logs, diagnostic buffer)
 type App struct {
-	ctx context.Context
+	ctx        context.Context
+	wailsReady atomic.Bool
 
 	sessionService    *service.SessionService
 	credentialService *service.CredentialService
@@ -165,6 +167,14 @@ func (a *App) startup(ctx context.Context) {
 	a.credentialService.SetOnSecurityWipe(func() error {
 		return a.WipeAllDataAndRestart()
 	})
+}
+
+// onWailsStartup marks the lifecycle context as ready only when Wails invokes
+// its startup hook. Unit tests may call startup with a plain context, which is
+// not valid for Wails runtime APIs.
+func (a *App) onWailsStartup(ctx context.Context) {
+	a.startup(ctx)
+	a.wailsReady.Store(true)
 }
 
 // =========================================================================
@@ -300,7 +310,13 @@ func (a *App) AppendSessionLog(tabID, serverName, data string) (string, error) {
 
 // logSecretPattern matches common inline-secret shapes so they are masked before
 // being written to a plaintext session log (passwords, tokens, API keys, etc.).
-var logSecretPattern = regexp.MustCompile(`(?i)(-p\s*|--password[=\s]+|password[:=\s]+|passwd[:=\s]+|secret[:=\s]+|token[:=\s]+|api[_-]?key[:=\s]+|bearer\s+)(\S+)`)
+// Keywords need an explicit ':' or '=' so ordinary prose ("password for kunal")
+// is left alone, and "-p" only counts as a whole word with the value attached
+// (mysql -pSecret), so "mkdir -p /tmp" or "ssh -p 2222" are not masked.
+var logSecretPattern = regexp.MustCompile(`(?i)(--password[=\s]+|(?:password|passwd|secret|token|api[_-]?key)\s*[:=]\s*|bearer\s+|(?:^|\s)-p)(\S+)`)
+
+// portLikeValue matches values such as "2222" or "8080:80" that follow -p as a port.
+var portLikeValue = regexp.MustCompile(`^[\d:.,-]+$`)
 
 // redactLogData masks obvious inline secrets in terminal output before it is
 // persisted to disk. It is best-effort (stream chunks can split a match) but
@@ -309,7 +325,14 @@ func redactLogData(data string) string {
 	if data == "" {
 		return data
 	}
-	return logSecretPattern.ReplaceAllString(data, "${1}[REDACTED]")
+	return logSecretPattern.ReplaceAllStringFunc(data, func(match string) string {
+		m := logSecretPattern.FindStringSubmatch(match)
+		prefix, value := m[1], m[2]
+		if strings.EqualFold(strings.TrimSpace(prefix), "-p") && portLikeValue.MatchString(value) {
+			return match // ssh -p2222, docker -p8080:80
+		}
+		return prefix + "[REDACTED]"
+	})
 }
 
 // StopSessionLog closes and forgets the log file for tabID, returning its path.
@@ -374,14 +397,21 @@ func (a *App) LaunchXServer() (string, error) {
 			args []string
 		}
 		candidates := []candidate{
-			{`C:\Program Files\VcXsrv\vcxsrv.exe`, []string{":0", "-multiwindow", "-clipboard", "-wgl", "-ac"}},
-			{`C:\Program Files (x86)\VcXsrv\vcxsrv.exe`, []string{":0", "-multiwindow", "-clipboard", "-wgl", "-ac"}},
-			{`C:\Program Files\Xming\Xming.exe`, []string{":0", "-clipboard", "-multiwindow", "-ac"}},
-			{`C:\Program Files (x86)\Xming\Xming.exe`, []string{":0", "-clipboard", "-multiwindow", "-ac"}},
+			{`C:\Program Files\VcXsrv\vcxsrv.exe`, []string{":0", "-multiwindow", "-clipboard", "-wgl"}},
+			{`C:\Program Files (x86)\VcXsrv\vcxsrv.exe`, []string{":0", "-multiwindow", "-clipboard", "-wgl"}},
+			{`C:\Program Files\Xming\Xming.exe`, []string{":0", "-clipboard", "-multiwindow"}},
+			{`C:\Program Files (x86)\Xming\Xming.exe`, []string{":0", "-clipboard", "-multiwindow"}},
 		}
 		for _, c := range candidates {
 			if _, err := os.Stat(c.path); err == nil {
-				if err := exec.Command(c.path, c.args...).Start(); err != nil {
+				// Keep X access control on (no "-ac"): the server only accepts
+				// clients presenting this cookie, which X11 forwarding injects.
+				authFile, err := sshsession.PrepareLocalXAuthority(0)
+				if err != nil {
+					return "", fmt.Errorf("prepare X server cookie: %w", err)
+				}
+				args := append(append([]string{}, c.args...), "-auth", authFile)
+				if err := exec.Command(c.path, args...).Start(); err != nil {
 					return "", fmt.Errorf("found %s but failed to start it: %w", c.path, err)
 				}
 				a.loggingService.LogAudit("XSERVER_STARTED", "xserver", "", "", "", "SUCCESS", c.path)
@@ -436,10 +466,30 @@ func (a *App) RunSSHCommand(tabID, command string) (string, error) {
 		return "", err
 	}
 	defer s.Close()
-	out, err := s.CombinedOutput(command)
-	// A non-zero exit still yields useful output; return what we captured.
-	return string(out), err
+
+	// The dashboard polls repeatedly; a command that never returns must not pin
+	// a goroutine and an SSH channel forever.
+	type result struct {
+		out []byte
+		err error
+	}
+	done := make(chan result, 1)
+	go func() {
+		out, err := s.CombinedOutput(command)
+		done <- result{out, err}
+	}()
+	select {
+	case r := <-done:
+		// A non-zero exit still yields useful output; return what we captured.
+		return string(r.out), r.err
+	case <-time.After(runSSHCommandTimeout):
+		_ = s.Close()
+		return "", fmt.Errorf("command timed out after %s", runSSHCommandTimeout)
+	}
 }
+
+// runSSHCommandTimeout bounds RunSSHCommand.
+const runSSHCommandTimeout = 30 * time.Second
 
 // ExportSessionsToFile serializes all saved sessions/folders and writes them to
 // a JSON file the user chooses via a native Save dialog. Returns the saved path.
@@ -453,7 +503,8 @@ func (a *App) ExportSessionsToFile() (string, error) {
 	if err != nil || savePath == "" {
 		return "", err
 	}
-	if err := os.WriteFile(savePath, []byte(data), 0644); err != nil {
+	// The export lists hosts, users, key paths and jump-host details: owner-only.
+	if err := os.WriteFile(savePath, []byte(data), 0600); err != nil {
 		return "", fmt.Errorf("failed to save sessions export: %w", err)
 	}
 	a.loggingService.LogAudit("SESSIONS_EXPORTED", "sessions", "", "", "", "SUCCESS", savePath)
@@ -988,6 +1039,8 @@ func (a *App) CloseTab(tabID string) error {
 	_ = a.connectionManager.CloseSession(tabID)
 	_, _ = a.settingsService.RemoveTab(tabID)
 	a.sftpService.CloseTab(tabID)
+	// Don't leak the transcript file handle if the frontend didn't stop logging.
+	a.StopSessionLog(tabID)
 	return nil
 }
 
@@ -1475,18 +1528,30 @@ func (a *App) TestSessionConnection(profile model.SessionProfile, password strin
 		}, nil
 	}
 
+	// Verify the host key exactly like a real connection (known_hosts, prompting
+	// for unknown keys) before any credential is offered to the server.
 	clientConfig := &ssh.ClientConfig{
-		User:            profile.Username,
-		Auth:            authMethods,
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout:         5 * time.Second,
+		User:              profile.Username,
+		Auth:              authMethods,
+		HostKeyCallback:   a.hostKeyService.BuildHostKeyCallback(),
+		HostKeyAlgorithms: a.hostKeyService.GetAlgorithmsForHost(profile.Host, port),
+		Timeout:           5 * time.Second,
 	}
 
-	targetAddr := fmt.Sprintf("%s:%d", profile.Host, port)
+	targetAddr := net.JoinHostPort(profile.Host, strconv.Itoa(port))
 	client, err := ssh.Dial("tcp", targetAddr, clientConfig)
 	if err != nil {
 		errStr := err.Error()
 		low := strings.ToLower(errStr)
+		if strings.Contains(low, "host key") {
+			return ConnectionTestResult{
+				Success:   false,
+				Reachable: true,
+				LatencyMs: pingRes.LatencyMs,
+				Message:   fmt.Sprintf("Server reachable (%d ms), but its host key was not trusted, so no credentials were sent.", pingRes.LatencyMs),
+				Error:     errStr,
+			}, nil
+		}
 		if strings.Contains(low, "unable to authenticate") ||
 			strings.Contains(low, "handshake failed") ||
 			strings.Contains(low, "permission denied") {
@@ -1530,12 +1595,9 @@ func (a *App) LaunchRDPSession(profile model.SessionProfile, password string) er
 	return a.OpenSessionWithTabID(profile.ID, profile, password)
 }
 
+// GetAvailableSerialPorts lists the serial ports actually present on this machine.
 func (a *App) GetAvailableSerialPorts() []string {
-	var ports []string
-	for i := 1; i <= 32; i++ {
-		ports = append(ports, fmt.Sprintf("COM%d", i))
-	}
-	return ports
+	return protocol.ListSerialPorts()
 }
 
 // =========================================================================
@@ -1576,7 +1638,7 @@ func (a *App) SaveTerminalOutput(suggestedFilename, content string) (string, err
 		return "", err
 	}
 
-	if err := os.WriteFile(savePath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(savePath, []byte(content), 0600); err != nil {
 		return "", fmt.Errorf("failed to save terminal transcript: %w", err)
 	}
 

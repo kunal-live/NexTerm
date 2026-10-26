@@ -243,7 +243,7 @@ func (m *Manager) GetAlgorithmsForHost(hostname string, port int) []string {
 	if port <= 0 {
 		port = 22
 	}
-	addr := fmt.Sprintf("%s:%d", hostname, port)
+	addr := net.JoinHostPort(hostname, strconv.Itoa(port))
 	normAddr := knownhosts.Normalize(addr)
 	normHost := knownhosts.Normalize(hostname)
 
@@ -317,7 +317,7 @@ func (m *Manager) Remove(hostname string, port int) error {
 	if port <= 0 {
 		port = 22
 	}
-	addr := fmt.Sprintf("%s:%d", hostname, port)
+	addr := net.JoinHostPort(hostname, strconv.Itoa(port))
 	normAddr := knownhosts.Normalize(addr)
 
 	if _, err := os.Stat(m.appHostsPath); os.IsNotExist(err) {

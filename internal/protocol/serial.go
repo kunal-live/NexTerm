@@ -81,6 +81,13 @@ func (s *SerialSession) Connect(ctx context.Context) error {
 		return fmt.Errorf("open serial port %s failed: %w", s.portName, err)
 	}
 
+	if err := configureSerialPort(f, s.baudRate, s.dataBits, s.stopBits, s.parity); err != nil {
+		_ = f.Close()
+		s.SetConnected(false)
+		s.EmitStateChange("failed", err.Error())
+		return fmt.Errorf("configure serial port %s failed: %w", s.portName, err)
+	}
+
 	s.file = f
 	s.SetConnected(true)
 	s.EmitStateChange("connected", fmt.Sprintf("Serial %s connected (%d baud)", s.portName, s.baudRate))
@@ -90,12 +97,12 @@ func (s *SerialSession) Connect(ctx context.Context) error {
 		s.portName, s.baudRate, s.dataBits, s.parity, s.stopBits)
 	s.EmitData([]byte(banner))
 
-	go s.readLoop()
+	go s.readLoop(f)
 
 	return nil
 }
 
-func (s *SerialSession) readLoop() {
+func (s *SerialSession) readLoop(f *os.File) {
 	buf := make([]byte, 1024)
 
 	for {
@@ -105,14 +112,21 @@ func (s *SerialSession) readLoop() {
 		default:
 		}
 
-		n, err := s.file.Read(buf)
+		n, err := f.Read(buf)
+		if err == io.EOF {
+			// A serial line has no end-of-file: a read timeout with no bytes is
+			// reported as EOF, so just poll again.
+			err = nil
+		}
 		if err != nil {
-			s.SetConnected(false)
-			if err != io.EOF {
-				s.EmitDisconnect("Serial port disconnected or closed", err)
-			} else {
-				s.EmitDisconnect("Serial port EOF reached", nil)
+			select {
+			case <-s.stopChan:
+				// Closed locally via Disconnect; not a hardware disconnect.
+				return
+			default:
 			}
+			s.SetConnected(false)
+			s.EmitDisconnect("Serial port disconnected or closed", err)
 			_ = s.Disconnect()
 			return
 		}

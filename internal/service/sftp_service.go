@@ -6,8 +6,10 @@ import (
 	sftpmanager "nexterm/internal/sftp"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -224,12 +226,30 @@ func (s *SFTPService) OpenExternal(tabID, remotePath string, chooseApp bool) err
 	if err := os.MkdirAll(cacheDir, 0700); err != nil {
 		return fmt.Errorf("create local cache dir: %w", err)
 	}
+	if runtime.GOOS != "windows" {
+		if err := os.Chmod(cacheDir, 0700); err != nil {
+			return fmt.Errorf("secure local cache dir: %w", err)
+		}
+	}
 
-	baseName := filepath.Base(remotePath)
+	baseName := path.Base(filepath.ToSlash(remotePath))
+	invalid := baseName == "/" || baseName == "." || baseName == ".."
+	if runtime.GOOS == "windows" {
+		// ':' would address an NTFS alternate data stream; the rest are illegal.
+		invalid = invalid || strings.ContainsAny(baseName, `\:*?"<>|`)
+	}
+	if invalid {
+		return fmt.Errorf("cannot open %q externally: file name is not valid on this system", remotePath)
+	}
 	localPath := filepath.Join(cacheDir, baseName)
 
 	if err := s.sftpMgr.Download(tabID, client, remotePath, localPath); err != nil {
 		return fmt.Errorf("download remote file: %w", err)
+	}
+	if runtime.GOOS != "windows" {
+		if err := os.Chmod(localPath, 0600); err != nil {
+			return fmt.Errorf("secure local cache file: %w", err)
+		}
 	}
 
 	stat, err := os.Stat(localPath)
@@ -241,10 +261,12 @@ func (s *SFTPService) OpenExternal(tabID, remotePath string, chooseApp bool) err
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "windows":
+		// Never route the server-controlled file name through cmd.exe: characters
+		// such as & or | in it would be run as commands.
 		if chooseApp {
 			cmd = exec.Command("rundll32.exe", "shell32.dll,OpenAs_RunDLL", localPath)
 		} else {
-			cmd = exec.Command("cmd", "/c", "start", "", localPath)
+			cmd = exec.Command("rundll32.exe", "url.dll,FileProtocolHandler", localPath)
 		}
 	case "darwin":
 		if chooseApp {

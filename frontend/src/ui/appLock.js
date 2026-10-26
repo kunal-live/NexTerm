@@ -146,7 +146,6 @@ function injectStyles() {
   document.head.appendChild(s);
 }
 
-export function isLocked() { return locked; }
 
 /** Returns true when the app-lock feature is turned on in Settings. */
 export function isAppLockEnabled() { return lsGet(ENABLED_KEY, "1") !== "0"; }

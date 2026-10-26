@@ -107,6 +107,12 @@ func (t *TerminalService) OpenLocalTerminal(shell string, cols, rows int) (strin
 		return "", "", fmt.Errorf("start local pseudo terminal: %w", err)
 	}
 
+	// Register before the reader starts so a shell that exits immediately is
+	// still removed from the map by the reader below.
+	t.mu.Lock()
+	t.localTabs[tabID] = term
+	t.mu.Unlock()
+
 	go func() {
 		buf := make([]byte, 4096)
 		for {
@@ -126,6 +132,9 @@ func (t *TerminalService) OpenLocalTerminal(shell string, cols, rows int) (strin
 				hook := t.onTerminalClose
 				t.mu.Unlock()
 
+				// Release the pipes and process handles (no-op if Close already ran).
+				_ = term.Close()
+
 				if hook != nil {
 					hook(tabID, title)
 				}
@@ -133,10 +142,6 @@ func (t *TerminalService) OpenLocalTerminal(shell string, cols, rows int) (strin
 			}
 		}
 	}()
-
-	t.mu.Lock()
-	t.localTabs[tabID] = term
-	t.mu.Unlock()
 
 	if t.logService != nil {
 		t.logService.LogSessionEvent(tabID, "started", fmt.Sprintf("Local terminal (%s)", title))

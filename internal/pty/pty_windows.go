@@ -188,7 +188,30 @@ func Start(commandLine string, cols, rows int) (*Terminal, error) {
 		pid:      int(pi.ProcessId),
 	}
 
+	// The output pipe never reports EOF while the pseudo console is open, even
+	// after the shell exits, so close the console once the process ends. The
+	// waiter gets its own handle because Close may close hProcess meanwhile.
+	var waitHandle windows.Handle
+	self := windows.CurrentProcess()
+	if err := windows.DuplicateHandle(self, pi.Process, self, &waitHandle, 0, false, windows.DUPLICATE_SAME_ACCESS); err == nil {
+		go term.closeConsoleOnExit(waitHandle)
+	}
+
 	return term, nil
+}
+
+// closeConsoleOnExit waits for the child process and then closes the pseudo
+// console so readers of Out see EOF.
+func (t *Terminal) closeConsoleOnExit(process windows.Handle) {
+	defer windows.CloseHandle(process)
+	_, _ = windows.WaitForSingleObject(process, windows.INFINITE)
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.hPC != 0 {
+		procClosePseudoConsole.Call(uintptr(t.hPC))
+		t.hPC = 0
+	}
 }
 
 // Write sends data to the ConPTY input stream.

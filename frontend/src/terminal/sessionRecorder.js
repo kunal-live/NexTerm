@@ -26,8 +26,6 @@ function saveAll(list) {
   try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (_) {}
 }
 
-export function isRecording() { return recordingActive; }
-
 // Called from terminalManager on every completed command line (Enter pressed)
 export function recordCommand(tabId, cmd) {
   if (!recordingActive || !current) return;

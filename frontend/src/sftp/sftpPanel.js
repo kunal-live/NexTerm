@@ -23,9 +23,6 @@ export let sftpSortOrder = "asc";   // "asc" or "desc"
 export let showHiddenSFTPFiles = true;
 export let recentSFTPPaths = ["/", "~", "/opt", "/etc", "/var/log", "/tmp"];
 
-export function setCurrentSFTPPath(p) { currentSFTPPath = p; }
-export function setSFTPCurrentItems(items) { sftpCurrentItems = items; }
-export function setSelectedSFTPItem(item) { selectedSFTPItem = item; }
 export function setSFTPSortColumn(col) { sftpSortColumn = col; }
 export function setSFTPSortOrder(order) { sftpSortOrder = order; }
 export function setShowHiddenSFTPFiles(val) { showHiddenSFTPFiles = val; }

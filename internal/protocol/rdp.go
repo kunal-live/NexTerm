@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 )
 
@@ -31,12 +32,18 @@ func NewRDPSession(id string, profile model.SessionProfile) *RDPSession {
 // GenerateRDPProfileContent builds the content of an .rdp configuration file with
 // advanced device redirection, audio, display, and performance flags.
 func GenerateRDPProfileContent(p model.SessionProfile, port int) string {
-	content := fmt.Sprintf("full address:s:%s:%d\r\nprompt for credentials:i:1\r\n", p.Host, port)
+	// Host, user and domain may come from an imported session file; strip line
+	// breaks so they cannot inject extra .rdp settings (e.g. drive redirection).
+	host := rdpField(p.Host)
+	if strings.Contains(host, ":") {
+		host = "[" + host + "]" // IPv6 literal
+	}
+	content := fmt.Sprintf("full address:s:%s:%d\r\nprompt for credentials:i:1\r\n", host, port)
 	if p.Username != "" {
-		content += fmt.Sprintf("username:s:%s\r\n", p.Username)
+		content += fmt.Sprintf("username:s:%s\r\n", rdpField(p.Username))
 	}
 	if p.RDPDomain != "" {
-		content += fmt.Sprintf("domain:s:%s\r\n", p.RDPDomain)
+		content += fmt.Sprintf("domain:s:%s\r\n", rdpField(p.RDPDomain))
 	}
 	if p.RDPFullScreen {
 		content += "screen mode id:i:2\r\n"
@@ -78,6 +85,11 @@ func GenerateRDPProfileContent(p model.SessionProfile, port int) string {
 	content += fmt.Sprintf("connection type:i:%d\r\nnetworkautodetect:i:1\r\nbandwidthautodetect:i:1\r\n", perf)
 
 	return content
+}
+
+// rdpField removes characters that would end an .rdp "key:type:value" line.
+func rdpField(s string) string {
+	return strings.NewReplacer("\r", "", "\n", "", "\x00", "").Replace(strings.TrimSpace(s))
 }
 
 // Connect generates the RDP configuration file and launches mstsc.exe or xfreerdp.
@@ -164,16 +176,14 @@ func (r *RDPSession) Connect(ctx context.Context) error {
 		p.Host, port, p.Username)
 	r.EmitData([]byte(banner))
 
-	go r.waitProcess()
+	// Pass cmd explicitly: Disconnect clears r.cmd concurrently.
+	go r.waitProcess(cmd)
 
 	return nil
 }
 
-func (r *RDPSession) waitProcess() {
-	if r.cmd == nil {
-		return
-	}
-	_ = r.cmd.Wait()
+func (r *RDPSession) waitProcess(cmd *exec.Cmd) {
+	_ = cmd.Wait()
 
 	r.SetConnected(false)
 	r.EmitDisconnect("RDP window closed by user", nil)

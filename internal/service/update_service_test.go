@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -113,5 +114,53 @@ func TestExtractExeFromZip(t *testing.T) {
 	}
 	if string(content) != "MZ_MOCK_BINARY_DATA" {
 		t.Errorf("unexpected content: %s", string(content))
+	}
+}
+
+func TestValidateUpdateURL(t *testing.T) {
+	ok := []string{
+		"https://github.com/kunal-live/NexTerm/releases/download/v1.4.0/nexterm.exe",
+		"https://objects.githubusercontent.com/github-production-release-asset/x",
+	}
+	bad := []string{
+		"http://github.com/kunal-live/NexTerm/releases/download/v1.4.0/nexterm.exe",
+		"https://example.com/nexterm.exe",
+		"https://github.com.evil.example/nexterm.exe",
+		"file:///C:/Windows/System32/calc.exe",
+	}
+	for _, u := range ok {
+		if err := validateUpdateURL(u); err != nil {
+			t.Errorf("validateUpdateURL(%q) = %v, want nil", u, err)
+		}
+	}
+	for _, u := range bad {
+		if err := validateUpdateURL(u); err == nil {
+			t.Errorf("validateUpdateURL(%q) = nil, want error", u)
+		}
+	}
+}
+
+func TestParseChecksumManifest(t *testing.T) {
+	manifest := "" +
+		"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  NexTerm-Setup.exe\n" +
+		"BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB *nexterm.exe\n" +
+		"not-a-digest  broken.zip\n"
+
+	if sum, ok := parseChecksumManifest(strings.NewReader(manifest), "nexterm.exe"); !ok || sum != strings.Repeat("b", 64) {
+		t.Errorf("expected lower-cased digest for nexterm.exe, got %q (ok=%v)", sum, ok)
+	}
+	if _, ok := parseChecksumManifest(strings.NewReader(manifest), "broken.zip"); ok {
+		t.Errorf("malformed digest must not be accepted")
+	}
+	if _, ok := parseChecksumManifest(strings.NewReader(manifest), "missing.exe"); ok {
+		t.Errorf("missing asset must not be found")
+	}
+}
+
+func TestApplyUpdateRejectsUnofferedURL(t *testing.T) {
+	svc := NewUpdateService(nil)
+	err := svc.DownloadAndApplyUpdate(context.Background(), "https://github.com/attacker/repo/releases/download/v9/nexterm.exe")
+	if err == nil {
+		t.Fatal("expected ApplyUpdate to reject a URL that no update check offered")
 	}
 }

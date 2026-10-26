@@ -61,9 +61,9 @@
 <details>
 <summary><b>Previous: What's New in v1.3.0 (2026-10-04)</b></summary>
 
-- 🔒 **Master Password Vault Protection**: Optional Master Password encryption layer over the native DPAPI vault, featuring password hint recovery and a built-in cryptographic password generator.
+- 🔒 **Master Password Vault Protection**: Optional Master Password encryption layer over the platform-native credential vault, featuring password hint recovery and a built-in cryptographic password generator.
 - 🛡️ **App Lock & Idle Inactivity Auto-Lock**: Instantly lock the entire workstation with a master toggle or configure automated idle timeout locks to safeguard active terminal connections.
-- 🔑 **Real In-App SSH KeyGen**: Native RSA 2048-bit & 4096-bit SSH key pair generator with 1-click PEM and OpenSSH export.
+- 🔑 **Real In-App SSH KeyGen**: Native Ed25519 and RSA-4096 SSH key pair generator with 1-click OpenSSH export.
 - 🕵️ **Real-Time Session Log Redaction**: Automatic in-flight scrubbing of passwords, bearer tokens, and private keys from terminal buffers and session logs.
 - 🌌 **Overhauled Theme Gallery & Universe Animations**: Interactive Theme Gallery with category filters (Cyberpunk, Matrix, Dracula, Solarized, Nord, Celestial) and an interactive particle canvas on the welcome screen.
 - 🤖 **Universal AI DevOps Assistant**: Integrated diagnostic AI companion to assist with shell commands, log debugging, and automation scripts.
@@ -98,7 +98,7 @@
 <summary><b>Previous: What's New in v1.0.0 (2026-07-01)</b></summary>
 
 - 🚀 **Initial Open Source Release**: Native cross-platform SSH client built with Go, Wails v2, and xterm.js.
-- 🔑 **Platform Credential Vault**: Native Windows DPAPI encryption for zero plain-text storage.
+- 🔑 **Platform Credential Vault**: Native credential storage using Windows DPAPI, macOS Keychain, or Linux Secret Service.
 - ⇄ **Visual SSH Port Forwarding**: Local, Remote, and SOCKS5 dynamic proxy tunneling manager.
 - 🛡️ **SSH Bastion / Jump Host**: Multi-stage jump proxy authentication.
 - 🛠️ **Network Toolbox**: Integrated ICMP Ping, DNS Resolver, TCP Port Scanner, and SHA/MD5 hash calculator.
@@ -191,7 +191,7 @@
 - **DNS Resolver**: Queries A, AAAA, and CNAME records for any domain or IP.
 - **Concurrent Multi-Port Scanner**: Multi-threaded TCP port scanner testing common ports (21, 22, 80, 443, 1521, 3306, 5432, 8080) or custom port ranges.
 - **Checksum & Hash Generator**: Computes SHA256, SHA1, and MD5 hashes.
-- **SSH KeyGen**: Generates 2048/4096-bit RSA SSH key pairs in PEM and OpenSSH formats.
+- **SSH KeyGen**: Generates Ed25519 or RSA-4096 SSH key pairs in OpenSSH format.
 
 ### 🔒 9. Enterprise Security, App Lock & NexTerm Customizer
 - **Independent App Lock**: Lock the entire workstation on demand or on idle timeout with a dedicated PIN or Master Password.
@@ -263,7 +263,7 @@ graph TD
         MacroMgr[macro: Macro Manager]
         NetTools[nettools: Ping, DNS, PortScan, Hash]
         SecMgr[security: Policy & App Lock]
-        Vault[vault: Windows DPAPI / Keyring Vault]
+        Vault[vault: Windows DPAPI / macOS Keychain / Linux Secret Service]
         Store[store: Session Tree Store]
         Updater[service: Auto-Updater Engine]
     end
@@ -303,7 +303,7 @@ NexTerm is designed and tested for native execution across:
 - **Linux**: Ubuntu, Debian, Fedora, Arch Linux, RHEL, openSUSE (`x86_64`, `arm64`)
 
 ### Prerequisites
-- **Go 1.22+** ([golang.org](https://golang.org/dl/))
+- **Go 1.25+** ([golang.org](https://golang.org/dl/))
 - **Wails CLI v2.9+** ([wails.io](https://wails.io/docs/gettingstarted/installation))
   ```bash
   go install github.com/wailsapp/wails/v2/cmd/wails@latest

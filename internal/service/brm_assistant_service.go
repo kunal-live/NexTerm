@@ -242,7 +242,7 @@ done
 
 	// Inspect components within chosen root
 	checkScript := fmt.Sprintf(`
-root="%s"
+root=%s
 for comp in sys/cm sys/dm_oracle sys/dm_fusa sys/em sys/test bin include source log ece; do
   if [ -e "$root/$comp" ]; then
     echo "COMP:$comp"
@@ -258,7 +258,7 @@ for lg in sys/cm/cm.log sys/dm_oracle/dm_oracle.log log/cm.log; do
     echo "LOG:$root/$lg"
   fi
 done
-`, chosenRoot)
+`, posixShellQuote(chosenRoot))
 
 	sChan2, err2 := client.NewSession()
 	if err2 == nil {
@@ -430,11 +430,12 @@ func (s *BRMAssistantService) inspectRemoteSource(sshSess *protocol.SSHSession, 
 	}
 	defer sChan.Close()
 
-	// Safe read-only tail with line numbers
-	cmd := fmt.Sprintf("if [ -f \"%s\" ]; then tail -n %d \"%s\" | awk '{print NR \":\" $0}'; else echo \"__FILE_NOT_FOUND__\"; fi", sourcePath, maxLines, sourcePath)
+	// Safe read-only tail with line numbers. Path and filter are single-quoted:
+	// inside double quotes $(...) and backticks would still be executed.
+	qPath := posixShellQuote(sourcePath)
+	cmd := fmt.Sprintf("if [ -f %s ]; then tail -n %d -- %s | awk '{print NR \":\" $0}'; else echo \"__FILE_NOT_FOUND__\"; fi", qPath, maxLines, qPath)
 	if filterQuery != "" {
-		safeQuery := strings.ReplaceAll(filterQuery, `"`, `\"`)
-		cmd = fmt.Sprintf("if [ -f \"%s\" ]; then grep -n -C 3 -iE \"%s\" \"%s\" | tail -n %d; else echo \"__FILE_NOT_FOUND__\"; fi", sourcePath, safeQuery, sourcePath, maxLines)
+		cmd = fmt.Sprintf("if [ -f %s ]; then grep -n -C 3 -iE -e %s -- %s | tail -n %d; else echo \"__FILE_NOT_FOUND__\"; fi", qPath, posixShellQuote(filterQuery), qPath, maxLines)
 	}
 
 	out, err := sChan.CombinedOutput(cmd)
@@ -1584,4 +1585,9 @@ func (s *BRMAssistantService) GetErrorKnowledge(code string) ErrorKnowledge {
 			},
 		}
 	}
+}
+
+// posixShellQuote single-quotes s so a POSIX shell treats it as one literal word.
+func posixShellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }

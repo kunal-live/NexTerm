@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -20,11 +21,13 @@ import (
 // (Connect happens in the constructor, then Write/Resize/Close) so the frontend
 // and App layer don't care which protocol is underneath.
 type Session struct {
-	client     *ssh.Client
-	sshSess    *ssh.Session
-	stdin      io.WriteCloser
-	closeOnce  sync.Once
-	stopChan   chan struct{}
+	client         *ssh.Client
+	bastion        *ssh.Client // jump host connection, closed together with client
+	sshSess        *ssh.Session
+	stdin          io.WriteCloser
+	closeOnce      sync.Once
+	disconnectOnce sync.Once
+	stopChan       chan struct{}
 
 	OnData         func(data []byte)
 	OnDisconnected func(reason string, classified ClassifiedError)
@@ -169,6 +172,16 @@ func Connect(opts ConnectOptions) (*Session, error) {
 	addr := net.JoinHostPort(opts.Host, strconv.Itoa(opts.Port))
 	var conn net.Conn
 
+	// The bastion connection must outlive the handshake (the target connection is
+	// tunnelled through it) but be closed if anything below fails.
+	var bastion *ssh.Client
+	connected := false
+	defer func() {
+		if !connected && bastion != nil {
+			_ = bastion.Close()
+		}
+	}()
+
 	if opts.UseJumpHost && opts.JumpHost != "" {
 		if opts.JumpPort <= 0 {
 			opts.JumpPort = 22
@@ -204,12 +217,11 @@ func Connect(opts ConnectOptions) (*Session, error) {
 			_ = bastionDirectConn.Close()
 			return nil, fmt.Errorf("bastion handshake failed: %w", bErr)
 		}
-		bastionClient := ssh.NewClient(bastionSSHConn, bastionChans, bastionReqs)
+		bastion = ssh.NewClient(bastionSSHConn, bastionChans, bastionReqs)
 
 		// Tunnel through bastion to target
-		proxiedConn, pErr := bastionClient.Dial("tcp", addr)
+		proxiedConn, pErr := bastion.Dial("tcp", addr)
 		if pErr != nil {
-			_ = bastionClient.Close()
 			return nil, fmt.Errorf("bastion failed to dial target %s: %w", addr, pErr)
 		}
 		conn = proxiedConn
@@ -278,13 +290,17 @@ func Connect(opts ConnectOptions) (*Session, error) {
 		_ = setupX11Forwarding(sshSess, client, opts.X11Display)
 	}
 
-	// Change working directory if requested
-	if opts.WorkingDirectory != "" {
-		_ = sshSess.Setenv("PWD", opts.WorkingDirectory)
+	cdCommand := ""
+	if dir := strings.TrimSpace(opts.WorkingDirectory); dir != "" {
+		cdCommand = "cd " + shellQuote(dir)
 	}
 
 	if opts.StartupCommand != "" {
-		if err := sshSess.Start(opts.StartupCommand); err != nil {
+		cmd := opts.StartupCommand
+		if cdCommand != "" {
+			cmd = cdCommand + " && " + cmd
+		}
+		if err := sshSess.Start(cmd); err != nil {
 			_ = sshSess.Close()
 			_ = client.Close()
 			return nil, fmt.Errorf("failed to start startup command: %w", err)
@@ -297,14 +313,22 @@ func Connect(opts ConnectOptions) (*Session, error) {
 		}
 	}
 
+	// Setting PWD via env is ignored by most servers, so type the cd into the
+	// freshly started interactive shell instead.
+	if cdCommand != "" && opts.StartupCommand == "" {
+		_, _ = stdin.Write([]byte(cdCommand + "\n"))
+	}
+
 	s := &Session{
 		client:         client,
+		bastion:        bastion,
 		sshSess:        sshSess,
 		stdin:          stdin,
 		stopChan:       make(chan struct{}),
 		OnData:         opts.OnData,
 		OnDisconnected: opts.OnDisconnected,
 	}
+	connected = true
 
 	go s.readLoop(stdout)
 	go s.readLoop(stderr)
@@ -324,6 +348,16 @@ func buildAuthMethods(opts ConnectOptions) ([]ssh.AuthMethod, error) {
 
 	switch opts.AuthType {
 	case AuthTypePassword:
+		if opts.KeyboardInteractivePrompt != nil {
+			// Route keyboard-interactive through the prompt handler so MFA/OTP
+			// questions reach the user instead of being answered with the password.
+			ki := &KeyboardInteractiveAuthProvider{Password: opts.Password, Prompt: opts.KeyboardInteractivePrompt}
+			kiMethods, err := ki.BuildAuthMethods()
+			if err != nil {
+				return nil, err
+			}
+			return append([]ssh.AuthMethod{ssh.Password(opts.Password)}, kiMethods...), nil
+		}
 		p := &PasswordAuthProvider{Password: opts.Password}
 		return p.BuildAuthMethods()
 
@@ -439,10 +473,14 @@ func (s *Session) readLoop(reader io.Reader) {
 			case <-s.stopChan:
 				return
 			default:
-				if s.OnDisconnected != nil {
-					classified := ClassifyError(err)
-					s.OnDisconnected(classified.Message, classified)
-				}
+				// stdout and stderr both hit EOF when the channel closes;
+				// report the disconnect only once.
+				s.disconnectOnce.Do(func() {
+					if s.OnDisconnected != nil {
+						classified := ClassifyError(err)
+						s.OnDisconnected(classified.Message, classified)
+					}
+				})
 				s.Close()
 				return
 			}
@@ -493,7 +531,15 @@ func (s *Session) Close() {
 		if s.client != nil {
 			_ = s.client.Close()
 		}
+		if s.bastion != nil {
+			_ = s.bastion.Close()
+		}
 	})
+}
+
+// shellQuote single-quotes s for a POSIX shell.
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
 func (s *Session) Client() *ssh.Client {

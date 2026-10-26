@@ -37,6 +37,17 @@ func (s *SSHSession) Connect(ctx context.Context) error {
 		s.EmitStateChange(string(state), message)
 	}
 
+	// Wire data and disconnect events before connecting: the read loops start
+	// inside sshsession.Connect, so handlers assigned afterwards would race with
+	// them and drop the login banner / first prompt.
+	s.opts.OnData = func(data []byte) {
+		s.EmitData(data)
+	}
+	s.opts.OnDisconnected = func(reason string, classified sshsession.ClassifiedError) {
+		s.SetConnected(false)
+		s.EmitDisconnect(reason, fmt.Errorf("[%s] %s: %s", classified.Category, classified.Message, classified.Description))
+	}
+
 	// Connect via sshsession engine
 	sess, err := sshsession.Connect(s.opts)
 	if err != nil {
@@ -46,16 +57,6 @@ func (s *SSHSession) Connect(ctx context.Context) error {
 
 	s.session = sess
 	s.SetConnected(true)
-
-	// Wire data and disconnect events
-	sess.OnData = func(data []byte) {
-		s.EmitData(data)
-	}
-
-	sess.OnDisconnected = func(reason string, classified sshsession.ClassifiedError) {
-		s.SetConnected(false)
-		s.EmitDisconnect(reason, fmt.Errorf("[%s] %s: %s", classified.Category, classified.Message, classified.Description))
-	}
 
 	return nil
 }

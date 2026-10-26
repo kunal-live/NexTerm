@@ -5,10 +5,6 @@
 
 export let rootNode = null;
 
-export function getRootNode() {
-  return rootNode;
-}
-
 export function setRootNode(node) {
   rootNode = node;
   return rootNode;

@@ -137,7 +137,7 @@ func (w *Workspace) ensureRequiredPanesForLayout() {
 	}
 
 	for len(w.Panes) < requiredCount {
-		newPaneID := fmt.Sprintf("pane-%d", len(w.Panes)+1)
+		newPaneID := w.nextPaneIDLocked()
 		w.Panes = append(w.Panes, &Pane{
 			ID:          newPaneID,
 			Title:       fmt.Sprintf("Terminal %d", len(w.Panes)+1),
@@ -225,6 +225,17 @@ func (w *Workspace) recalculateGridPositions() {
 		}
 		if len(w.Panes) >= 3 {
 			w.Panes[2].Row, w.Panes[2].Col, w.Panes[2].RowSpan, w.Panes[2].ColSpan = 1, 3, 1, 1
+		}
+	}
+}
+
+// nextPaneIDLocked returns an unused "pane-N" ID. Deriving N from the pane count
+// alone collides after a pane in the middle has been closed.
+func (w *Workspace) nextPaneIDLocked() string {
+	for n := len(w.Panes) + 1; ; n++ {
+		id := fmt.Sprintf("pane-%d", n)
+		if !w.hasPane(id) {
+			return id
 		}
 	}
 }
@@ -420,7 +431,7 @@ func (w *Workspace) SplitPane(sourcePaneID, direction string) (*Pane, error) {
 		return nil, errors.New("maximum number of split panes reached (8)")
 	}
 
-	newPaneID := fmt.Sprintf("pane-%d", time.Now().UnixNano()%100000)
+	newPaneID := w.nextPaneIDLocked()
 	newPane := &Pane{
 		ID:          newPaneID,
 		Title:       fmt.Sprintf("Terminal %d", len(w.Panes)+1),
@@ -491,10 +502,10 @@ func (w *Workspace) ClosePane(paneID string) error {
 		w.ActivePaneID = remainingPane.ID
 	}
 
-	// Reset layout if needed
+	// Reset layout if needed: every 3+ pane preset leaves a hole with 2 panes.
 	if len(w.Panes) == 1 {
 		w.Layout = LayoutSingle
-	} else if len(w.Panes) == 2 && (w.Layout == Layout2Top1Bot || w.Layout == LayoutGrid4) {
+	} else if len(w.Panes) == 2 && w.Layout != LayoutSplitV && w.Layout != LayoutSplitH {
 		w.Layout = LayoutSplitV
 	} else if len(w.Panes) == 3 && w.Layout == LayoutGrid4 {
 		w.Layout = Layout2Top1Bot

@@ -10,6 +10,8 @@ import (
 	"net"
 	"os/exec"
 	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -53,10 +55,39 @@ func LookupService(port int) string {
 	return fmt.Sprintf("Port %d", port)
 }
 
+// maxScanPorts bounds a single PortScan request.
+const maxScanPorts = 1024
+
+// validHost reports whether host is an IP literal or a plausible DNS name. In
+// particular it rejects values starting with '-', which ping would parse as flags.
+func validHost(host string) bool {
+	if host == "" || len(host) > 253 {
+		return false
+	}
+	if net.ParseIP(host) != nil {
+		return true
+	}
+	for _, label := range strings.Split(strings.TrimSuffix(host, "."), ".") {
+		if label == "" || len(label) > 63 || label[0] == '-' || label[len(label)-1] == '-' {
+			return false
+		}
+		for _, r := range label {
+			if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_') {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 // Ping executes a system ping command and returns formatted statistics.
 func Ping(host string) (string, error) {
+	host = strings.TrimSpace(host)
 	if host == "" {
 		return "", fmt.Errorf("host cannot be empty")
+	}
+	if !validHost(host) {
+		return "", fmt.Errorf("invalid host %q: expected a hostname or IP address", host)
 	}
 
 	var cmd *exec.Cmd
@@ -117,6 +148,16 @@ func PortScan(host string, ports []int) []PortScanResult {
 	if len(ports) == 0 {
 		ports = []int{21, 22, 23, 25, 53, 80, 110, 143, 443, 1433, 1521, 3306, 3389, 5432, 5900, 6379, 8080, 8443, 27017}
 	}
+	valid := make([]int, 0, len(ports))
+	for _, p := range ports {
+		if p >= 1 && p <= 65535 {
+			valid = append(valid, p)
+		}
+	}
+	ports = valid
+	if len(ports) > maxScanPorts {
+		ports = ports[:maxScanPorts]
+	}
 
 	results := make([]PortScanResult, len(ports))
 	var wg sync.WaitGroup
@@ -124,9 +165,9 @@ func PortScan(host string, ports []int) []PortScanResult {
 
 	for i, p := range ports {
 		wg.Add(1)
+		semaphore <- struct{}{} // bound live goroutines, not just concurrent dials
 		go func(idx, port int) {
 			defer wg.Done()
-			semaphore <- struct{}{}
 			defer func() { <-semaphore }()
 
 			addr := net.JoinHostPort(host, fmt.Sprintf("%d", port))
@@ -207,7 +248,7 @@ func PingTarget(host string, port int, timeoutMs int) ServerReachability {
 	if port <= 0 {
 		port = 22
 	}
-	target := fmt.Sprintf("%s:%d", host, port)
+	target := net.JoinHostPort(host, strconv.Itoa(port))
 	start := time.Now()
 	conn, err := net.DialTimeout("tcp", target, time.Duration(timeoutMs)*time.Millisecond)
 	dur := time.Since(start).Milliseconds()
@@ -236,10 +277,13 @@ func CheckServersReachability(targets []TargetQuery, timeoutMs int) []ServerReac
 	}
 	results := make([]ServerReachability, len(targets))
 	var wg sync.WaitGroup
+	sem := make(chan struct{}, 32)
 	for i, t := range targets {
 		wg.Add(1)
+		sem <- struct{}{}
 		go func(idx int, target TargetQuery) {
 			defer wg.Done()
+			defer func() { <-sem }()
 			results[idx] = PingTarget(target.Host, target.Port, timeoutMs)
 		}(i, t)
 	}

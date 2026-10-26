@@ -840,6 +840,10 @@ export function showNewTunnelWizard() {
         <label>Remote Destination Host / IP *</label>
         <input type="text" id="tunRemoteHost" value="10.0.0.5" placeholder="e.g. 10.0.0.5 or 127.0.0.1" />
       </div>
+      <div class="form-group hidden" id="tunAllowRemoteHostsGroup">
+        <label><input type="checkbox" id="tunAllowRemoteHosts" /> Allow connections from other hosts</label>
+        <small>By default, the remote tunnel is available only on the SSH server itself. Enabling this exposes it on the server's network.</small>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn-secondary" id="modalCancel">Cancel</button>
@@ -852,6 +856,7 @@ export function showNewTunnelWizard() {
     const isDynamic = typeSelect.value === "dynamic";
     box.querySelector("#tunRemotePortGroup").classList.toggle("hidden", isDynamic);
     box.querySelector("#tunRemoteHostGroup").classList.toggle("hidden", isDynamic);
+    box.querySelector("#tunAllowRemoteHostsGroup").classList.toggle("hidden", typeSelect.value !== "remote");
   };
 
   box.querySelector("#modalCancel").onclick = hideModal;
@@ -864,6 +869,7 @@ export function showNewTunnelWizard() {
       localPort: parseInt(box.querySelector("#tunLocalPort").value, 10) || 8080,
       remotePort: parseInt(box.querySelector("#tunRemotePort").value, 10) || 80,
       remoteHost: box.querySelector("#tunRemoteHost").value.trim() || "127.0.0.1",
+      allowRemoteHosts: typeSelect.value === "remote" && box.querySelector("#tunAllowRemoteHosts").checked,
       autoStart: false
     };
     hideModal();

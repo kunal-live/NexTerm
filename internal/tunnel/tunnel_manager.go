@@ -7,6 +7,8 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
 	"sync"
 	"time"
 
@@ -33,6 +35,10 @@ type TunnelConfig struct {
 	LocalPort         int        `json:"localPort"`
 	RemoteHost        string     `json:"remoteHost,omitempty"`
 	RemotePort        int        `json:"remotePort,omitempty"`
+	// AllowRemoteHosts binds a remote forward on all server interfaces (0.0.0.0)
+	// instead of the server's loopback, exposing it to the server's network
+	// (subject to sshd's GatewayPorts).
+	AllowRemoteHosts  bool       `json:"allowRemoteHosts,omitempty"`
 	AutoStart         bool       `json:"autoStart"`
 	Status            string     `json:"status"` // "running", "stopped", "error"
 	ErrorMsg          string     `json:"errorMsg,omitempty"`
@@ -121,6 +127,13 @@ func (tm *TunnelManager) GetTunnels() []TunnelConfig {
 		}
 		list = append(list, t)
 	}
+	// Map iteration order is random; keep the UI list stable.
+	sort.Slice(list, func(i, j int) bool {
+		if list[i].Name != list[j].Name {
+			return list[i].Name < list[j].Name
+		}
+		return list[i].ID < list[j].ID
+	})
 	return list
 }
 
@@ -167,13 +180,16 @@ func (tm *TunnelManager) StartTunnel(id string, sshClient *ssh.Client) error {
 	var err error
 
 	if t.Type == TunnelRemote {
-		// Remote port forwarding: SSH server listens, forwards to local
-		remoteAddr := fmt.Sprintf("0.0.0.0:%d", t.RemotePort)
-		listener, err = sshClient.Listen("tcp", remoteAddr)
+		// Remote port forwarding: SSH server listens, forwards to local.
+		// Bind the server's loopback unless wider exposure was explicitly chosen.
+		bindHost := "127.0.0.1"
+		if t.AllowRemoteHosts {
+			bindHost = "0.0.0.0"
+		}
+		listener, err = sshClient.Listen("tcp", net.JoinHostPort(bindHost, strconv.Itoa(t.RemotePort)))
 	} else {
 		// Local or Dynamic SOCKS5: Local PC listens
-		localAddr := fmt.Sprintf("127.0.0.1:%d", t.LocalPort)
-		listener, err = net.Listen("tcp", localAddr)
+		listener, err = net.Listen("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(t.LocalPort)))
 	}
 
 	if err != nil {
@@ -205,10 +221,21 @@ func (tm *TunnelManager) handleConnections(rt *runningTunnel, client *ssh.Client
 		if err != nil {
 			select {
 			case <-rt.stopChan:
-				return
 			default:
-				return
+				// The listener died on its own (usually the SSH connection
+				// dropped): don't keep reporting the tunnel as running.
+				tm.mu.Lock()
+				if tm.running[rt.config.ID] == rt {
+					delete(tm.running, rt.config.ID)
+					if t, ok := tm.tunnels[rt.config.ID]; ok {
+						t.Status = "error"
+						t.ErrorMsg = err.Error()
+						tm.tunnels[rt.config.ID] = t
+					}
+				}
+				tm.mu.Unlock()
 			}
+			return
 		}
 
 		go func(c net.Conn) {
@@ -216,7 +243,7 @@ func (tm *TunnelManager) handleConnections(rt *runningTunnel, client *ssh.Client
 			switch rt.config.Type {
 			case TunnelRemote:
 				// Forward to local target
-				localTarget := fmt.Sprintf("127.0.0.1:%d", rt.config.LocalPort)
+				localTarget := net.JoinHostPort("127.0.0.1", strconv.Itoa(rt.config.LocalPort))
 				target, err := net.Dial("tcp", localTarget)
 				if err != nil {
 					return
@@ -225,12 +252,27 @@ func (tm *TunnelManager) handleConnections(rt *runningTunnel, client *ssh.Client
 				pipe(c, target)
 			case TunnelLocal:
 				// Forward to remote target via SSH
-				remoteTarget := fmt.Sprintf("%s:%d", rt.config.RemoteHost, rt.config.RemotePort)
+				remoteTarget := net.JoinHostPort(rt.config.RemoteHost, strconv.Itoa(rt.config.RemotePort))
 				target, err := client.Dial("tcp", remoteTarget)
 				if err != nil {
 					return
 				}
 				defer target.Close()
+				pipe(c, target)
+			case TunnelDynamic:
+				// SOCKS5 proxy: each client names its own destination, which the
+				// SSH server dials on its behalf.
+				dest, err := readSocks5Request(c)
+				if err != nil {
+					return
+				}
+				target, err := client.Dial("tcp", dest)
+				if err != nil {
+					writeSocks5Reply(c, socks5GeneralFailure)
+					return
+				}
+				defer target.Close()
+				writeSocks5Reply(c, socks5Succeeded)
 				pipe(c, target)
 			}
 		}(conn)

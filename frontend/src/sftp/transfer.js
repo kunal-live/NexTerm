@@ -52,39 +52,3 @@ export async function triggerDownload(tabId, remotePath, destLocalPath, onComple
     showToast(`Download failed: ${err}`, "error");
   }
 }
-
-export async function selectAndUploadFile(tabId, destRemotePath, onComplete) {
-  const activeTab = tabId || getActiveTabId();
-  if (!activeTab || activeTab === "home") {
-    showToast("Please open an active SSH tab first", "warning");
-    return;
-  }
-
-  try {
-    if (window.go && window.go.main && window.go.main.App) {
-      const localFile = await window.go.main.App.SelectUploadFile();
-      if (!localFile) return;
-      await triggerUpload(activeTab, localFile, destRemotePath, onComplete);
-    }
-  } catch (err) {
-    showToast("File selection failed: " + err, "error");
-  }
-}
-
-export async function selectAndDownloadFile(tabId, item, onComplete) {
-  const activeTab = tabId || getActiveTabId();
-  if (!activeTab || activeTab === "home") {
-    showToast("Please open an active SSH tab first", "warning");
-    return;
-  }
-
-  try {
-    if (window.go && window.go.main && window.go.main.App) {
-      const dest = await window.go.main.App.SelectDownloadDest(item.name);
-      if (!dest) return;
-      await triggerDownload(activeTab, item.path, dest, onComplete);
-    }
-  } catch (err) {
-    showToast("Download selection failed: " + err, "error");
-  }
-}

@@ -57,6 +57,9 @@ func Start(commandLine string, cols, rows int) (*Terminal, error) {
 		pid:  cmd.Process.Pid,
 	}
 
+	// Reap the shell when it exits so it doesn't linger as a zombie.
+	go func() { _ = cmd.Wait() }()
+
 	return term, nil
 }
 

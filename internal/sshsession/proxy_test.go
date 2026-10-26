@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -226,7 +227,7 @@ func setupMockSOCKS4Proxy(t *testing.T) (string, func()) {
 					}
 				}
 
-				targetAddr := fmt.Sprintf("%s:%d", ip.String(), port)
+				targetAddr := net.JoinHostPort(ip.String(), strconv.Itoa(port))
 				targetConn, err := net.DialTimeout("tcp", targetAddr, 2*time.Second)
 				if err != nil {
 					_, _ = c.Write([]byte{0x00, 0x5b, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00})

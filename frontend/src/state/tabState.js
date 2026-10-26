@@ -54,24 +54,8 @@ export function getAllTabs() {
   });
 }
 
-export function getTab(tabId) {
-  const t = tabs[tabId] || null;
-  if (t && !t.id) t.id = tabId;
-  return t;
-}
-
-export function setTab(tabId, tabObj) {
-  if (tabObj && !tabObj.id) tabObj.id = tabId;
-  tabs[tabId] = tabObj;
-  return tabObj;
-}
-
 export function deleteTab(tabId) {
   delete tabs[tabId];
-}
-
-export function hasTab(tabId) {
-  return !!tabs[tabId];
 }
 
 export function findTabBySessionId(sessionId) {
@@ -82,10 +66,6 @@ export function findTabBySessionId(sessionId) {
     }
   }
   return null;
-}
-
-export function getTabCount() {
-  return Object.keys(tabs).length;
 }
 
 export function getActiveTabId() {

@@ -7,7 +7,7 @@
 
 import { tabs, activeTabId } from '../state/tabState.js';
 import { showModal, hideModal } from '../ui/modal.js';
-import { showToast } from '../ui/notifications.js';
+import { showToast, escapeHtml } from '../ui/notifications.js';
 
 let monitorState = {
   open: false,
@@ -107,7 +107,7 @@ export function closeServerMonitor() {
 function renderShell() {
   const conn = connectedSSHTabs();
   const options = conn.map(s =>
-    `<option value="${s.id}" ${s.id === monitorState.tabId ? 'selected' : ''}>${escape(s.name)} (${escape(s.host)})</option>`
+    `<option value="${s.id}" ${s.id === monitorState.tabId ? 'selected' : ''}>${escapeHtml(s.name)} (${escapeHtml(s.host)})</option>`
   ).join('');
 
   return `
@@ -315,10 +315,10 @@ async function fetchProcesses() {
   el.innerHTML = `<div class="mon-row mon-row-hdr"><div class="mon-row-main">PID · User · Command</div><div class="mon-row-side">CPU / MEM</div></div>` +
     procs.map(p => `
       <div class="mon-row">
-        <div class="mon-row-main"><strong>${escape(p.pid)}</strong> <span class="mon-dim">${escape(p.user)}</span> ${escape(p.cmd)}</div>
+        <div class="mon-row-main"><strong>${escapeHtml(p.pid)}</strong> <span class="mon-dim">${escapeHtml(p.user)}</span> ${escapeHtml(p.cmd)}</div>
         <div class="mon-row-side">
-          <span class="mon-metric">${escape(p.cpu)}% / ${escape(p.mem)}%</span>
-          <button class="mon-act-btn danger" data-killproc="${escape(p.pid)}" data-name="${escape(p.cmd)}" title="Kill this process">Kill</button>
+          <span class="mon-metric">${escapeHtml(p.cpu)}% / ${escapeHtml(p.mem)}%</span>
+          <button class="mon-act-btn danger" data-killproc="${escapeHtml(p.pid)}" data-name="${escapeHtml(p.cmd)}" title="Kill this process">Kill</button>
         </div>
       </div>`).join('');
   el.querySelectorAll('[data-killproc]').forEach(b => {
@@ -353,12 +353,12 @@ async function fetchServices() {
     const running = s.active === 'active';
     const dot = running ? '#22c55e' : (s.active === 'failed' ? '#ef4444' : '#94a3b8');
     return `<div class="mon-row">
-      <div class="mon-row-main"><span class="mon-status-dot" style="background:${dot};"></span><strong>${escape(s.unit.replace('.service', ''))}</strong> <span class="mon-dim">${escape(s.active)}/${escape(s.sub)}</span></div>
+      <div class="mon-row-main"><span class="mon-status-dot" style="background:${dot};"></span><strong>${escapeHtml(s.unit.replace('.service', ''))}</strong> <span class="mon-dim">${escapeHtml(s.active)}/${escapeHtml(s.sub)}</span></div>
       <div class="mon-row-side">
-        <button class="mon-act-btn" data-svc="${escape(s.unit)}" data-op="restart" title="Restart">Restart</button>
+        <button class="mon-act-btn" data-svc="${escapeHtml(s.unit)}" data-op="restart" title="Restart">Restart</button>
         ${running
-          ? `<button class="mon-act-btn danger" data-svc="${escape(s.unit)}" data-op="stop" title="Stop">Stop</button>`
-          : `<button class="mon-act-btn" data-svc="${escape(s.unit)}" data-op="start" title="Start">Start</button>`}
+          ? `<button class="mon-act-btn danger" data-svc="${escapeHtml(s.unit)}" data-op="stop" title="Stop">Stop</button>`
+          : `<button class="mon-act-btn" data-svc="${escapeHtml(s.unit)}" data-op="start" title="Start">Start</button>`}
       </div>
     </div>`;
   }).join('');
@@ -385,7 +385,7 @@ async function fetchDocker() {
   let out = '';
   try { out = await window.go.main.App.RunSSHCommand(monitorState.tabId, cmd); } catch (e) { return; }
   if (/command not found|permission denied|Cannot connect to the Docker daemon/i.test(out)) {
-    el.innerHTML = `<div class="mon-empty">Docker not available on this host (${escape(out.split('\n')[0] || '')})</div>`;
+    el.innerHTML = `<div class="mon-empty">Docker not available on this host (${escapeHtml(out.split('\n')[0] || '')})</div>`;
     setText('monDockerCount', '0');
     return;
   }
@@ -399,11 +399,11 @@ async function fetchDocker() {
     const running = /running|up/i.test(c.state) || /^Up/i.test(c.status);
     const dot = running ? '#22c55e' : '#94a3b8';
     return `<div class="mon-row">
-      <div class="mon-row-main"><span class="mon-status-dot" style="background:${dot};"></span><strong>${escape(c.name)}</strong> <span class="mon-dim">${escape(c.image)}</span> <span class="mon-dim">${escape(c.status)}</span></div>
+      <div class="mon-row-main"><span class="mon-status-dot" style="background:${dot};"></span><strong>${escapeHtml(c.name)}</strong> <span class="mon-dim">${escapeHtml(c.image)}</span> <span class="mon-dim">${escapeHtml(c.status)}</span></div>
       <div class="mon-row-side">
-        <button class="mon-act-btn" data-dockerlogs="${escape(c.id)}" data-name="${escape(c.name)}" title="View recent logs">Logs</button>
-        <button class="mon-act-btn" data-dockerrestart="${escape(c.id)}" data-name="${escape(c.name)}" title="Restart container">Restart</button>
-        ${running ? `<button class="mon-act-btn danger" data-dockerstop="${escape(c.id)}" data-name="${escape(c.name)}" title="Stop container">Stop</button>` : ''}
+        <button class="mon-act-btn" data-dockerlogs="${escapeHtml(c.id)}" data-name="${escapeHtml(c.name)}" title="View recent logs">Logs</button>
+        <button class="mon-act-btn" data-dockerrestart="${escapeHtml(c.id)}" data-name="${escapeHtml(c.name)}" title="Restart container">Restart</button>
+        ${running ? `<button class="mon-act-btn danger" data-dockerstop="${escapeHtml(c.id)}" data-name="${escapeHtml(c.name)}" title="Stop container">Stop</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -431,10 +431,10 @@ async function dockerLogs(id, name) {
     showModal(`
       <div class="broadcast-modal-card bcast-large-modal mon-modal">
         <div class="broadcast-header">
-          <div class="broadcast-title-row"><span class="broadcast-icon">🐳</span><div><h3>Logs: ${escape(name)}</h3><p class="broadcast-subtitle">Last 200 lines</p></div></div>
+          <div class="broadcast-title-row"><span class="broadcast-icon">🐳</span><div><h3>Logs: ${escapeHtml(name)}</h3><p class="broadcast-subtitle">Last 200 lines</p></div></div>
           <button id="monLogsClose" class="broadcast-close-btn">✕</button>
         </div>
-        <div class="broadcast-body"><pre class="mon-logs">${escape(out || '(empty)')}</pre></div>
+        <div class="broadcast-body"><pre class="mon-logs">${escapeHtml(out || '(empty)')}</pre></div>
       </div>`, 'modal-plain');
     const c = document.getElementById('monLogsClose');
     if (c) c.onclick = () => reopenMonitor('docker');
@@ -589,9 +589,9 @@ function renderUsers(users) {
   if (!users.length) { el.innerHTML = '<div class="mon-empty">No interactive users</div>'; return; }
   el.innerHTML = users.map(u => `
     <div class="mon-row">
-      <div class="mon-row-main"><strong>${escape(u.user)}</strong> <span class="mon-dim">${escape(u.tty)}</span>${u.from ? ` <span class="mon-dim">from ${escape(u.from)}</span>` : ''}</div>
-      <div class="mon-row-side"><span class="mon-dim">${escape(u.since)}</span>
-        <button class="mon-act-btn danger" data-kick="${escape(u.tty)}" data-user="${escape(u.user)}" title="Disconnect this login session">Disconnect</button>
+      <div class="mon-row-main"><strong>${escapeHtml(u.user)}</strong> <span class="mon-dim">${escapeHtml(u.tty)}</span>${u.from ? ` <span class="mon-dim">from ${escapeHtml(u.from)}</span>` : ''}</div>
+      <div class="mon-row-side"><span class="mon-dim">${escapeHtml(u.since)}</span>
+        <button class="mon-act-btn danger" data-kick="${escapeHtml(u.tty)}" data-user="${escapeHtml(u.user)}" title="Disconnect this login session">Disconnect</button>
       </div>
     </div>`).join('');
   el.querySelectorAll('[data-kick]').forEach(b => {
@@ -607,9 +607,9 @@ function renderPorts(ports) {
   if (!ports.length) { el.innerHTML = '<div class="mon-empty">No listening ports detected (may need root)</div>'; return; }
   el.innerHTML = ports.map(p => `
     <div class="mon-row">
-      <div class="mon-row-main"><strong>${escape(p.port)}</strong>/<span class="mon-dim">${escape(p.proto)}</span> ${p.proc ? `<span class="mon-tag">${escape(p.proc)}</span>` : ''}${p.pid ? ` <span class="mon-dim">pid ${escape(p.pid)}</span>` : ''}</div>
+      <div class="mon-row-main"><strong>${escapeHtml(p.port)}</strong>/<span class="mon-dim">${escapeHtml(p.proto)}</span> ${p.proc ? `<span class="mon-tag">${escapeHtml(p.proc)}</span>` : ''}${p.pid ? ` <span class="mon-dim">pid ${escapeHtml(p.pid)}</span>` : ''}</div>
       <div class="mon-row-side">
-        ${p.pid ? `<button class="mon-act-btn danger" data-killpid="${escape(p.pid)}" data-port="${escape(p.port)}" title="Kill the process holding this port">Close Port</button>` : '<span class="mon-dim">—</span>'}
+        ${p.pid ? `<button class="mon-act-btn danger" data-killpid="${escapeHtml(p.pid)}" data-port="${escapeHtml(p.port)}" title="Kill the process holding this port">Close Port</button>` : '<span class="mon-dim">—</span>'}
       </div>
     </div>`).join('');
   el.querySelectorAll('[data-killpid]').forEach(b => {
@@ -625,10 +625,10 @@ function renderDisks(disks) {
     const pct = parseInt(d.pct, 10) || 0;
     const col = pct >= 90 ? '#ef4444' : pct >= 75 ? '#f59e0b' : '#22c55e';
     return `<div class="mon-row">
-      <div class="mon-row-main"><strong>${escape(d.mount)}</strong> <span class="mon-dim">${escape(d.used)}/${escape(d.size)}</span></div>
+      <div class="mon-row-main"><strong>${escapeHtml(d.mount)}</strong> <span class="mon-dim">${escapeHtml(d.used)}/${escapeHtml(d.size)}</span></div>
       <div class="mon-row-side" style="flex:1; max-width:220px;">
         <div class="mon-bar"><div class="mon-bar-fill" style="width:${pct}%; background:${col};"></div></div>
-        <span class="mon-dim">${escape(d.pct)}</span>
+        <span class="mon-dim">${escapeHtml(d.pct)}</span>
       </div>
     </div>`;
   }).join('');
@@ -719,6 +719,3 @@ function fmtRate(bps) {
   return Math.round(bps) + ' B/s';
 }
 function setText(id, txt) { const el = document.getElementById(id); if (el) el.textContent = txt; }
-function escape(s) {
-  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}

@@ -8,6 +8,7 @@
 import { rootNode } from '../state/sessionState.js';
 import { tabs } from '../state/tabState.js';
 import { connectToSession } from '../terminal/terminalManager.js';
+import { escapeHtml } from '../ui/notifications.js';
 
 let probeInterval = null;
 let isProbing = false;
@@ -34,16 +35,6 @@ export function getAllSavedServers() {
   }
   walk(rootNode);
   return result;
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }
 
 /** Render and probe reachability for all saved servers. */

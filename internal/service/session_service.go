@@ -383,22 +383,8 @@ func (s *SessionService) DuplicateSession(id string) (*model.TreeNode, error) {
 	if parent == nil {
 		parent = s.root
 	}
-	cloneProfile := *node.Session
-	oldVaultKey := cloneProfile.VaultKey
-	cloneProfile.ID = uuid.NewString()
-	cloneProfile.VaultKey = cloneProfile.ID
+	cloneProfile := s.cloneSessionProfile(*node.Session)
 	cloneProfile.Name = cloneProfile.Name + " (Copy)"
-
-	// Duplicate password & passphrase in vault if present
-	if oldVaultKey != "" && s.vaultLoad != nil && s.vaultSave != nil {
-		if pwd, ok, err := s.vaultLoad(oldVaultKey); err == nil && ok && pwd != "" {
-			_ = s.vaultSave(cloneProfile.VaultKey, pwd)
-		}
-		if pass, ok, err := s.vaultLoad(oldVaultKey + "_passphrase"); err == nil && ok && pass != "" {
-			_ = s.vaultSave(cloneProfile.VaultKey+"_passphrase", pass)
-			cloneProfile.PassphraseVaultKey = cloneProfile.VaultKey + "_passphrase"
-		}
-	}
 
 	newNode := &model.TreeNode{
 		ID:      uuid.NewString(),
@@ -434,24 +420,19 @@ func (s *SessionService) cloneFolderRecursive(src *model.TreeNode) *model.TreeNo
 		return nil
 	}
 	clone := &model.TreeNode{
-		ID:       uuid.NewString(),
-		Name:     src.Name,
-		Expanded: src.Expanded,
-		Children: make([]*model.TreeNode, 0, len(src.Children)),
+		ID:              uuid.NewString(),
+		Name:            src.Name,
+		Expanded:        src.Expanded,
+		Children:        make([]*model.TreeNode, 0, len(src.Children)),
+		DefaultUsername: src.DefaultUsername,
+		DefaultPort:     src.DefaultPort,
+		Environment:     src.Environment,
+		Color:           src.Color,
 	}
 
 	if src.Session != nil {
-		profCopy := *src.Session
-		oldVaultKey := profCopy.VaultKey
-		profCopy.ID = uuid.NewString()
-		profCopy.VaultKey = profCopy.ID
+		profCopy := s.cloneSessionProfile(*src.Session)
 		clone.Session = &profCopy
-
-		if oldVaultKey != "" && s.vaultLoad != nil && s.vaultSave != nil {
-			if pwd, ok, err := s.vaultLoad(oldVaultKey); err == nil && ok && pwd != "" {
-				_ = s.vaultSave(profCopy.VaultKey, pwd)
-			}
-		}
 	}
 
 	for _, child := range src.Children {
@@ -461,6 +442,56 @@ func (s *SessionService) cloneFolderRecursive(src *model.TreeNode) *model.TreeNo
 		}
 	}
 	return clone
+}
+
+// cloneSessionProfile copies a profile under a fresh ID and gives the copy its own
+// vault entries (password, key passphrase, proxy password). Sharing the original's
+// keys would mean deleting either session wipes the other's credentials.
+func (s *SessionService) cloneSessionProfile(src model.SessionProfile) model.SessionProfile {
+	dst := src
+	dst.ID = uuid.NewString()
+	dst.VaultKey = dst.ID
+	dst.PassphraseVaultKey = ""
+	dst.ProxyVaultKey = ""
+	if src.AnsiColors != nil {
+		dst.AnsiColors = make(map[string]string, len(src.AnsiColors))
+		for k, v := range src.AnsiColors {
+			dst.AnsiColors[k] = v
+		}
+	}
+	if src.RDPRedirectClipboard != nil {
+		v := *src.RDPRedirectClipboard
+		dst.RDPRedirectClipboard = &v
+	}
+
+	if src.VaultKey == "" || s.vaultLoad == nil || s.vaultSave == nil {
+		return dst
+	}
+	copySecret := func(from, to string) bool {
+		if v, ok, err := s.vaultLoad(from); err == nil && ok && v != "" {
+			return s.vaultSave(to, v) == nil
+		}
+		return false
+	}
+
+	copySecret(src.VaultKey, dst.VaultKey)
+
+	passKey := src.PassphraseVaultKey
+	if passKey == "" {
+		passKey = src.VaultKey + "_passphrase"
+	}
+	if copySecret(passKey, dst.VaultKey+"_passphrase") {
+		dst.PassphraseVaultKey = dst.VaultKey + "_passphrase"
+	}
+
+	proxyKey := src.ProxyVaultKey
+	if proxyKey == "" {
+		proxyKey = src.VaultKey + "_proxy"
+	}
+	if copySecret(proxyKey, dst.VaultKey+"_proxy") {
+		dst.ProxyVaultKey = dst.VaultKey + "_proxy"
+	}
+	return dst
 }
 
 // ExpandAllFolders expands or collapses all folders in the session tree.
@@ -687,7 +718,10 @@ func ValidateAndNormalizeTree(imported *model.TreeNode) (*model.TreeNode, error)
 	return imported, nil
 }
 
-// ImportSessions validates, normalizes and restores session tree from a JSON string (GAP-15).
+// ImportSessions validates, normalizes and merges a session tree from a JSON string
+// into the current tree (GAP-15). Top-level folders merge with existing folders of
+// the same name, and sessions whose ID already exists are skipped, so re-importing
+// an export does not duplicate anything and never discards existing sessions.
 func (s *SessionService) ImportSessions(jsonContent string) (*model.TreeNode, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -696,14 +730,97 @@ func (s *SessionService) ImportSessions(jsonContent string) (*model.TreeNode, er
 	if err := json.Unmarshal([]byte(jsonContent), &imported); err != nil {
 		return s.root, fmt.Errorf("invalid session JSON: %w", err)
 	}
+	// Accept the versioned sessions.json envelope ({"version":1,"root":{...}}) too.
+	if imported.ID == "" && len(imported.Children) == 0 && imported.Session == nil {
+		var envelope store.PersistedSessions
+		if err := json.Unmarshal([]byte(jsonContent), &envelope); err == nil && envelope.Root != nil {
+			imported = *envelope.Root
+		}
+	}
 
 	validated, err := ValidateAndNormalizeTree(&imported)
 	if err != nil {
 		return s.root, fmt.Errorf("session validation failed: %w", err)
 	}
 
-	s.root = validated
+	if s.root == nil {
+		s.root = validated
+		return s.root, s.saveTree()
+	}
+
+	existingIDs := make(map[string]bool)
+	var collect func(n *model.TreeNode)
+	collect = func(n *model.TreeNode) {
+		if n == nil {
+			return
+		}
+		existingIDs[n.ID] = true
+		if n.Session != nil {
+			existingIDs[n.Session.ID] = true
+		}
+		for _, c := range n.Children {
+			collect(c)
+		}
+	}
+	collect(s.root)
+
+	var children []*model.TreeNode
+	if validated.Session != nil {
+		children = []*model.TreeNode{validated} // a single exported session
+	} else {
+		children = validated.Children
+	}
+	mergeImportedChildren(s.root, children, existingIDs)
 	return s.root, s.saveTree()
+}
+
+// mergeImportedChildren adds imported nodes under parent: folders merge into an
+// existing folder with the same name, sessions already present (same session ID)
+// are skipped, and node IDs that clash with existing ones are regenerated.
+func mergeImportedChildren(parent *model.TreeNode, imported []*model.TreeNode, existingIDs map[string]bool) {
+	for _, n := range imported {
+		if n == nil {
+			continue
+		}
+		if n.Session != nil {
+			if existingIDs[n.Session.ID] {
+				continue
+			}
+			if existingIDs[n.ID] {
+				n.ID = uuid.NewString()
+			}
+			existingIDs[n.ID] = true
+			existingIDs[n.Session.ID] = true
+			parent.Children = append(parent.Children, n)
+			continue
+		}
+
+		var target *model.TreeNode
+		for _, c := range parent.Children {
+			if c.Session == nil && strings.EqualFold(c.Name, n.Name) {
+				target = c
+				break
+			}
+		}
+		if target == nil {
+			target = &model.TreeNode{
+				ID:              n.ID,
+				Name:            n.Name,
+				Expanded:        n.Expanded,
+				Children:        []*model.TreeNode{},
+				DefaultUsername: n.DefaultUsername,
+				DefaultPort:     n.DefaultPort,
+				Environment:     n.Environment,
+				Color:           n.Color,
+			}
+			if target.ID == "" || existingIDs[target.ID] {
+				target.ID = uuid.NewString()
+			}
+			existingIDs[target.ID] = true
+			parent.Children = append(parent.Children, target)
+		}
+		mergeImportedChildren(target, n.Children, existingIDs)
+	}
 }
 
 // FindNode locates a node by ID.

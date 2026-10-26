@@ -30,8 +30,8 @@ export async function checkForUpdates(interactive = false) {
       showUpdateDialog(info);
     } else {
       if (interactive) {
-        const curVer = info ? info.currentVersion : "1.3.0";
-        showToast(`NexTerm is up to date (v${curVer})`, "success");
+        const curVer = info ? info.currentVersion : "";
+        showToast(`NexTerm is up to date${curVer ? ` (v${curVer})` : ""}`, "success");
       }
     }
   } catch (err) {

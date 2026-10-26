@@ -87,10 +87,14 @@ func TestAppInitializationAndServices(t *testing.T) {
 		t.Fatalf("expected log entries from session activity")
 	}
 
-	// Serial ports via App facade
-	ports := app.GetAvailableSerialPorts()
-	if len(ports) != 32 {
-		t.Fatalf("expected 32 serial ports, got %d", len(ports))
+	// Serial ports via App facade: only ports really present on this machine,
+	// so the count depends on the hardware, but entries must be real names.
+	seen := map[string]bool{}
+	for _, p := range app.GetAvailableSerialPorts() {
+		if p == "" || seen[p] {
+			t.Fatalf("serial port list has an empty or duplicate entry: %q", p)
+		}
+		seen[p] = true
 	}
 }
 

@@ -32,6 +32,8 @@ type ConnectionManager struct {
 	pendingChallenges   map[string]chan authChallengeResponse
 	pendingSizes        map[string][2]int
 	connecting          map[string]bool
+	connectAttempts     map[string]uint64 // latest OpenSession attempt per tab; cleared by CloseSession
+	connectSeq          uint64
 	onSessionClosed     func(tabID string)
 	activeBroadcastsMu  sync.Mutex
 	activeBroadcasts    map[string]context.CancelFunc
@@ -46,6 +48,7 @@ func NewConnectionManager(credService *CredentialService, hostKeyService *HostKe
 		sessions:          make(map[string]protocol.ProtocolSession),
 		pendingSizes:      make(map[string][2]int),
 		connecting:        make(map[string]bool),
+		connectAttempts:   make(map[string]uint64),
 		credService:       credService,
 		hostKeyService:    hostKeyService,
 		logService:        logService,
@@ -77,12 +80,22 @@ func (cm *ConnectionManager) OpenSession(ctx context.Context, tabID string, prof
 	if cm.connecting == nil {
 		cm.connecting = make(map[string]bool)
 	}
+	if cm.connectAttempts == nil {
+		cm.connectAttempts = make(map[string]uint64)
+	}
 	cm.connecting[tabID] = true
+	cm.connectSeq++
+	attempt := cm.connectSeq
+	cm.connectAttempts[tabID] = attempt
 	cm.mu.Unlock()
 
 	defer func() {
 		cm.mu.Lock()
-		delete(cm.connecting, tabID)
+		// A newer OpenSession on the same tab owns the markers now.
+		if cm.connectAttempts[tabID] == attempt {
+			delete(cm.connecting, tabID)
+			delete(cm.connectAttempts, tabID)
+		}
 		cm.mu.Unlock()
 	}()
 
@@ -127,6 +140,22 @@ func (cm *ConnectionManager) OpenSession(ctx context.Context, tabID string, prof
 	})
 
 	session.SetDisconnectHandler(func(reason string, err error) {
+		cm.mu.Lock()
+		current, registered := cm.sessions[tabID]
+		inFlight, hasInFlight := cm.connectAttempts[tabID]
+		if (registered && current != session) || (!registered && hasInFlight && inFlight != attempt) {
+			// A reconnect already replaced (or is replacing) this session on the
+			// tab; a late disconnect from the old one must not tear down the new one.
+			cm.mu.Unlock()
+			return
+		}
+		delete(cm.sessions, tabID)
+		if cm.pendingSizes != nil {
+			delete(cm.pendingSizes, tabID)
+		}
+		hook := cm.onSessionClosed
+		cm.mu.Unlock()
+
 		classified := sshsession.ClassifyError(err)
 		cm.emitter.Emit("terminal:closed:"+tabID, map[string]interface{}{
 			"reason":      reason,
@@ -139,14 +168,6 @@ func (cm *ConnectionManager) OpenSession(ctx context.Context, tabID string, prof
 			"message": reason,
 			"error":   classified,
 		})
-
-		cm.mu.Lock()
-		delete(cm.sessions, tabID)
-		if cm.pendingSizes != nil {
-			delete(cm.pendingSizes, tabID)
-		}
-		hook := cm.onSessionClosed
-		cm.mu.Unlock()
 
 		if cm.logService != nil {
 			cm.logService.LogSessionEvent(tabID, "disconnected", reason)
@@ -176,6 +197,13 @@ func (cm *ConnectionManager) OpenSession(ctx context.Context, tabID string, prof
 	}
 
 	cm.mu.Lock()
+	if cm.connectAttempts[tabID] != attempt {
+		// The tab was closed (or reconnected) while this attempt was still
+		// connecting; don't leave an orphaned live connection behind.
+		cm.mu.Unlock()
+		_ = session.Disconnect()
+		return fmt.Errorf("connection to %s was cancelled", profile.Host)
+	}
 	cm.sessions[tabID] = session
 	var pending [2]int
 	hasPending := false
@@ -467,6 +495,8 @@ func (cm *ConnectionManager) CloseSession(tabID string) error {
 	if cm.connecting != nil {
 		delete(cm.connecting, tabID)
 	}
+	// Cancels any OpenSession still in flight for this tab.
+	delete(cm.connectAttempts, tabID)
 	if cm.pendingSizes != nil {
 		delete(cm.pendingSizes, tabID)
 	}
