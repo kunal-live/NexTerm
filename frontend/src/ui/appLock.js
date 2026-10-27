@@ -209,6 +209,9 @@ export async function lockNow() {
   injectStyles();
   locked = true;
   if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+  if (window.go?.main?.App?.LockApp) {
+    try { await window.go.main.App.LockApp(); } catch (_) {}
+  }
 
   let countdownInterval = null;
 

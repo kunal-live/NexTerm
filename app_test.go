@@ -2,14 +2,16 @@ package main
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
 	"nexterm/internal/model"
 	"nexterm/internal/security"
 	"nexterm/internal/service"
 	"nexterm/internal/store"
 	"nexterm/internal/vault"
-	"path/filepath"
-	"strings"
-	"testing"
 )
 
 func createTestApp(t *testing.T) *App {
@@ -398,6 +400,174 @@ func TestAppLockoutAndReset(t *testing.T) {
 	hasMaster, _ := app.HasMasterPassword()
 	if hasMaster {
 		t.Errorf("expected HasMasterPassword=false after ResetAllData")
+	}
+}
+
+func TestRedactLogData_FalsePositivesAndKnownCommands(t *testing.T) {
+	// 1. False positive cases that must NOT be mangled by redaction
+	falsePositiveCases := []string{
+		"mkdir -p /var/app/logs",
+		"ls -print",
+		"grep -pattern",
+		`find . -name "*.log" -print`,
+		"ssh -p 2222 user@remote",
+		"docker run -d -p 8080:80 nginx:latest",
+		"The token expired at midnight",
+		"password change notification sent to user",
+		"tar -czf archive.tar.gz -C /opt .",
+	}
+
+	for _, input := range falsePositiveCases {
+		redacted := redactLogData(input)
+		if redacted != input {
+			t.Errorf("false positive mangled: input %q became %q", input, redacted)
+		}
+	}
+
+	// 2. Legitimate secret patterns that MUST be redacted
+	truePositiveCases := []struct {
+		input       string
+		expectedSub string
+	}{
+		{"mysql -u root -pSuperSecret123 mydb", "mysql -u root -p[REDACTED] mydb"},
+		{"mysqldump -h localhost -pAdminPass456 database", "mysqldump -h localhost -p[REDACTED] database"},
+		{"sshpass -p hunter2 ssh user@host", "sshpass -p [REDACTED] ssh user@host"},
+		{"curl -u admin --password=mySecretPass https://example.com", "--password=[REDACTED]"},
+		{"curl -u admin --password mySecretPass https://example.com", "--password [REDACTED]"},
+		{"export api_key: secret-key-xyz123", "api_key: [REDACTED]"},
+		{"token: mySecretTokenAbc", "token: [REDACTED]"},
+		{"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6", "Bearer [REDACTED]"},
+	}
+
+	for _, tc := range truePositiveCases {
+		redacted := redactLogData(tc.input)
+		if !strings.Contains(redacted, "[REDACTED]") {
+			t.Errorf("expected redaction for input %q, got %q", tc.input, redacted)
+		}
+		if !strings.Contains(redacted, tc.expectedSub) {
+			t.Errorf("expected output to contain %q, got %q", tc.expectedSub, redacted)
+		}
+	}
+}
+
+func TestAppLockEnforcement_RefusesSecretsWhenLocked(t *testing.T) {
+	app := createTestApp(t)
+
+	// Set master password and save a test credential
+	masterPass := "SecretMasterKey1!"
+	if err := app.SetMasterPassword(masterPass, "test hint"); err != nil {
+		t.Fatalf("SetMasterPassword failed: %v", err)
+	}
+
+	vaultKey := "session_vault_test_1"
+	secretPass := "SuperSecretPassword123"
+	if err := app.SaveSessionPassword(vaultKey, secretPass); err != nil {
+		t.Fatalf("SaveSessionPassword failed: %v", err)
+	}
+
+	// Lock the backend application
+	if err := app.LockApp(); err != nil {
+		t.Fatalf("LockApp failed: %v", err)
+	}
+	if !app.IsAppLocked() {
+		t.Fatalf("expected app to report locked, got false")
+	}
+
+	// Backend MUST refuse to hand out secrets while locked
+	if _, err := app.GetSessionPassword(vaultKey); err == nil {
+		t.Errorf("expected GetSessionPassword to fail while app is locked")
+	}
+	if _, err := app.GetSessionPassphrase(vaultKey); err == nil {
+		t.Errorf("expected GetSessionPassphrase to fail while app is locked")
+	}
+	if _, err := app.GetSavedPasswords(); err == nil {
+		t.Errorf("expected GetSavedPasswords to fail while app is locked")
+	}
+	if _, err := app.FindSessionPassword(vaultKey, "192.168.1.1", 22, "admin"); err == nil {
+		t.Errorf("expected FindSessionPassword to fail while app is locked")
+	}
+
+	// Unlock with master password
+	ok, err := app.VerifyMasterPassword(masterPass)
+	if err != nil || !ok {
+		t.Fatalf("VerifyMasterPassword failed: ok=%v, err=%v", ok, err)
+	}
+	if app.IsAppLocked() {
+		t.Fatalf("expected app to be unlocked after valid master password")
+	}
+
+	// Backend now provides credentials
+	retrieved, err := app.GetSessionPassword(vaultKey)
+	if err != nil {
+		t.Fatalf("GetSessionPassword failed after unlock: %v", err)
+	}
+	if retrieved != secretPass {
+		t.Fatalf("expected %q, got %q", secretPass, retrieved)
+	}
+}
+
+func TestPolicyChecks_DangerousCommandsBlocked(t *testing.T) {
+	app := createTestApp(t)
+
+	// Enable policy to block dangerous commands
+	pol := app.GetSecurityPolicy()
+	pol.DisableDangerousCommands = true
+	if err := app.SaveSecurityPolicy(pol); err != nil {
+		t.Fatalf("SaveSecurityPolicy failed: %v", err)
+	}
+
+	// Dangerous commands should be rejected by BroadcastCommand, BroadcastRaw, and ExecuteMulti
+	dangerousCmd := "rm -rf /"
+	if _, err := app.BroadcastCommand([]string{}, dangerousCmd, "parallel"); err == nil {
+		t.Errorf("expected BroadcastCommand to block %q under policy", dangerousCmd)
+	}
+	if err := app.BroadcastRaw(dangerousCmd); err == nil {
+		t.Errorf("expected BroadcastRaw to block %q under policy", dangerousCmd)
+	}
+	if err := app.ExecuteMulti([]string{"tab-1"}, dangerousCmd); err == nil {
+		t.Errorf("expected ExecuteMulti to block %q under policy", dangerousCmd)
+	}
+
+	// Safe command should not be blocked by the dangerous command filter
+	safeCmd := "ls -la"
+	if err := app.settingsService.CheckCommand(safeCmd); err != nil {
+		t.Errorf("expected safe command %q to be allowed, got error: %v", safeCmd, err)
+	}
+}
+
+func TestSessionLog_CleanupOnCloseTab(t *testing.T) {
+	app := createTestApp(t)
+
+	tabID := "test-tab-cleanup-1"
+	logPath, err := app.AppendSessionLog(tabID, "Production-DB", "Connected to DB\nmysql -u root -pSecr3t db\n")
+	if err != nil {
+		t.Fatalf("AppendSessionLog failed: %v", err)
+	}
+	if logPath == "" {
+		t.Fatalf("expected non-empty log file path")
+	}
+
+	// Verify log file was written and redacted on disk
+	content, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("failed to read log file: %v", err)
+	}
+	if strings.Contains(string(content), "Secr3t") {
+		t.Errorf("password was not redacted in persisted session log")
+	}
+	if !strings.Contains(string(content), "-p[REDACTED]") {
+		t.Errorf("expected redacted password in log, got: %s", string(content))
+	}
+
+	// Closing the tab should flush and close the log file handle
+	if err := app.CloseTab(tabID); err != nil {
+		t.Fatalf("CloseTab failed: %v", err)
+	}
+
+	// Calling StopSessionLog on the closed tab should return empty string (already cleanly stopped)
+	stoppedPath := app.StopSessionLog(tabID)
+	if stoppedPath != "" {
+		t.Errorf("expected StopSessionLog to return empty string after CloseTab, got %q", stoppedPath)
 	}
 }
 

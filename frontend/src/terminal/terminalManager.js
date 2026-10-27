@@ -373,8 +373,6 @@ export async function executeReconnectAttempt(tabId, attempt) {
     try {
       if (vKey && typeof window.go.main.App.GetSessionPassword === "function") {
         password = await window.go.main.App.GetSessionPassword(vKey);
-      } else if (vKey && typeof window.go.main.App.GetSavedPassword === "function") {
-        password = await window.go.main.App.GetSavedPassword(vKey);
       }
       if (!password && window.go.main.App.FindSessionPassword && profile.host && profile.username) {
         password = await window.go.main.App.FindSessionPassword(vKey || "", profile.host, profile.port || 22, profile.username);
@@ -1322,8 +1320,6 @@ export async function connectToSession(profile, forceNewTab = false) {
             if (hasSaved) {
               if (typeof window.go.main.App.GetSessionPassword === "function") {
                 password = await window.go.main.App.GetSessionPassword(vKey);
-              } else if (typeof window.go.main.App.GetSavedPassword === "function") {
-                password = await window.go.main.App.GetSavedPassword(vKey);
               }
             }
           }

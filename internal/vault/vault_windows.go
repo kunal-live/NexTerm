@@ -15,7 +15,7 @@ import (
 
 // Vault stores secrets (passwords, key passphrases) encrypted with Windows
 // DPAPI, scoped to the current Windows user profile (CryptProtectData).
-// Credentials are bound to the hardware and user account and never written in plaintext.
+// Credentials are encrypted with user-profile keys and never written in plaintext.
 type Vault struct {
 	dir string
 }

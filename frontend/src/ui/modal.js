@@ -120,8 +120,6 @@ export function promptPasswordDialog(profile) {
             if (detKey !== vKey) {
               await window.go.main.App.SaveSessionPassword(detKey, val);
             }
-          } else if (typeof window.go.main.App.SavePassword === "function") {
-            await window.go.main.App.SavePassword(vKey, val);
           }
         } catch (err) {
           console.warn("Save password to vault failed:", err);
@@ -245,8 +243,6 @@ export function promptPassphraseDialog(profile) {
         try {
           if (typeof window.go.main.App.SaveSessionPassword === "function") {
             await window.go.main.App.SaveSessionPassword(pvKey, val);
-          } else if (typeof window.go.main.App.SavePassword === "function") {
-            await window.go.main.App.SavePassword(pvKey, val);
           }
           if (profile.id && !profile.id.startsWith("quick-") && typeof window.go.main.App.UpdateSession === "function") {
             await window.go.main.App.UpdateSession(profile);
@@ -343,8 +339,6 @@ export function promptBastionSecretDialog({ gatewayLabel, vaultKey, isKey, keyPa
           const key = isKey ? vaultKey + "_passphrase" : vaultKey;
           if (typeof window.go.main.App.SaveSessionPassword === "function") {
             await window.go.main.App.SaveSessionPassword(key, val);
-          } else if (typeof window.go.main.App.SavePassword === "function") {
-            await window.go.main.App.SavePassword(key, val);
           }
         } catch (_) {}
       }

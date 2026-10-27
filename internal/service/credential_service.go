@@ -63,6 +63,7 @@ type CredentialService struct {
 	vault           *vault.Vault
 	treeProvider    func() *model.TreeNode
 	lockoutFilePath string
+	isLocked        bool
 
 	// Master password lockout
 	stage          int
@@ -85,6 +86,17 @@ func NewCredentialService(v *vault.Vault) *CredentialService {
 		appLockStage: 1,
 	}
 	cs.loadLockoutStateLocked()
+	if v != nil {
+		if hash, ok, _ := v.Load(vaultMasterHashKey); ok && strings.TrimSpace(hash) != "" {
+			cs.isLocked = true
+		}
+		if aHash, aOk, _ := v.Load(vaultAppLockHashKey); aOk && strings.TrimSpace(aHash) != "" {
+			enVal, eOk, _ := v.Load(vaultAppLockEnabledKey)
+			if !eOk || enVal == "true" {
+				cs.isLocked = true
+			}
+		}
+	}
 	return cs
 }
 
@@ -99,6 +111,17 @@ func (c *CredentialService) Vault() *vault.Vault {
 func (c *CredentialService) SetVault(v *vault.Vault) {
 	c.mu.Lock()
 	c.vault = v
+	if v != nil {
+		if hash, ok, _ := v.Load(vaultMasterHashKey); ok && strings.TrimSpace(hash) != "" {
+			c.isLocked = true
+		}
+		if aHash, aOk, _ := v.Load(vaultAppLockHashKey); aOk && strings.TrimSpace(aHash) != "" {
+			enVal, eOk, _ := v.Load(vaultAppLockEnabledKey)
+			if !eOk || enVal == "true" {
+				c.isLocked = true
+			}
+		}
+	}
 	c.mu.Unlock()
 }
 
@@ -320,6 +343,10 @@ func (c *CredentialService) GetSavedPasswords(root *model.TreeNode) ([]SavedCred
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
+	if c.isLocked {
+		return nil, fmt.Errorf("vault is locked: authentication required")
+	}
+
 	var list []SavedCredential
 	if c.vault == nil || root == nil {
 		return list, nil
@@ -386,11 +413,14 @@ func (c *CredentialService) DeleteSavedPassword(vaultKey string) error {
 	return c.vault.Delete(vaultKey)
 }
 
-// GetSessionPassword retrieves a stored password from the DPAPI vault for editing.
+// GetSessionPassword retrieves a stored password from the platform vault for editing.
 func (c *CredentialService) GetSessionPassword(vaultKey string) (string, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
+	if c.isLocked {
+		return "", fmt.Errorf("vault is locked: authentication required")
+	}
 	if c.vault == nil || vaultKey == "" {
 		return "", nil
 	}
@@ -406,6 +436,9 @@ func (c *CredentialService) GetSessionPassphrase(vaultKey string) (string, error
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
+	if c.isLocked {
+		return "", fmt.Errorf("vault is locked: authentication required")
+	}
 	if c.vault == nil || vaultKey == "" {
 		return "", nil
 	}
@@ -427,6 +460,10 @@ func (c *CredentialService) GetSessionPassphrase(vaultKey string) (string, error
 // host, port, and username matching across saved sessions and deterministic vault keys.
 func (c *CredentialService) FindSessionPassword(vaultKey, host string, port int, username string) (string, error) {
 	c.mu.RLock()
+	if c.isLocked {
+		c.mu.RUnlock()
+		return "", fmt.Errorf("vault is locked: authentication required")
+	}
 	treeFn := c.treeProvider
 	c.mu.RUnlock()
 
@@ -619,6 +656,7 @@ func (c *CredentialService) SetMasterPassword(password, hint string) error {
 	}
 
 	c.resetLockoutLocked()
+	c.isLocked = false
 	return nil
 }
 
@@ -657,8 +695,9 @@ func (c *CredentialService) VerifyMasterPassword(password string) (bool, error) 
 
 	err = bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(strings.TrimSpace(password)))
 	if err == nil {
-		// Password correct -> reset lockout state completely
+		// Password correct -> reset lockout state completely and unlock vault
 		c.resetLockoutLocked()
+		c.isLocked = false
 		return true, nil
 	}
 
@@ -837,6 +876,7 @@ func (c *CredentialService) RemoveMasterPassword(currentPassword string) error {
 	_ = c.vault.Delete(vaultMasterHintKey)
 	_ = c.vault.Delete(vaultMasterHistoryKey)
 	c.resetLockoutLocked()
+	c.isLocked = false
 	return nil
 }
 
@@ -853,6 +893,7 @@ func (c *CredentialService) ResetMasterPassword() error {
 	_ = c.vault.Delete(vaultMasterHintKey)
 	_ = c.vault.Delete(vaultMasterHistoryKey)
 	c.resetLockoutLocked()
+	c.isLocked = false
 	return nil
 }
 
@@ -1002,6 +1043,7 @@ func (c *CredentialService) SetAppPassword(password, hint string) error {
 	_ = c.vault.Save(vaultAppLockEnabledKey, "true")
 
 	c.resetAppLockoutLocked()
+	c.isLocked = false
 	return nil
 }
 
@@ -1031,6 +1073,7 @@ func (c *CredentialService) VerifyAppPassword(password string) (bool, error) {
 	err = bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(strings.TrimSpace(password)))
 	if err == nil {
 		c.resetAppLockoutLocked()
+		c.isLocked = false
 		return true, nil
 	}
 
@@ -1384,3 +1427,42 @@ func GenerateSecurePassword(length int, includeSymbols bool) string {
 
 	return string(buf)
 }
+
+// Lock marks the credential vault as locked, requiring master/app password verification.
+func (c *CredentialService) Lock() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.isLocked = true
+}
+
+// Unlock marks the credential vault as unlocked.
+func (c *CredentialService) Unlock() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.isLocked = false
+}
+
+// IsLocked reports whether the credential vault is currently locked.
+func (c *CredentialService) IsLocked() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	if c.vault == nil {
+		return false
+	}
+	hasMaster := false
+	if hash, ok, _ := c.vault.Load(vaultMasterHashKey); ok && strings.TrimSpace(hash) != "" {
+		hasMaster = true
+	}
+	hasApp := false
+	if aHash, aOk, _ := c.vault.Load(vaultAppLockHashKey); aOk && strings.TrimSpace(aHash) != "" {
+		enVal, eOk, _ := c.vault.Load(vaultAppLockEnabledKey)
+		if !eOk || enVal == "true" {
+			hasApp = true
+		}
+	}
+	if !hasMaster && !hasApp {
+		return false
+	}
+	return c.isLocked
+}
+

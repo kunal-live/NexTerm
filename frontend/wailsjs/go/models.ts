@@ -480,6 +480,7 @@ export namespace security {
 	    allowClipboardSharing: boolean;
 	    allowFileTransfers: boolean;
 	    requireAuditLog: boolean;
+	    disableDangerousCommands: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new SecurityPolicy(source);
@@ -497,6 +498,7 @@ export namespace security {
 	        this.allowClipboardSharing = source["allowClipboardSharing"];
 	        this.allowFileTransfers = source["allowFileTransfers"];
 	        this.requireAuditLog = source["requireAuditLog"];
+	        this.disableDangerousCommands = source["disableDangerousCommands"];
 	    }
 	}
 	export class CustomizerConfig {
@@ -1210,6 +1212,7 @@ export namespace tunnel {
 	    localPort: number;
 	    remoteHost?: string;
 	    remotePort?: number;
+	    allowRemoteHosts?: boolean;
 	    autoStart: boolean;
 	    status: string;
 	    errorMsg?: string;
@@ -1231,6 +1234,7 @@ export namespace tunnel {
 	        this.localPort = source["localPort"];
 	        this.remoteHost = source["remoteHost"];
 	        this.remotePort = source["remotePort"];
+	        this.allowRemoteHosts = source["allowRemoteHosts"];
 	        this.autoStart = source["autoStart"];
 	        this.status = source["status"];
 	        this.errorMsg = source["errorMsg"];

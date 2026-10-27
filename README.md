@@ -18,7 +18,7 @@
 [![Linux Download](https://img.shields.io/badge/Download-Linux_x64_%28.tar.gz%29-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-linux-x64.tar.gz)
 [![SHA256 Checksums](https://img.shields.io/badge/Checksums-SHA256SUMS-10b981?style=for-the-badge&logo=git&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/latest/download/SHA256SUMS)
 
-**NexTerm** is an all-in-one, cross-platform desktop SSH client, terminal emulator, SFTP browser, and remote infrastructure workstation built with **Go**, **Wails v2**, and **xterm.js**. Engineered for native execution on **Windows**, **macOS** (Apple Silicon & Intel), and **Linux**, it features zero artificial limits, enterprise-grade security controls, visual SSH tunnel management, bastion jump hosts, live server performance monitoring, multi-execution command broadcasting, macro automation, and multi-protocol connectivity.
+**NexTerm** is an all-in-one, cross-platform desktop SSH client, terminal emulator, SFTP browser, and remote infrastructure workstation built with **Go**, **Wails v2**, and **xterm.js**. Engineered for native execution on **Windows**, **macOS** (Apple Silicon & Intel), and **Linux**, it provides enterprise-grade security controls, visual SSH tunnel management, bastion jump hosts, live server performance monitoring, multi-execution command broadcasting, macro automation, and multi-protocol connectivity.
 
 ### 📥 Download NexTerm
 
@@ -183,14 +183,12 @@
 ### 🖥️ 7. Multi-Protocol Session Wizard
 - **SSH**: Interactive PTY with Keep-Alive, Bastion Jump Host, SOCKS4/5/HTTP proxy support, and live latency validation (`TestSessionConnection`).
 - **SFTP**: Standalone remote file explorer session with high-throughput 32KB concurrent pipelines.
-- **RDP (Remote Desktop — MobaXterm Parity)**: Native Windows hardware-accelerated `mstsc.exe` and Linux `xfreerdp`/`remmina` integration with:
-  - Local disk and folder redirection (`drivestoredirect:s:*`)
-  - Bidirectional clipboard sync (`redirectclipboard:i:1`)
-  - Remote and local audio playback (`audiomode`) with microphone capture (`audiocapturemode:i:1`)
-  - Redirected printers, COM ports, and smart cards
-  - Experience performance presets (LAN, Broadband, WAN auto-detection)
+- **RDP (Remote Desktop)**:
+  - **Windows**: Native hardware-accelerated `mstsc.exe` integration with local disk/folder redirection (`drivestoredirect:s:*`), bidirectional clipboard sync (`redirectclipboard:i:1`), remote/local audio playback (`audiomode`), microphone capture, redirected printers, COM ports, smart cards, and experience performance presets.
+  - **Linux**: External launcher integration supporting `xfreerdp` and `remmina`.
+  - **macOS**: External launcher integration opening Microsoft Remote Desktop.
 - **Serial (COM)**: Automated COM port discovery (`COM1`–`COM8`) with configurable Baud Rates (9600 to 115200), Parity, Data Bits, and Stop Bits.
-- **Local Shells**: Native PowerShell, Command Prompt (CMD), and WSL (Ubuntu/Debian) via ConPTY.
+- **Local Shells**: Native PowerShell, Command Prompt (CMD), and WSL on Windows; Bash and Zsh on macOS and Linux.
 
 ### 🛠️ 8. Integrated Network Toolbox
 - **ICMP Ping**: Real-time ping latency test with packet loss statistics.
@@ -206,11 +204,11 @@
 - **Security Policy Enforcement**: Administrator toggles to allow or forbid specific protocols (SSH, SFTP, Telnet, FTP, RDP, VNC, Serial), enforce password complexity, or disable dangerous commands.
 - **NexTerm Customizer**: Corporate white-label branding (Application Name, Logo Text, custom Startup/Splash messaging, and default company session catalogs).
 
-### 🔑 10. Platform-Native Hardware-Bound Credential Vault
+### 🔑 10. Platform-Native Credential Vault (Windows DPAPI, macOS Keychain, Linux Secret Service)
 - Zero plain-text credentials on disk. All passwords, passphrases, and private keys are encrypted using native OS security APIs:
-  - **Windows**: Windows DPAPI (`CryptProtectData`) tied to user profile.
-  - **macOS**: Native macOS Keychain Services.
-  - **Linux**: Freedesktop Secret Service API / system Keyring.
+  - **Windows**: Windows DPAPI (`CryptProtectData`) scoped to the active Windows user profile.
+  - **macOS**: Native macOS Keychain Services (`/usr/bin/security`).
+  - **Linux**: Freedesktop Secret Service API (`secret-tool` / GNOME Keyring / KWallet).
 
 ### 📈 11. Live Server Monitoring Dashboard
 - **Real-Time Visual Sparklines**: Live canvas-rendered graphs for CPU utilization, RAM usage, and network RX/TX bandwidth (refreshed every 2.5s).
@@ -221,7 +219,7 @@
 
 ### 🖥️ 12. X11 Forwarding & Local X Server Manager
 - **Remote GUI App Display**: Seamless SSH X11 tunneling (`x11-req`) forwarding remote Linux graphical applications (e.g. `xclock`, `gedit`, `firefox`, database installers) directly to your Windows desktop.
-- **Local X Server Detection & Launch**: Automatically detects and launches local Windows X servers (VcXsrv, Xming, GWSL) on display `:0` (port `6000`).
+- **Local X Server Detection & Launch**: Automatically detects and launches local Windows X servers (VcXsrv, Xming, GWSL) on display `:0` with secure MIT-MAGIC-COOKIE-1 authentication.
 
 ### 💾 13. Portable Session Tree Backup, Export & Import
 - **Native File Dialogs**: Export your entire hierarchical session tree (folders, host configurations, environments, and jump host bindings) into a portable JSON backup file.
@@ -242,6 +240,14 @@
 - **Seamless Self-Update**: Download new version packages in the background and hot-restart into the updated application with a single click.
 - **Channel Controls**: Toggle between automated check-on-launch or manual on-demand checks from the Help & Settings menu.
 
+### 🤖 17. Oracle BRM Assistant Service (`BRMAssistantService`)
+A specialized diagnostic assistant built for telecommunications and billing engineers managing Oracle Billing and Revenue Management (BRM):
+- **Automated Environment Detection**: Automatically discovers local and remote `$PIN_HOME` installations, locating `cm.pinlog`, `dm_oracle.pinlog`, and `pin.conf`.
+- **Intelligent Question Classification & Diagnostics**: Classifies queries across Opcode definitions, PCM errors, billing run issues, configuration anomalies, and system architecture.
+- **Opcode Knowledge Base**: Comprehensive reference for core opcodes (e.g. `PCM_OP_CUST_COMMIT_CUSTOMER`, `PCM_OP_BILL_MAKE_BILL`, `PCM_OP_PYMT_COLLECT`, `PCM_OP_ACT_USAGE`, `PCM_OP_AR_BILL_SETTLE`).
+- **PCM Error Diagnostic Engine**: Detailed root cause explanations and suggested remediation steps for error codes (e.g. `PIN_ERR_BAD_ARG`, `PIN_ERR_NOT_FOUND`, `PIN_ERR_NAP_CONNECT_FAILED`, `PIN_ERR_STORAGE`).
+- **Live Log Inspection & Error Highlighting**: Real-time inspection of Connection Manager (`cm`) and Data Manager (`dm`) logs with regex-based error pattern highlighting.
+
 ---
 
 ## 🏗️ Architecture
@@ -250,28 +256,34 @@
 graph TD
     subgraph Frontend ["Frontend (HTML5 / Vanilla CSS / xterm.js)"]
         UI[Workspace & Tabbar]
-        SFTPUI[SFTP Browser & Nexterm Editor]
-        TunnelUI[Nexterm Tunnel Manager]
+        SFTPUI[SFTP Browser & NexTerm Editor]
+        TunnelUI[NexTerm Tunnel Manager]
         MacroUI[Macro Recorder & Runner]
         ToolsUI[Network Toolbox Modal]
         SplitMgr[Split Layout Controller]
+        BRMUI[BRM Assistant UI]
         UpdaterUI[Auto-Updater Modal]
     end
 
-    subgraph Wails ["Wails v2 Desktop Bridge"]
-        Bridge[app.go Bridge APIs]
+    subgraph Wails ["Wails v2 Desktop Bridge (app.go)"]
+        Bridge[App Domain Facades]
     end
 
-    subgraph Backend ["Go Backend (internal/)"]
+    subgraph Backend ["Go Backend Services (internal/)"]
         SSH[sshsession: SSH, Bastion & Proxy Engine]
+        Agent[sshsession: SSH Agent & Pageant]
+        HostKey[hostkey: TOFU Host Key Verification & Fingerprints]
         SFTPMgr[sftp: High-Throughput SFTP Manager]
         TunnelMgr[tunnel: SSH Tunnel Engine]
-        MacroMgr[macro: Macro Manager]
+        MacroMgr[macro: Macro Automation Engine]
         NetTools[nettools: Ping, DNS, PortScan, Hash]
-        SecMgr[security: Policy & App Lock]
+        SecMgr[security: Policy & Dangerous Command Guard]
+        CredMgr[service: Master Password & App Lockout]
         Vault[vault: Windows DPAPI / macOS Keychain / Linux Secret Service]
-        Store[store: Session Tree Store]
-        Updater[service: Auto-Updater Engine]
+        LogMgr[service: Session Log Manager & Audit Trail]
+        BRM[service: Oracle BRM AI Assistant Engine]
+        Store[store: Hierarchical Session Tree Store]
+        Updater[service: GitHub Auto-Updater]
     end
 
     UI --> Bridge
@@ -280,18 +292,26 @@ graph TD
     MacroUI --> Bridge
     ToolsUI --> Bridge
     SplitMgr --> Bridge
+    BRMUI --> Bridge
     UpdaterUI --> Bridge
 
     Bridge --> SSH
+    Bridge --> Agent
+    Bridge --> HostKey
     Bridge --> SFTPMgr
     Bridge --> TunnelMgr
     Bridge --> MacroMgr
     Bridge --> NetTools
     Bridge --> SecMgr
+    Bridge --> CredMgr
     Bridge --> Vault
+    Bridge --> LogMgr
+    Bridge --> BRM
     Bridge --> Store
     Bridge --> Updater
 
+    SSH -->|TOFU Verification| HostKey
+    SSH -->|Agent / Key Auth| Agent
     SSH -->|Jump Host Proxy| Bastion[SSH Bastion Gateway]
     Bastion --> Target[Remote Linux/Unix Hosts]
     SFTPMgr -->|Shares SSH Client| Target
@@ -303,7 +323,7 @@ graph TD
 ## 🚀 Getting Started
 
 ### 🌐 Multi-Platform Support
-NexTerm is designed and tested for native execution across:
+NexTerm is designed for native execution across:
 - **Windows**: Windows 10 & Windows 11 (`x86_64`, `ARM64`)
 - **macOS**: macOS 11+ Big Sur through Sequoia (Native Apple Silicon `arm64` M1/M2/M3/M4 & Intel `x86_64`)
 - **Linux**: Ubuntu, Debian, Fedora, Arch Linux, RHEL, openSUSE (`x86_64`, `arm64`)
@@ -317,11 +337,14 @@ NexTerm is designed and tested for native execution across:
 - **Node.js 18+** (Optional, for frontend asset modification)
 - **Linux Dependencies** (Linux only):
   ```bash
-  # Ubuntu / Debian
+  # Ubuntu 22.04 / Debian 11/12
   sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
 
+  # Ubuntu 24.04+ (requires WebKit2GTK 4.1)
+  sudo apt-get update && sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
   # Fedora / RHEL
-  sudo dnf install -y gtk3-devel webkit2gtk3-devel
+  sudo dnf install -y gtk3-devel webkit2gtk4.1-devel
 
   # Arch Linux
   sudo pacman -S gtk3 webkit2gtk
@@ -375,6 +398,9 @@ wails build -platform darwin/amd64 -clean   # Intel Mac
 **Linux:**
 ```bash
 wails build -platform linux/amd64 -clean
+
+# On Ubuntu 24.04+ (WebKit2GTK 4.1):
+wails build -platform linux/amd64 -tags webkit2_41 -clean
 # Output: build/bin/nexterm
 ```
 
@@ -386,7 +412,7 @@ wails build -platform linux/amd64 -clean
 | :--- | :--- |
 | `Ctrl + K` | Open Universal Command Palette |
 | `Ctrl + N` | New SSH Session Dialog |
-| `Ctrl + T` | Open Local PowerShell Tab |
+| `Ctrl + T` | Open Local Terminal Tab (PowerShell on Windows, bash/zsh on macOS/Linux) |
 | `Ctrl + W` | Close Active Tab |
 | `Ctrl + Shift + F` | Terminal In-Buffer Text Search |
 | `Ctrl + Shift + \` | 2-Way Vertical Split |

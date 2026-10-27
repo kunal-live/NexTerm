@@ -13,7 +13,7 @@ This Privacy Policy explains clearly and transparently what data is handled by N
 
 - **Zero Telemetry**: NexTerm does not collect, log, or transmit telemetry, usage analytics, crash reports, or device identifiers.
 - **No Third-Party Embeds**: NexTerm does not load third-party trackers, external fonts, remote analytics scripts, or advertising widgets.
-- **Hardware-Backed Credential Security**: Authentication secrets (passwords, private key passphrases, proxy credentials) are encrypted using native operating system vaults (Windows DPAPI, macOS Keychain, Linux Secret Service).
+- **OS-Native Credential Security**: Authentication secrets (passwords, private key passphrases, proxy credentials) are encrypted using native operating system vaults (Windows DPAPI scoped to the user profile, macOS Keychain, Linux Secret Service).
 - **Local Data Sovereignty**: All your connection profiles, server trees, and session logs reside solely on your local device.
 
 ---
@@ -31,10 +31,10 @@ Because NexTerm is a desktop client for managing remote systems (SSH, SFTP, Tunn
 
 ### B. Authentication Credentials & Secrets
 - **What is handled:** SSH passwords, private key passphrases, Jump Host bastion credentials, and network proxy credentials (HTTP CONNECT, SOCKS5, SOCKS4).
-- **Where it is stored:** Credentials are **never** stored in plain text. They are encrypted using your operating system's native hardware-bound encryption:
-  - **Windows:** Windows Data Protection API (DPAPI via `CryptProtectData`), tied directly to your Windows user account.
-  - **macOS:** Native macOS Keychain Services.
-  - **Linux:** Freedesktop Secret Service API / system Keyring.
+- **Where it is stored:** Credentials are **never** stored in plain text. They are encrypted using your operating system's native profile-level security APIs:
+  - **Windows:** Windows Data Protection API (DPAPI via `CryptProtectData`), tied directly to your active Windows user account profile.
+  - **macOS:** Native macOS Keychain Services (`/usr/bin/security`).
+  - **Linux:** Freedesktop Secret Service API / system Keyring (`secret-tool`).
 - **Transmission:** Credentials are transmitted **exclusively and directly** over encrypted channels to the specific remote host or proxy server you have instructed NexTerm to connect to. They are never sent to NexTerm developers or any third party.
 
 ### C. Terminal Logs & Session Output

@@ -123,8 +123,6 @@ export function GetMasterPasswordHint():Promise<string>;
 
 export function GetRecentLogs(arg1:number):Promise<Array<service.LogEntry>>;
 
-export function GetSavedPassword(arg1:string):Promise<string>;
-
 export function GetSavedPasswords():Promise<Array<service.SavedCredential>>;
 
 export function GetSecurityPolicy():Promise<security.SecurityPolicy>;
@@ -153,6 +151,8 @@ export function ImportSessionsFromFile():Promise<model.TreeNode>;
 
 export function IsAppLockEnabled():Promise<boolean>;
 
+export function IsAppLocked():Promise<boolean>;
+
 export function IsXServerRunning():Promise<boolean>;
 
 export function LaunchRDPSession(arg1:model.SessionProfile,arg2:string):Promise<void>;
@@ -160,6 +160,8 @@ export function LaunchRDPSession(arg1:model.SessionProfile,arg2:string):Promise<
 export function LaunchSystemTool(arg1:string):Promise<void>;
 
 export function LaunchXServer():Promise<string>;
+
+export function LockApp():Promise<void>;
 
 export function MoveNode(arg1:string,arg2:string,arg3:number):Promise<model.TreeNode>;
 
@@ -256,8 +258,6 @@ export function SFTPWriteFile(arg1:string,arg2:string,arg3:string):Promise<void>
 export function SaveCustomizerConfig(arg1:security.CustomizerConfig):Promise<void>;
 
 export function SaveMacro(arg1:macro.Macro):Promise<void>;
-
-export function SavePassword(arg1:string,arg2:string):Promise<void>;
 
 export function SaveSecurityPolicy(arg1:security.SecurityPolicy):Promise<void>;
 

@@ -226,10 +226,6 @@ export function GetRecentLogs(arg1) {
   return window['go']['main']['App']['GetRecentLogs'](arg1);
 }
 
-export function GetSavedPassword(arg1) {
-  return window['go']['main']['App']['GetSavedPassword'](arg1);
-}
-
 export function GetSavedPasswords() {
   return window['go']['main']['App']['GetSavedPasswords']();
 }
@@ -286,6 +282,10 @@ export function IsAppLockEnabled() {
   return window['go']['main']['App']['IsAppLockEnabled']();
 }
 
+export function IsAppLocked() {
+  return window['go']['main']['App']['IsAppLocked']();
+}
+
 export function IsXServerRunning() {
   return window['go']['main']['App']['IsXServerRunning']();
 }
@@ -300,6 +300,10 @@ export function LaunchSystemTool(arg1) {
 
 export function LaunchXServer() {
   return window['go']['main']['App']['LaunchXServer']();
+}
+
+export function LockApp() {
+  return window['go']['main']['App']['LockApp']();
 }
 
 export function MoveNode(arg1, arg2, arg3) {
@@ -492,10 +496,6 @@ export function SaveCustomizerConfig(arg1) {
 
 export function SaveMacro(arg1) {
   return window['go']['main']['App']['SaveMacro'](arg1);
-}
-
-export function SavePassword(arg1, arg2) {
-  return window['go']['main']['App']['SavePassword'](arg1, arg2);
 }
 
 export function SaveSecurityPolicy(arg1) {

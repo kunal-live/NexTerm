@@ -39,11 +39,6 @@ export async function showNewSessionDialog(parentFolderId = "", editProfile = nu
         savedPassword = await window.go.main.App.GetSessionPassword(vKey);
       } catch (_) {}
     }
-    if (!savedPassword && window.go.main.App.GetSavedPassword) {
-      try {
-        savedPassword = await window.go.main.App.GetSavedPassword(vKey);
-      } catch (_) {}
-    }
     if (!savedPassword && window.go.main.App.FindSessionPassword && editProfile.host && editProfile.username) {
       try {
         savedPassword = await window.go.main.App.FindSessionPassword(vKey, editProfile.host, editProfile.port || 22, editProfile.username);

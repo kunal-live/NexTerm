@@ -5,21 +5,23 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 )
 
 type SecurityPolicy struct {
-	AllowSSH              bool `json:"allowSSH"`
-	AllowSFTP             bool `json:"allowSFTP"`
-	AllowRDP              bool `json:"allowRDP"`
-	AllowVNC              bool `json:"allowVNC"`
-	AllowTelnet           bool `json:"allowTelnet"`
-	AllowSerial           bool `json:"allowSerial"`
-	AllowPasswordSaving   bool `json:"allowPasswordSaving"`
-	AllowClipboardSharing bool `json:"allowClipboardSharing"`
-	AllowFileTransfers    bool `json:"allowFileTransfers"`
-	RequireAuditLog       bool `json:"requireAuditLog"`
+	AllowSSH                 bool `json:"allowSSH"`
+	AllowSFTP                bool `json:"allowSFTP"`
+	AllowRDP                 bool `json:"allowRDP"`
+	AllowVNC                 bool `json:"allowVNC"`
+	AllowTelnet              bool `json:"allowTelnet"`
+	AllowSerial              bool `json:"allowSerial"`
+	AllowPasswordSaving      bool `json:"allowPasswordSaving"`
+	AllowClipboardSharing    bool `json:"allowClipboardSharing"`
+	AllowFileTransfers       bool `json:"allowFileTransfers"`
+	RequireAuditLog          bool `json:"requireAuditLog"`
+	DisableDangerousCommands bool `json:"disableDangerousCommands"`
 }
 
 type CustomizerConfig struct {
@@ -215,3 +217,30 @@ func (sm *SecurityManager) IsAuditRequired() bool {
 	defer sm.mu.Unlock()
 	return sm.policy.RequireAuditLog
 }
+
+// DangerousCommandPatterns matches commands with catastrophic or destructive impact.
+var DangerousCommandPatterns = []*regexp.Regexp{
+	regexp.MustCompile(`(?i)\brm\s+-[a-z]*r[a-z]*f[a-z]*\s+/(?:\s|$)`), // rm -rf /
+	regexp.MustCompile(`(?i)\bmkfs(?:\.[a-z0-9]+)?\b`),                  // mkfs, mkfs.ext4
+	regexp.MustCompile(`(?i)\bdd\s+if=.*?\sof=/dev/[a-z0-9]+`),          // dd to raw block device
+	regexp.MustCompile(`:\(\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;\s*:`),     // shell fork bomb
+	regexp.MustCompile(`(?i)\b(?:shutdown|poweroff|init\s+0)\b`),        // system power down
+	regexp.MustCompile(`(?i)>\s*/dev/sd[a-z]`),                          // disk overwrite
+}
+
+// CheckCommand evaluates a command string against security policy rules.
+func (sm *SecurityManager) CheckCommand(cmd string) error {
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+	if !sm.policy.DisableDangerousCommands {
+		return nil
+	}
+	trimmed := strings.TrimSpace(cmd)
+	for _, pattern := range DangerousCommandPatterns {
+		if pattern.MatchString(trimmed) {
+			return fmt.Errorf("security policy denied: dangerous command '%s' is prohibited by administrator policy", trimmed)
+		}
+	}
+	return nil
+}
+

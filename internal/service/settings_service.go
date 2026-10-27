@@ -128,3 +128,11 @@ func (s *SettingsService) CheckClipboard() error {
 func (s *SettingsService) IsAuditRequired() bool {
 	return s.secMgr.IsAuditRequired()
 }
+
+func (s *SettingsService) CheckCommand(cmd string) error {
+	if s == nil || s.secMgr == nil {
+		return nil
+	}
+	return s.secMgr.CheckCommand(cmd)
+}
+

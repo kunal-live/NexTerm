@@ -53,6 +53,7 @@ type LoggingService struct {
 	auditEvents   []AuditEvent
 	maxAudit      int
 	auditFilePath string
+	sessionLogs   *SessionLogManager
 	emitter       EventEmitter
 }
 
@@ -69,6 +70,7 @@ func NewLoggingService(emitter EventEmitter) *LoggingService {
 	dir := filepath.Join(appData, "Nexterm")
 	_ = os.MkdirAll(dir, 0700)
 	auditPath := filepath.Join(dir, "audit_log.jsonl")
+	logDir := filepath.Join(dir, "session_logs")
 
 	svc := &LoggingService{
 		entries:       make([]LogEntry, 0, 500),
@@ -76,6 +78,7 @@ func NewLoggingService(emitter EventEmitter) *LoggingService {
 		auditEvents:   make([]AuditEvent, 0, 500),
 		maxAudit:      2000,
 		auditFilePath: auditPath,
+		sessionLogs:   NewSessionLogManager(logDir),
 		emitter:       emitter,
 	}
 
@@ -132,6 +135,10 @@ func (l *LoggingService) LogInfo(category, message string) {
 
 func (l *LoggingService) LogWarn(category, message string) {
 	l.log(LogLevelWarn, category, message, nil)
+}
+
+func (l *LoggingService) LogDebug(category, message string) {
+	l.log(LogLevelDebug, category, message, nil)
 }
 
 func (l *LoggingService) LogError(category, message string, err error) {
@@ -270,3 +277,43 @@ func (l *LoggingService) ClearLogs() {
 	defer l.mu.Unlock()
 	l.entries = l.entries[:0]
 }
+
+// AppendSessionLog writes terminal output for tabID to its transcript file.
+func (l *LoggingService) AppendSessionLog(tabID, serverName, data string) (string, error) {
+	if l == nil || l.sessionLogs == nil {
+		return "", fmt.Errorf("logging service uninitialized")
+	}
+	return l.sessionLogs.Append(tabID, serverName, data)
+}
+
+// StopSessionLog closes and forgets the transcript log file for tabID, preventing handle leaks.
+func (l *LoggingService) StopSessionLog(tabID string) string {
+	if l == nil || l.sessionLogs == nil {
+		return ""
+	}
+	return l.sessionLogs.Stop(tabID)
+}
+
+// StopAllSessionLogs closes all active session transcript files.
+func (l *LoggingService) StopAllSessionLogs() {
+	if l != nil && l.sessionLogs != nil {
+		l.sessionLogs.StopAll()
+	}
+}
+
+// SessionLogDir returns the path to the session transcript directory.
+func (l *LoggingService) SessionLogDir() string {
+	if l == nil || l.sessionLogs == nil {
+		return ""
+	}
+	return l.sessionLogs.LogDir()
+}
+
+// ActiveSessionLogCount returns the number of active session transcript files.
+func (l *LoggingService) ActiveSessionLogCount() int {
+	if l == nil || l.sessionLogs == nil {
+		return 0
+	}
+	return l.sessionLogs.ActiveLogCount()
+}
+
