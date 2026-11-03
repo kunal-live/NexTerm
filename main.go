@@ -2,9 +2,12 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"io/fs"
 	"log"
 	"runtime"
+
+	"nexterm/internal/service"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/menu"
@@ -61,7 +64,7 @@ func main() {
 			Appearance:           mac.NSAppearanceNameDarkAqua,
 			About: &mac.AboutInfo{
 				Title:   "NexTerm",
-				Message: "Professional Desktop SSH & Systems Workspace\nVersion 1.4.1",
+				Message: fmt.Sprintf("Professional Desktop SSH & Systems Workspace\nVersion %s", service.CurrentAppVersion),
 			},
 		},
 	})

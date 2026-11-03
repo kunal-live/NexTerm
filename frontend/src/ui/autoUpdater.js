@@ -150,11 +150,35 @@ export function showUpdateDialog(info) {
 }
 
 /**
- * Initializes the background update checker.
+ * Initializes continuous background update checking.
+ * Checks on startup, periodically every 15 minutes, and whenever the app window is focused.
  */
 export function initAutoUpdater() {
   // Silent check 4.5 seconds after launch
   setTimeout(() => {
     checkForUpdates(false);
   }, 4500);
+
+  // Continuous background sync: check every 15 minutes across all running devices
+  const SYNC_INTERVAL_MS = 15 * 60 * 1000;
+  setInterval(() => {
+    checkForUpdates(false);
+  }, SYNC_INTERVAL_MS);
+
+  // Fast wakeup: check when window regains focus or becomes visible (throttled to at most once per 5 minutes)
+  let lastCheckTime = Date.now();
+  const FOCUS_THROTTLE_MS = 5 * 60 * 1000;
+
+  const onWindowFocusOrVisible = () => {
+    if (document.visibilityState === "visible") {
+      const now = Date.now();
+      if (now - lastCheckTime > FOCUS_THROTTLE_MS) {
+        lastCheckTime = now;
+        checkForUpdates(false);
+      }
+    }
+  };
+
+  window.addEventListener("focus", onWindowFocusOrVisible);
+  document.addEventListener("visibilitychange", onWindowFocusOrVisible);
 }

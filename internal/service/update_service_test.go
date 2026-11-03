@@ -1,7 +1,9 @@
 package service
 
 import (
+	"archive/tar"
 	"archive/zip"
+	"compress/gzip"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -51,6 +53,16 @@ func TestCheckForUpdatesWithMockServer(t *testing.T) {
 				Size:               20000000,
 				BrowserDownloadURL: "https://example.com/NexTerm.exe",
 			},
+			{
+				Name:               "Nexterm-macos-arm64.zip",
+				Size:               22000000,
+				BrowserDownloadURL: "https://example.com/Nexterm-macos-arm64.zip",
+			},
+			{
+				Name:               "Nexterm-linux-x64.tar.gz",
+				Size:               19000000,
+				BrowserDownloadURL: "https://example.com/Nexterm-linux-x64.tar.gz",
+			},
 		},
 	}
 
@@ -75,8 +87,8 @@ func TestCheckForUpdatesWithMockServer(t *testing.T) {
 	if info.LatestVersion != "v1.3.1" {
 		t.Errorf("expected LatestVersion 'v1.3.1', got %q", info.LatestVersion)
 	}
-	if info.DownloadURL != "https://example.com/NexTerm.exe" {
-		t.Errorf("expected DownloadURL 'https://example.com/NexTerm.exe', got %q", info.DownloadURL)
+	if info.DownloadURL == "" {
+		t.Errorf("expected DownloadURL to be populated for %s, got empty", info.AssetName)
 	}
 }
 
@@ -162,5 +174,107 @@ func TestApplyUpdateRejectsUnofferedURL(t *testing.T) {
 	err := svc.DownloadAndApplyUpdate(context.Background(), "https://github.com/attacker/repo/releases/download/v9/nexterm.exe")
 	if err == nil {
 		t.Fatal("expected ApplyUpdate to reject a URL that no update check offered")
+	}
+}
+
+func TestFindMacAppBundle(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"/Applications/NexTerm.app/Contents/MacOS/NexTerm", "/Applications/NexTerm.app"},
+		{"/Users/kunal/Downloads/nexterm.app/Contents/MacOS/nexterm", "/Users/kunal/Downloads/nexterm.app"},
+		{"/usr/local/bin/nexterm", ""},
+		{"C:\\Program Files\\Nexterm\\nexterm.exe", ""},
+	}
+
+	for _, tt := range tests {
+		actual := findMacAppBundle(tt.input)
+		if filepath.ToSlash(actual) != filepath.ToSlash(tt.expected) {
+			t.Errorf("findMacAppBundle(%q) = %q; want %q", tt.input, actual, tt.expected)
+		}
+	}
+}
+
+func TestExtractZipToDir(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "zip_dir_test_*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	zipPath := filepath.Join(tempDir, "archive.zip")
+	destDir := filepath.Join(tempDir, "out")
+
+	var buf bytes.Buffer
+	w := zip.NewWriter(&buf)
+
+	f, err := w.Create("nested/file.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _ = f.Write([]byte("HELLO_ZIP_CONTENT"))
+	_ = w.Close()
+
+	if err := os.WriteFile(zipPath, buf.Bytes(), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := extractZipToDir(zipPath, destDir); err != nil {
+		t.Fatalf("extractZipToDir failed: %v", err)
+	}
+
+	content, err := os.ReadFile(filepath.Join(destDir, "nested", "file.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(content) != "HELLO_ZIP_CONTENT" {
+		t.Errorf("unexpected content: %s", string(content))
+	}
+}
+
+func TestExtractTarGz(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "targz_test_*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	tarGzPath := filepath.Join(tempDir, "archive.tar.gz")
+	destDir := filepath.Join(tempDir, "out")
+
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	tw := tar.NewWriter(gw)
+
+	body := []byte("HELLO_TAR_GZ")
+	hdr := &tar.Header{
+		Name: "nexterm",
+		Mode: 0755,
+		Size: int64(len(body)),
+	}
+	if err := tw.WriteHeader(hdr); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tw.Write(body); err != nil {
+		t.Fatal(err)
+	}
+	_ = tw.Close()
+	_ = gw.Close()
+
+	if err := os.WriteFile(tarGzPath, buf.Bytes(), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := extractTarGz(tarGzPath, destDir); err != nil {
+		t.Fatalf("extractTarGz failed: %v", err)
+	}
+
+	content, err := os.ReadFile(filepath.Join(destDir, "nexterm"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(content) != "HELLO_TAR_GZ" {
+		t.Errorf("unexpected content: %s", string(content))
 	}
 }

@@ -112,7 +112,7 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             VER="${GITHUB_REF_NAME}"
           else
-            PROD_VER=$(python3 -c "import os, json; print(json.load(open(os.path.join(os.environ.get('GITHUB_WORKSPACE', '.'), 'wails.json')))['info']['productVersion'])" 2>/dev/null || echo "1.4.1")
+            PROD_VER=$(python3 -c "import os, json; print(json.load(open(os.path.join(os.environ.get('GITHUB_WORKSPACE', '.'), 'wails.json')))['info']['productVersion'])" 2>/dev/null || echo "1.4.2")
             VER="v${PROD_VER}"
           fi
           ditto -c -k --sequesterRsrc --keepParent nexterm.app "Nexterm-macos-arm64.zip"
@@ -154,7 +154,7 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             VER="${GITHUB_REF_NAME}"
           else
-            PROD_VER=$(python3 -c "import os, json; print(json.load(open(os.path.join(os.environ.get('GITHUB_WORKSPACE', '.'), 'wails.json')))['info']['productVersion'])" 2>/dev/null || echo "1.4.1")
+            PROD_VER=$(python3 -c "import os, json; print(json.load(open(os.path.join(os.environ.get('GITHUB_WORKSPACE', '.'), 'wails.json')))['info']['productVersion'])" 2>/dev/null || echo "1.4.2")
             VER="v${PROD_VER}"
           fi
           tar -czvf "build/bin/Nexterm-linux-x64.tar.gz" -C build/bin nexterm
@@ -184,7 +184,7 @@ jobs:
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             TAG="${{ github.ref_name }}"
           else
-            VER=$(python3 -c "import json; print(json.load(open('wails.json'))['info']['productVersion'])" 2>/dev/null || echo "1.4.1")
+            VER=$(python3 -c "import json; print(json.load(open('wails.json'))['info']['productVersion'])" 2>/dev/null || echo "1.4.2")
             TAG="v${VER}"
           fi
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"

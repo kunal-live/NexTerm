@@ -1,7 +1,9 @@
 package service
 
 import (
+	"archive/tar"
 	"archive/zip"
+	"compress/gzip"
 	"bufio"
 	"context"
 	"crypto/sha256"
@@ -24,7 +26,7 @@ import (
 )
 
 // CurrentAppVersion defines the running application version.
-const CurrentAppVersion = "1.4.1"
+const CurrentAppVersion = "1.4.2"
 
 // DefaultUpdateRepo is the GitHub repository queried for updates.
 const DefaultUpdateRepo = "kunal-live/NexTerm"
@@ -172,20 +174,29 @@ func (s *UpdateService) CheckForUpdates(ctx context.Context) (*UpdateInfo, error
 	var selectedAsset *githubReleaseAsset
 	for _, asset := range rel.Assets {
 		lower := strings.ToLower(asset.Name)
-		if runtime.GOOS == "windows" {
+		switch runtime.GOOS {
+		case "windows":
 			// Prioritize direct portable executable, then portable zip, then setup exe
 			if lower == "nexterm.exe" {
 				selectedAsset = &asset
 				break
 			}
-			if strings.Contains(lower, "portable") && strings.HasSuffix(lower, ".zip") {
+			if (strings.Contains(lower, "portable") || strings.Contains(lower, "windows")) && strings.HasSuffix(lower, ".zip") {
 				selectedAsset = &asset
 			} else if selectedAsset == nil && (strings.HasSuffix(lower, ".zip") || strings.HasSuffix(lower, ".exe")) {
 				selectedAsset = &asset
 			}
-		} else {
-			if strings.HasSuffix(lower, ".tar.gz") || strings.HasSuffix(lower, ".zip") {
+		case "darwin":
+			// macOS Apple Silicon (arm64) or universal archive
+			if (strings.Contains(lower, "macos") || strings.Contains(lower, "darwin") || strings.Contains(lower, "mac")) && strings.HasSuffix(lower, ".zip") {
 				selectedAsset = &asset
+				break
+			}
+		case "linux":
+			// Linux x86_64 tarball
+			if strings.Contains(lower, "linux") && (strings.HasSuffix(lower, ".tar.gz") || strings.HasSuffix(lower, ".tgz") || strings.HasSuffix(lower, ".zip")) {
+				selectedAsset = &asset
+				break
 			}
 		}
 	}
@@ -316,7 +327,7 @@ func (s *UpdateService) DownloadAndApplyUpdate(ctx context.Context, downloadURL 
 	if downloadURL == "" {
 		return errors.New("download URL cannot be empty")
 	}
-	if runtime.GOOS != "windows" {
+	if runtime.GOOS != "windows" && runtime.GOOS != "darwin" && runtime.GOOS != "linux" {
 		return fmt.Errorf("automatic update is not supported on %s; download the new release manually", runtime.GOOS)
 	}
 
@@ -372,33 +383,50 @@ func (s *UpdateService) DownloadAndApplyUpdate(ctx context.Context, downloadURL 
 		return fmt.Errorf("update checksum mismatch for %s: expected %s, got %s", pending.assetName, expectedSum, actualSum)
 	}
 
-	// If download was a zip archive, extract the executable
-	targetNewExe := filepath.Join(tempDir, "NexTerm_new.exe")
-	if strings.HasSuffix(strings.ToLower(pending.assetName), ".zip") {
-		if err := extractExeFromZip(downloadPath, targetNewExe); err != nil {
-			return fmt.Errorf("extract executable from update zip failed: %w", err)
+	switch runtime.GOOS {
+	case "windows":
+		targetNewExe := filepath.Join(tempDir, "NexTerm_new.exe")
+		if strings.HasSuffix(strings.ToLower(pending.assetName), ".zip") {
+			if err := extractExeFromZip(downloadPath, targetNewExe); err != nil {
+				return fmt.Errorf("extract executable from update zip failed: %w", err)
+			}
+		} else if err := os.Rename(downloadPath, targetNewExe); err != nil {
+			if err := copyFile(downloadPath, targetNewExe); err != nil {
+				return fmt.Errorf("stage new executable failed: %w", err)
+			}
 		}
-	} else if err := os.Rename(downloadPath, targetNewExe); err != nil {
-		// If rename fails across volumes, copy
-		if err := copyFile(downloadPath, targetNewExe); err != nil {
-			return fmt.Errorf("stage new executable failed: %w", err)
+
+		fi, err := os.Stat(targetNewExe)
+		if err != nil {
+			return fmt.Errorf("downloaded binary validation failed: %w", err)
 		}
-	}
+		if fi.Size() < 1024*100 {
+			return fmt.Errorf("downloaded binary validation failed: file is only %d bytes", fi.Size())
+		}
 
-	// Verify the executable file exists and is non-empty
-	fi, err := os.Stat(targetNewExe)
-	if err != nil {
-		return fmt.Errorf("downloaded binary validation failed: %w", err)
-	}
-	if fi.Size() < 1024*100 {
-		return fmt.Errorf("downloaded binary validation failed: file is only %d bytes", fi.Size())
-	}
+		if err := applyWindowsHotRestart(currentExe, targetNewExe, tempDir); err != nil {
+			return err
+		}
+		handedOff = true
+		return nil
 
-	if err := applyWindowsHotRestart(currentExe, targetNewExe, tempDir); err != nil {
-		return err
+	case "darwin":
+		if err := applyMacOSHotRestart(currentExe, downloadPath, tempDir); err != nil {
+			return err
+		}
+		handedOff = true
+		return nil
+
+	case "linux":
+		if err := applyLinuxHotRestart(currentExe, downloadPath, tempDir); err != nil {
+			return err
+		}
+		handedOff = true
+		return nil
+
+	default:
+		return fmt.Errorf("automatic update not implemented for %s", runtime.GOOS)
 	}
-	handedOff = true
-	return nil
 }
 
 // fetchExpectedChecksum downloads a sha256sum-style manifest and returns the digest for assetName.
@@ -580,6 +608,306 @@ exit
 	// Exit the current process to allow file overwrite
 	go func() {
 		time.Sleep(400 * time.Millisecond)
+		os.Exit(0)
+	}()
+
+	return nil
+}
+
+func findMacAppBundle(exePath string) string {
+	dir := filepath.Dir(exePath)
+	for dir != "/" && dir != "." && dir != "" {
+		if strings.HasSuffix(dir, ".app") {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
+	return ""
+}
+
+func extractZipToDir(zipPath, destDir string) error {
+	r, err := zip.OpenReader(zipPath)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+
+	for _, f := range r.File {
+		cleanName := filepath.Clean(f.Name)
+		if strings.HasPrefix(cleanName, "..") || filepath.IsAbs(cleanName) {
+			continue // Zip Slip protection
+		}
+		target := filepath.Join(destDir, cleanName)
+		if f.FileInfo().IsDir() {
+			if err := os.MkdirAll(target, 0755); err != nil {
+				return err
+			}
+			continue
+		}
+		if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+			return err
+		}
+		mode := f.FileInfo().Mode()
+		if mode == 0 {
+			mode = 0755
+		}
+		rc, err := f.Open()
+		if err != nil {
+			return err
+		}
+		dst, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR|os.O_TRUNC, mode)
+		if err != nil {
+			rc.Close()
+			return err
+		}
+		_, err = io.Copy(dst, io.LimitReader(rc, maxUpdatePayloadBytes+1))
+		rc.Close()
+		dst.Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func extractTarGz(tarGzPath, destDir string) error {
+	f, err := os.Open(tarGzPath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	gzr, err := gzip.NewReader(f)
+	if err != nil {
+		return err
+	}
+	defer gzr.Close()
+
+	tr := tar.NewReader(gzr)
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		cleanName := filepath.Clean(header.Name)
+		if strings.HasPrefix(cleanName, "..") || filepath.IsAbs(cleanName) {
+			continue // Zip Slip protection
+		}
+
+		target := filepath.Join(destDir, cleanName)
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if err := os.MkdirAll(target, 0755); err != nil {
+				return err
+			}
+		case tar.TypeReg, tar.TypeRegA:
+			if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+				return err
+			}
+			mode := header.FileInfo().Mode()
+			if mode == 0 {
+				mode = 0755
+			}
+			dst, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR|os.O_TRUNC, mode)
+			if err != nil {
+				return err
+			}
+			if _, err := io.Copy(dst, io.LimitReader(tr, maxUpdatePayloadBytes+1)); err != nil {
+				dst.Close()
+				return err
+			}
+			dst.Close()
+		}
+	}
+	return nil
+}
+
+func applyMacOSHotRestart(currentExe, downloadZip, tempDir string) error {
+	extractDir := filepath.Join(tempDir, "extracted")
+	if err := os.MkdirAll(extractDir, 0755); err != nil {
+		return fmt.Errorf("create macos extraction dir failed: %w", err)
+	}
+
+	// Try ditto first (standard macOS command preserving code signatures, symlinks, and resource forks)
+	cmdDitto := exec.Command("/usr/bin/ditto", "-x", "-k", downloadZip, extractDir)
+	if err := cmdDitto.Run(); err != nil {
+		// Fallback to pure Go zip extractor
+		if err := extractZipToDir(downloadZip, extractDir); err != nil {
+			return fmt.Errorf("extract macOS bundle failed: %w", err)
+		}
+	}
+
+	// Find the .app bundle in extractDir
+	appPath := ""
+	entries, _ := os.ReadDir(extractDir)
+	for _, e := range entries {
+		if strings.HasSuffix(strings.ToLower(e.Name()), ".app") {
+			appPath = filepath.Join(extractDir, e.Name())
+			break
+		}
+	}
+	if appPath == "" {
+		for _, e := range entries {
+			if e.IsDir() {
+				subEntries, _ := os.ReadDir(filepath.Join(extractDir, e.Name()))
+				for _, sub := range subEntries {
+					if strings.HasSuffix(strings.ToLower(sub.Name()), ".app") {
+						appPath = filepath.Join(extractDir, e.Name(), sub.Name())
+						break
+					}
+				}
+			}
+			if appPath != "" {
+				break
+			}
+		}
+	}
+
+	if appPath == "" {
+		return fmt.Errorf("no .app bundle found inside macOS update package")
+	}
+
+	// Remove any Gatekeeper quarantine flag from downloaded files
+	_ = exec.Command("/usr/bin/xattr", "-cr", appPath).Run()
+
+	targetApp := findMacAppBundle(currentExe)
+	if targetApp == "" {
+		targetApp = currentExe
+	}
+
+	scriptPath := filepath.Join(tempDir, "apply_update.sh")
+	pid := os.Getpid()
+	scriptContent := fmt.Sprintf(`#!/bin/bash
+PID=%d
+TARGET="%s"
+SOURCE="%s"
+TEMP_DIR="%s"
+
+for i in $(seq 1 30); do
+    if ! kill -0 $PID 2>/dev/null; then
+        break
+    fi
+    sleep 0.5
+done
+
+if [ -d "$TARGET" ]; then
+    rm -rf "$TARGET"
+    cp -R "$SOURCE" "$TARGET"
+    xattr -cr "$TARGET" 2>/dev/null || true
+    open -n "$TARGET"
+elif [ -f "$TARGET" ]; then
+    SOURCE_BIN=$(find "$SOURCE" -type f -perm +111 2>/dev/null | head -n 1)
+    if [ -n "$SOURCE_BIN" ]; then
+        cp -f "$SOURCE_BIN" "$TARGET"
+        chmod 0755 "$TARGET"
+        "$TARGET" &
+    fi
+fi
+
+rm -rf "$TEMP_DIR"
+exit 0
+`, pid, targetApp, appPath, tempDir)
+
+	if err := os.WriteFile(scriptPath, []byte(scriptContent), 0755); err != nil {
+		return fmt.Errorf("write macOS restart script failed: %w", err)
+	}
+
+	cmd := exec.Command("/bin/bash", scriptPath)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("launch macOS restart script failed: %w", err)
+	}
+
+	go func() {
+		time.Sleep(300 * time.Millisecond)
+		os.Exit(0)
+	}()
+
+	return nil
+}
+
+func applyLinuxHotRestart(currentExe, downloadTarGz, tempDir string) error {
+	extractDir := filepath.Join(tempDir, "extracted")
+	if err := os.MkdirAll(extractDir, 0755); err != nil {
+		return fmt.Errorf("create linux extraction dir failed: %w", err)
+	}
+
+	lower := strings.ToLower(downloadTarGz)
+	if strings.HasSuffix(lower, ".tar.gz") || strings.HasSuffix(lower, ".tgz") {
+		cmdTar := exec.Command("tar", "-xzf", downloadTarGz, "-C", extractDir)
+		if err := cmdTar.Run(); err != nil {
+			if err := extractTarGz(downloadTarGz, extractDir); err != nil {
+				return fmt.Errorf("extract Linux tarball failed: %w", err)
+			}
+		}
+	} else if strings.HasSuffix(lower, ".zip") {
+		if err := extractZipToDir(downloadTarGz, extractDir); err != nil {
+			return fmt.Errorf("extract Linux zip failed: %w", err)
+		}
+	} else {
+		_ = copyFile(downloadTarGz, filepath.Join(extractDir, "nexterm"))
+	}
+
+	newBinary := filepath.Join(extractDir, "nexterm")
+	if _, err := os.Stat(newBinary); err != nil {
+		entries, _ := os.ReadDir(extractDir)
+		for _, e := range entries {
+			if !e.IsDir() {
+				p := filepath.Join(extractDir, e.Name())
+				if fi, err := os.Stat(p); err == nil && fi.Mode()&0111 != 0 {
+					newBinary = p
+					break
+				}
+			}
+		}
+	}
+
+	if fi, err := os.Stat(newBinary); err != nil || fi.Size() < 1024*100 {
+		return fmt.Errorf("downloaded Linux binary validation failed")
+	}
+
+	_ = os.Chmod(newBinary, 0755)
+
+	scriptPath := filepath.Join(tempDir, "apply_update.sh")
+	pid := os.Getpid()
+	scriptContent := fmt.Sprintf(`#!/bin/bash
+PID=%d
+TARGET="%s"
+SOURCE="%s"
+TEMP_DIR="%s"
+
+for i in $(seq 1 30); do
+    if ! kill -0 $PID 2>/dev/null; then
+        break
+    fi
+    sleep 0.5
+done
+
+cp -f "$SOURCE" "$TARGET"
+chmod 0755 "$TARGET"
+nohup "$TARGET" >/dev/null 2>&1 &
+rm -rf "$TEMP_DIR"
+exit 0
+`, pid, currentExe, newBinary, tempDir)
+
+	if err := os.WriteFile(scriptPath, []byte(scriptContent), 0755); err != nil {
+		return fmt.Errorf("write Linux restart script failed: %w", err)
+	}
+
+	cmd := exec.Command("/bin/bash", scriptPath)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("launch Linux restart script failed: %w", err)
+	}
+
+	go func() {
+		time.Sleep(300 * time.Millisecond)
 		os.Exit(0)
 	}()
 
