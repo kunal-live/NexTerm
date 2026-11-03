@@ -218,10 +218,36 @@ jobs:
       - name: List Release Files
         run: ls -lh release/
 
+      - name: Generate Release Notes Body
+        shell: bash
+        run: |
+          TAG="${{ steps.release_meta.outputs.tag }}"
+          cat << 'EOF' > release_body.md
+          # NexTerm Desktop SSH & Systems Workspace
+
+          ### 📥 Official Downloads for All Operating Systems
+
+          Choose the download package for your operating system below. Each package is self-contained and pre-compiled with native Go and embedded UI; no separate runtime installations are required.
+
+          | Operating System | Package Type | Direct 1-Click Download (Latest) | Versioned Archive |
+          | :--- | :--- | :--- | :--- |
+          | **Windows 10 / 11 (64-bit)** | 📦 NSIS Setup Installer (`.exe`) | **[⬇️ NexTerm-Setup.exe](https://github.com/kunal-live/NexTerm/releases/latest/download/NexTerm-Setup.exe)** | **[⬇️ NexTerm-Setup-TAG.exe](https://github.com/kunal-live/NexTerm/releases/download/TAG/NexTerm-Setup-TAG.exe)** |
+          | **Windows 10 / 11 (64-bit)** | ⚡ Portable Archive (`.zip`) | **[⬇️ Nexterm-windows-x64-portable.zip](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-windows-x64-portable.zip)** | **[⬇️ Nexterm-TAG-windows-amd64-portable.zip](https://github.com/kunal-live/NexTerm/releases/download/TAG/Nexterm-TAG-windows-amd64-portable.zip)** |
+          | **Windows 10 / 11 (64-bit)** | 🚀 Standalone Executable (`.exe`) | **[⬇️ nexterm.exe](https://github.com/kunal-live/NexTerm/releases/latest/download/nexterm.exe)** | **[⬇️ nexterm.exe](https://github.com/kunal-live/NexTerm/releases/download/TAG/nexterm.exe)** |
+          | **macOS (Apple Silicon)** | 🍏 App Bundle (`.zip`) | **[⬇️ Nexterm-macos-arm64.zip](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-macos-arm64.zip)** | **[⬇️ Nexterm-TAG-macos-arm64.zip](https://github.com/kunal-live/NexTerm/releases/download/TAG/Nexterm-TAG-macos-arm64.zip)** |
+          | **Linux (Ubuntu, Debian, Fedora, Arch)** | 🐧 Binary Archive (`.tar.gz`) | **[⬇️ Nexterm-linux-x64.tar.gz](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-linux-x64.tar.gz)** | **[⬇️ Nexterm-TAG-linux-amd64.tar.gz](https://github.com/kunal-live/NexTerm/releases/download/TAG/Nexterm-TAG-linux-amd64.tar.gz)** |
+          | **Cryptographic Hashes** | 🔐 SHA-256 Checksums | **[📄 SHA256SUMS](https://github.com/kunal-live/NexTerm/releases/latest/download/SHA256SUMS)** | **[📄 SHA256SUMS](https://github.com/kunal-live/NexTerm/releases/download/TAG/SHA256SUMS)** |
+
+          ---
+
+          EOF
+          sed -i "s/TAG/${TAG}/g" release_body.md
+
       - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.release_meta.outputs.tag }}
           files: release/*
+          body_path: release_body.md
           generate_release_notes: true
           name: ${{ steps.release_meta.outputs.title }}

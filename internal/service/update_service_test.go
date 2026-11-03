@@ -119,11 +119,11 @@ func TestExtractExeFromZip(t *testing.T) {
 
 func TestValidateUpdateURL(t *testing.T) {
 	ok := []string{
-		"https://github.com/kunal-live/NexTerm/releases/download/v1.4.0/nexterm.exe",
+		"https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/nexterm.exe",
 		"https://objects.githubusercontent.com/github-production-release-asset/x",
 	}
 	bad := []string{
-		"http://github.com/kunal-live/NexTerm/releases/download/v1.4.0/nexterm.exe",
+		"http://github.com/kunal-live/NexTerm/releases/download/v1.4.1/nexterm.exe",
 		"https://example.com/nexterm.exe",
 		"https://github.com.evil.example/nexterm.exe",
 		"file:///C:/Windows/System32/calc.exe",
