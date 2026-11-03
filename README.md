@@ -11,31 +11,31 @@
 [![License](https://img.shields.io/badge/License-MIT-green.badge?style=for-the-badge)](#license)
 [![GitHub Release](https://img.shields.io/github/v/release/kunal-live/NexTerm?style=for-the-badge&color=8b5cf6&logo=github)](https://github.com/kunal-live/NexTerm/releases/latest)
 [![Launch Video](https://img.shields.io/badge/Launch_Video-1080p_Tour-8b5cf6?style=for-the-badge&logo=youtube&logoColor=white)](#-video-showcase-connect-beyond-limits)
-[![Download NexTerm for Windows](https://img.shields.io/badge/Download-Windows_Installer_%28.exe%29-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/latest/download/NexTerm-Setup.exe)
-[![Windows Portable](https://img.shields.io/badge/Download-Windows_Portable_%28.zip%29-005A9E?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-windows-x64-portable.zip)
-[![Windows Standalone](https://img.shields.io/badge/Download-Windows_Standalone_%28.exe%29-0083B0?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/latest/download/nexterm.exe)
-[![macOS Download](https://img.shields.io/badge/Download-macOS_Apple_Silicon_%28.zip%29-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-macos-arm64.zip)
-[![Linux Download](https://img.shields.io/badge/Download-Linux_x64_%28.tar.gz%29-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-linux-x64.tar.gz)
-[![SHA256 Checksums](https://img.shields.io/badge/Checksums-SHA256SUMS-10b981?style=for-the-badge&logo=git&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/latest/download/SHA256SUMS)
+[![Download NexTerm for Windows](https://img.shields.io/badge/Download_v1.4.1-Windows_Installer_%28.exe%29-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/NexTerm-Setup.exe)
+[![Windows Portable](https://img.shields.io/badge/Download_v1.4.1-Windows_Portable_%28.zip%29-005A9E?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/Nexterm-windows-x64-portable.zip)
+[![Windows Standalone](https://img.shields.io/badge/Download_v1.4.1-Windows_Standalone_%28.exe%29-0083B0?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/nexterm.exe)
+[![macOS Download](https://img.shields.io/badge/Download_v1.4.1-macOS_Apple_Silicon_%28.zip%29-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/Nexterm-macos-arm64.zip)
+[![Linux Download](https://img.shields.io/badge/Download_v1.4.1-Linux_x64_%28.tar.gz%29-FCC624?style=for-the-badge&logo=linux&logoColor=black)](https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/Nexterm-linux-x64.tar.gz)
+[![SHA256 Checksums](https://img.shields.io/badge/Checksums-SHA256SUMS-10b981?style=for-the-badge&logo=git&logoColor=white)](https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/SHA256SUMS)
 
 **NexTerm** is an all-in-one, cross-platform desktop SSH client, terminal emulator, SFTP browser, and remote infrastructure workstation built with **Go**, **Wails v2**, and **xterm.js**. Engineered for native execution on **Windows**, **macOS** (Apple Silicon & Intel), and **Linux**, it provides enterprise-grade security controls, visual SSH tunnel management, bastion jump hosts, live server performance monitoring, multi-execution command broadcasting, macro automation, and multi-protocol connectivity.
 
-### 📥 Download NexTerm
+### 📥 Download NexTerm v1.4.1 for All Operating Systems
 
-> Choose the download for your operating system below. Each release package includes the compiled NexTerm app and its frontend; you do not need Go, Node.js, Python, or Git. Download the installer for the simplest setup, or the portable package to extract and run.
+> Choose the download package for your operating system below. Each official release includes the compiled native NexTerm binary and embedded UI; no Go, Node.js, Python, or Git installations are required. Download the installer for the simplest desktop setup, or the portable package to extract and run without administrator privileges.
 
-| Platform | Format | Direct 1-Click Download | Dependencies Needed |
-| :--- | :--- | :--- | :--- |
-| **Windows 10 / 11 (64-bit)** | 📦 Setup Installer (`.exe`) | **[⬇️ Download NexTerm Setup](https://github.com/kunal-live/NexTerm/releases/latest/download/NexTerm-Setup.exe)** | **None** (Built-in) |
-| **Windows 10 / 11 (64-bit)** | ⚡ Portable Archive (`.zip`) | **[⬇️ Download Portable (.zip)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-windows-x64-portable.zip)** | **None** (Extract & Run) |
-| **Windows 10 / 11 (64-bit)** | 🚀 Standalone Executable (`.exe`) | **[⬇️ Download Standalone (.exe)](https://github.com/kunal-live/NexTerm/releases/latest/download/nexterm.exe)** | **None** (Direct Run) |
-| **macOS (M1 / M2 / M3 / M4)** | 🍏 App Bundle (`.zip`) | **[⬇️ Download macOS (arm64)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-macos-arm64.zip)** | **None** |
-| **Linux (Ubuntu, Debian, Fedora)** | 🐧 Binary Archive (`.tar.gz`) | **[⬇️ Download Linux (x64)](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-linux-x64.tar.gz)** | GTK 3 & WebKit2GTK 4.0 runtime libraries |
-| **Integrity & Verification** | 🔐 SHA-256 Hashes | **[📄 View SHA256SUMS](https://github.com/kunal-live/NexTerm/releases/latest/download/SHA256SUMS)** | Verifiable with `sha256sum -c` |
+| Operating System | Package Type | Direct 1-Click Download (Latest) | Versioned Archive (v1.4.1) | Dependencies |
+| :--- | :--- | :--- | :--- | :--- |
+| **Windows 10 / 11 (64-bit)** | 📦 NSIS Setup Installer (`.exe`) | **[⬇️ NexTerm-Setup.exe](https://github.com/kunal-live/NexTerm/releases/latest/download/NexTerm-Setup.exe)** | **[⬇️ NexTerm-Setup-v1.4.1.exe](https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/NexTerm-Setup-v1.4.1.exe)** | **None** (Self-contained) |
+| **Windows 10 / 11 (64-bit)** | ⚡ Portable Archive (`.zip`) | **[⬇️ Nexterm-windows-x64-portable.zip](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-windows-x64-portable.zip)** | **[⬇️ Nexterm-v1.4.1-windows-amd64-portable.zip](https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/Nexterm-v1.4.1-windows-amd64-portable.zip)** | **None** (Extract & Run) |
+| **Windows 10 / 11 (64-bit)** | 🚀 Standalone Binary (`.exe`) | **[⬇️ nexterm.exe](https://github.com/kunal-live/NexTerm/releases/latest/download/nexterm.exe)** | **[⬇️ nexterm.exe](https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/nexterm.exe)** | **None** (Zero-Install) |
+| **macOS (M1 / M2 / M3 / M4 Apple Silicon)** | 🍏 Signed App Bundle (`.zip`) | **[⬇️ Nexterm-macos-arm64.zip](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-macos-arm64.zip)** | **[⬇️ Nexterm-v1.4.1-macos-arm64.zip](https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/Nexterm-v1.4.1-macos-arm64.zip)** | **None** (macOS 12+) |
+| **Linux (Ubuntu, Debian, Fedora, Arch)** | 🐧 Binary Archive (`.tar.gz`) | **[⬇️ Nexterm-linux-x64.tar.gz](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-linux-x64.tar.gz)** | **[⬇️ Nexterm-v1.4.1-linux-amd64.tar.gz](https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/Nexterm-v1.4.1-linux-amd64.tar.gz)** | GTK 3 & WebKit2GTK |
+| **Cryptographic Hashes** | 🔐 SHA-256 Checksums | **[📄 SHA256SUMS](https://github.com/kunal-live/NexTerm/releases/latest/download/SHA256SUMS)** | **[📄 SHA256SUMS](https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/SHA256SUMS)** | `sha256sum -c SHA256SUMS` |
 
 > ⚠️ **Important Note for Non-Developers**: Do **NOT** click the green **`Code ➔ Download ZIP`** button on GitHub. That button only downloads raw source code. Use the platform download above instead.
 
-**[👉 View All Releases & Notes](https://github.com/kunal-live/NexTerm/releases)** • **[🚀 Download Latest Release](https://github.com/kunal-live/NexTerm/releases/latest)** • **[🎬 Watch the 2-Minute Video Tour](#-video-showcase-connect-beyond-limits)**
+**[👉 View All Releases & Notes](https://github.com/kunal-live/NexTerm/releases)** • **[🚀 GitHub Release v1.4.1](https://github.com/kunal-live/NexTerm/releases/tag/v1.4.1)** • **[🎬 Watch the 2-Minute Video Tour](#-video-showcase-connect-beyond-limits)**
 
 </div>
 
@@ -461,12 +461,12 @@ Experience the official 2-minute feature tour of NexTerm with professional keyno
 
 <p>
   <a href="https://github.com/kunal-live/NexTerm/raw/main/assets/nexterm-launch-video.mp4"><b>▶️ Watch / Download Direct Video (1080p MP4)</b></a> • 
-  <a href="https://github.com/kunal-live/NexTerm/releases/latest"><b>📥 Download Latest Release</b></a> • 
-  <a href="https://github.com/kunal-live/NexTerm/releases/latest/download/NexTerm-Setup.exe"><b>🪟 Windows Setup</b></a> • 
-  <a href="https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-windows-x64-portable.zip"><b>⚡ Windows Portable</b></a> • 
-  <a href="https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-macos-arm64.zip"><b>🍏 macOS</b></a> • 
-  <a href="https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-linux-x64.tar.gz"><b>🐧 Linux</b></a> • 
-  <a href="https://github.com/kunal-live/NexTerm/releases"><b>📦 View All Releases</b></a>
+  <a href="https://github.com/kunal-live/NexTerm/releases/tag/v1.4.1"><b>📦 GitHub Release v1.4.1</b></a> • 
+  <a href="https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/NexTerm-Setup.exe"><b>🪟 Windows Setup (v1.4.1)</b></a> • 
+  <a href="https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/Nexterm-windows-x64-portable.zip"><b>⚡ Windows Portable (v1.4.1)</b></a> • 
+  <a href="https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/Nexterm-macos-arm64.zip"><b>🍏 macOS Apple Silicon (v1.4.1)</b></a> • 
+  <a href="https://github.com/kunal-live/NexTerm/releases/download/v1.4.1/Nexterm-linux-x64.tar.gz"><b>🐧 Linux x64 (v1.4.1)</b></a> • 
+  <a href="https://github.com/kunal-live/NexTerm/releases"><b>📁 View All Releases</b></a>
 </p>
 
 </div>
