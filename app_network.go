@@ -84,6 +84,13 @@ func (a *App) ExecuteMacro(macroID string, targetTabIDs []string) error {
 		return fmt.Errorf("macro not found: %s", macroID)
 	}
 
+	for _, cmd := range targetMacro.Commands {
+		if err := a.settingsService.CheckCommand(cmd); err != nil {
+			a.loggingService.LogAudit("POLICY_DENIED", "macro_exec", "", "", "", "DENIED", err.Error())
+			return fmt.Errorf("macro command denied by security policy: %w", err)
+		}
+	}
+
 	targets := targetTabIDs
 	if len(targets) == 0 {
 		active := a.connectionManager.ActiveSessions()
@@ -94,6 +101,10 @@ func (a *App) ExecuteMacro(macroID string, targetTabIDs []string) error {
 
 	if len(targets) == 0 {
 		return fmt.Errorf("no active terminals to execute macro against")
+	}
+
+	if a.loggingService != nil {
+		a.loggingService.LogAudit("MACRO_EXEC", "macro_exec", "", "", "", "SUCCESS", fmt.Sprintf("Macro %s dispatched across %d target tabs", macroID, len(targets)))
 	}
 
 	go func() {

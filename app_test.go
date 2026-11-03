@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"nexterm/internal/macro"
 	"nexterm/internal/model"
 	"nexterm/internal/security"
 	"nexterm/internal/service"
@@ -526,6 +527,18 @@ func TestPolicyChecks_DangerousCommandsBlocked(t *testing.T) {
 	}
 	if err := app.ExecuteMulti([]string{"tab-1"}, dangerousCmd); err == nil {
 		t.Errorf("expected ExecuteMulti to block %q under policy", dangerousCmd)
+	}
+
+	// Dangerous commands inside macros must also be blocked by security policy
+	_ = app.SaveMacro(macro.Macro{
+		ID:       "macro-dangerous-test",
+		Name:     "Dangerous Macro",
+		Commands: []string{"echo starting", dangerousCmd},
+	})
+	if err := app.ExecuteMacro("macro-dangerous-test", []string{"tab-1"}); err == nil {
+		t.Errorf("expected ExecuteMacro with %q to fail under dangerous command policy", dangerousCmd)
+	} else if !strings.Contains(err.Error(), "security policy") {
+		t.Errorf("expected security policy error message, got: %v", err)
 	}
 
 	// Safe command should not be blocked by the dangerous command filter

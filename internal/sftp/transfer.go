@@ -118,6 +118,8 @@ func Download(client *sftp.Client, remotePath, localPath string) error {
 		return fmt.Errorf("create local root dir: %w", err)
 	}
 
+	cleanBase := filepath.Clean(targetBaseDir)
+
 	walker := client.Walk(remotePath)
 	for walker.Step() {
 		if walker.Err() != nil {
@@ -135,7 +137,17 @@ func Download(client *sftp.Client, remotePath, localPath string) error {
 			continue
 		}
 
-		localTarget := filepath.Join(targetBaseDir, filepath.FromSlash(rel))
+		cleanRel := filepath.Clean(filepath.FromSlash(rel))
+		if cleanRel == ".." || strings.HasPrefix(cleanRel, ".."+string(filepath.Separator)) || filepath.IsAbs(cleanRel) {
+			return fmt.Errorf("path traversal attempt detected: remote path %q escapes destination %q", curRemote, targetBaseDir)
+		}
+
+		localTarget := filepath.Join(targetBaseDir, cleanRel)
+		cleanTarget := filepath.Clean(localTarget)
+		if cleanTarget != cleanBase && !strings.HasPrefix(cleanTarget, cleanBase+string(filepath.Separator)) {
+			return fmt.Errorf("path traversal attempt detected: remote path %q escapes destination %q", curRemote, targetBaseDir)
+		}
+
 		stat := walker.Stat()
 
 		if stat.IsDir() {
@@ -173,4 +185,14 @@ func downloadSingleFile(client *sftp.Client, remoteFile, localFile string) error
 	// High-throughput concurrent pipeline: WriteTo triggers parallel SFTP read chunks
 	_, err = src.WriteTo(dst)
 	return err
+}
+
+// isWithinBase reports whether path target is strictly inside or equal to base.
+func isWithinBase(base, target string) bool {
+	cleanBase := filepath.Clean(base)
+	cleanTarget := filepath.Clean(target)
+	if cleanTarget == cleanBase {
+		return true
+	}
+	return strings.HasPrefix(cleanTarget, cleanBase+string(filepath.Separator))
 }
