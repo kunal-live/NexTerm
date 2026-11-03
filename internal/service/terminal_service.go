@@ -45,12 +45,12 @@ func defaultLocalShell() (string, string) {
 	}
 	if userShell := os.Getenv("SHELL"); userShell != "" {
 		base := filepath.Base(userShell)
-		return userShell, fmt.Sprintf("Local Shell (%s)", base)
+		return userShell + " -l", fmt.Sprintf("Local Shell (%s)", base)
 	}
 	if runtime.GOOS == "darwin" {
-		return "/bin/zsh", "Local Shell (zsh)"
+		return "/bin/zsh -l", "Local Shell (zsh)"
 	}
-	return "/bin/bash", "Local Shell (bash)"
+	return "/bin/bash -l", "Local Shell (bash)"
 }
 
 // OpenLocalTerminal launches a local shell via ConPTY (Windows) or POSIX PTY (macOS/Linux).

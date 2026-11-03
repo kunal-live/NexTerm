@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -33,11 +34,51 @@ func Start(commandLine string, cols, rows int) (*Terminal, error) {
 
 	var cmd *exec.Cmd
 	trimmed := strings.TrimSpace(commandLine)
-	if strings.ContainsAny(trimmed, " \t;&|><") {
+	parts := strings.Fields(trimmed)
+	if len(parts) > 1 && !strings.ContainsAny(trimmed, ";&|><") {
+		cmd = exec.Command(parts[0], parts[1:]...)
+	} else if strings.ContainsAny(trimmed, ";&|><") {
 		cmd = exec.Command("sh", "-c", trimmed)
 	} else {
 		cmd = exec.Command(trimmed)
 	}
+
+	// Ensure essential environment variables for interactive terminal emulation
+	env := os.Environ()
+	hasTerm := false
+	for _, e := range env {
+		if strings.HasPrefix(e, "TERM=") {
+			hasTerm = true
+			break
+		}
+	}
+	if !hasTerm {
+		env = append(env, "TERM=xterm-256color", "COLORTERM=truecolor")
+	}
+
+	// On macOS GUI bundles, launchd provides a minimal PATH (/usr/bin:/bin:/usr/sbin:/sbin).
+	// Prepend standard Homebrew paths so user CLI utilities (brew, git, node, docker, etc.) are available.
+	if runtime.GOOS == "darwin" {
+		currentPath := os.Getenv("PATH")
+		commonPaths := []string{"/opt/homebrew/bin", "/opt/homebrew/sbin", "/usr/local/bin"}
+		for _, cp := range commonPaths {
+			if !strings.Contains(currentPath, cp) {
+				currentPath = cp + ":" + currentPath
+			}
+		}
+		pathFound := false
+		for i, e := range env {
+			if strings.HasPrefix(e, "PATH=") {
+				env[i] = "PATH=" + currentPath
+				pathFound = true
+				break
+			}
+		}
+		if !pathFound {
+			env = append(env, "PATH=" + currentPath)
+		}
+	}
+	cmd.Env = env
 
 	ws := &pty.Winsize{
 		Cols: uint16(cols),
