@@ -49,11 +49,22 @@
 
 ---
 
-## 🚀 What's New in v1.4.0
+## 🚀 What's New in v1.4.1
 
-> **Release Name**: *Network Proxies, MobaXterm RDP Parity & High-Throughput SFTP*  
-> **Release Package**: [📦 GitHub Release v1.4.0](https://github.com/kunal-live/NexTerm/releases/tag/v1.4.0) • [All Releases & Downloads](https://github.com/kunal-live/NexTerm/releases)  
+> **Release Name**: *Modular Domain Architecture, App Lock Security Enforcement & Reliability Engine*  
+> **Release Package**: [📦 GitHub Release v1.4.1](https://github.com/kunal-live/NexTerm/releases/tag/v1.4.1) • [All Releases & Downloads](https://github.com/kunal-live/NexTerm/releases)  
 > Full release history for all previous versions is documented below.
+
+- 🧩 **Modular Domain Architecture**: Refactored monolithic core into isolated domain controllers (`session`, `credentials`, `logging`, `terminal`, `sftp`, `network`, `system`), improving maintainability, auditability, and test isolation.
+- 🛡️ **Backend App Lock & Secret Gating**: Enforced strict app-lock and master password state verification on backend secret access, preventing unauthorized retrieval of credentials even if UI boundaries are bypassed.
+- ⚡ **Concurrency & Mutex Optimization**: Eliminated global mutex bottlenecks with per-tab `SessionLogManager` locks, preventing log handle leaks and thread contention under heavy multi-terminal workloads.
+- 🚦 **Operational Policy Enforcement**: Integrated dangerous command blocking and protocol restrictions into `BroadcastCommand`, `ExecuteMulti`, and `RunSSHCommand`.
+- 🔐 **Hardened Security & Display Protocols**: Enforced owner-only permissions (`0600`) on session exports and upgraded X11 display forwarding with `MIT-MAGIC-COOKIE-1` token authentication.
+- 🧹 **Precision Sensitive Data Redaction**: Refined regex redaction filters to prevent false positives with Unix shell flags (such as `mkdir -p`, `ls -print`, `grep -pattern`).
+- 🧪 **Enterprise Test Coverage**: Added comprehensive test suites across session management, app-lockout lifecycle, and security policies.
+
+<details>
+<summary><b>Previous: What's New in v1.4.0 (2026-10-26) — <a href="https://github.com/kunal-live/NexTerm/releases/tag/v1.4.0">Release v1.4.0</a></b></summary>
 
 - 🌐 **Network Proxy Routing (SOCKS5, SOCKS4, HTTP CONNECT)**: Native proxy client supporting direct SSH connections and chained bastion jump hosts with full credential authentication.
 - 🖥️ **MobaXterm RDP Feature Parity**: Device redirection (local drives/hotplug, clipboard, printers, COM ports, smart cards), remote/local audio playback & microphone capture, and network performance bandwidth auto-detection.
@@ -63,6 +74,8 @@
 - 🛡️ **Independent App Lock & Multi-Stage Lockout**: Dedicated workstation lock with PIN/password protection, exponential cooldowns against brute-force attempts, and a live background server reachability monitor.
 - 🎨 **Home Dashboard & Hero Enhancements**: Refreshed dashboard with environment filtering (Production, Staging, Dev) and celestial hero animations.
 - 🧹 **Binary Optimization**: Removed redundant assets and dependencies to reduce embedded binary size and memory footprint.
+
+</details>
 
 <details>
 <summary><b>Previous: What's New in v1.3.0 (2026-10-04) — <a href="https://github.com/kunal-live/NexTerm/releases/tag/v1.3.0">Release v1.3.0</a></b></summary>

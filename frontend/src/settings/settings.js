@@ -1695,7 +1695,7 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
           <div style="background: #11141e; border: 1px solid #1e2433; border-radius: 6px; padding: 12px;">
             <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; letter-spacing: 0.5px;">Current Version</div>
-            <div id="settingsInstalledVer" style="font-size: 15px; font-weight: 700; color: #38bdf8; margin-top: 4px;">v1.4.0</div>
+            <div id="settingsInstalledVer" style="font-size: 15px; font-weight: 700; color: #38bdf8; margin-top: 4px;">v1.4.1</div>
           </div>
           <div style="background: #11141e; border: 1px solid #1e2433; border-radius: 6px; padding: 12px;">
             <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 600; letter-spacing: 0.5px;">Release Channel</div>

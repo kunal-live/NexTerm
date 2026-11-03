@@ -52,7 +52,9 @@ jobs:
       - name: Package Windows Release Assets
         shell: pwsh
         run: |
-          $ver = if ($env:GITHUB_REF_NAME) { $env:GITHUB_REF_NAME } else { "latest" }
+          $json = Get-Content "wails.json" | ConvertFrom-Json
+          $defaultVer = "v" + $json.info.productVersion
+          $ver = if ($env:GITHUB_REF_NAME -and $env:GITHUB_REF_NAME -ne "main") { $env:GITHUB_REF_NAME } else { $defaultVer }
           # NSIS installer is the primary Windows download. Fail the release if Wails
           # didn't produce one rather than publishing a dead installer link.
           $installers = @(Get-ChildItem -Path "build/bin" -Filter "*installer.exe" -File)
@@ -107,7 +109,12 @@ jobs:
       - name: Package macOS App as Zip
         run: |
           cd build/bin
-          VER="${GITHUB_REF_NAME:-latest}"
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VER="${GITHUB_REF_NAME}"
+          else
+            PROD_VER=$(python3 -c "import os, json; print(json.load(open(os.path.join(os.environ.get('GITHUB_WORKSPACE', '.'), 'wails.json')))['info']['productVersion'])" 2>/dev/null || echo "1.4.1")
+            VER="v${PROD_VER}"
+          fi
           ditto -c -k --sequesterRsrc --keepParent nexterm.app "Nexterm-macos-arm64.zip"
           ditto -c -k --sequesterRsrc --keepParent nexterm.app "Nexterm-${VER}-macos-arm64.zip"
           cd ../..
@@ -144,7 +151,12 @@ jobs:
 
       - name: Package Linux Binary as tar.gz
         run: |
-          VER="${GITHUB_REF_NAME:-latest}"
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VER="${GITHUB_REF_NAME}"
+          else
+            PROD_VER=$(python3 -c "import os, json; print(json.load(open(os.path.join(os.environ.get('GITHUB_WORKSPACE', '.'), 'wails.json')))['info']['productVersion'])" 2>/dev/null || echo "1.4.1")
+            VER="v${PROD_VER}"
+          fi
           tar -czvf "build/bin/Nexterm-linux-x64.tar.gz" -C build/bin nexterm
           tar -czvf "build/bin/Nexterm-${VER}-linux-amd64.tar.gz" -C build/bin nexterm
 
@@ -172,7 +184,7 @@ jobs:
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             TAG="${{ github.ref_name }}"
           else
-            VER=$(python3 -c "import json; print(json.load(open('wails.json'))['info']['productVersion'])" 2>/dev/null || echo "1.4.0")
+            VER=$(python3 -c "import json; print(json.load(open('wails.json'))['info']['productVersion'])" 2>/dev/null || echo "1.4.1")
             TAG="v${VER}"
           fi
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
