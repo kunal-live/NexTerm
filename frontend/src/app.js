@@ -41,6 +41,7 @@ import {
   activateHomeTab,
   activateTab,
   closeTab,
+  disconnectTab,
   toggleMultiExec,
   sendMultiExec,
   startReconnectionSequence,

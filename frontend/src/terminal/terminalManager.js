@@ -156,8 +156,7 @@ export function showReconnectPromptBanner(tabId, profile, classifiedErr) {
   if (btnDismiss) {
     btnDismiss.onclick = () => {
       hideReconnectBanner(tabId);
-      if (t.term) t.term.write("\r\n\x1b[90m● Banner dismissed. Press [Enter] anytime to close tab.\x1b[0m\r
-");
+      if (t.term) t.term.write("\r\n\x1b[90m● Banner dismissed. Press [Enter] anytime to close tab.\x1b[0m\r\n");
     };
   }
 }
