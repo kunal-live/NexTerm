@@ -112,27 +112,37 @@ export function showReconnectPromptBanner(tabId, profile, classifiedErr) {
   if (!t || !t.paneEl) return;
   hideReconnectBanner(tabId);
 
+  const hostName = (profile && profile.host) || (profile && profile.name) || (t.isLocal ? "Local Terminal" : "Server");
   const container = t.paneEl.querySelector(".pane-terminal-top") || t.paneEl;
   const banner = document.createElement("div");
   banner.className = "reconnect-banner";
   banner.id = `reconnectBanner_${tabId}`;
   banner.innerHTML = `
     <div class="reconnect-banner-left">
-      <span class="reconnect-pulse-icon">⚡</span>
+      <span class="reconnect-pulse-icon">🔌</span>
       <div>
-        <div class="reconnect-banner-title">Connection Lost</div>
-        <div class="reconnect-banner-desc">Connection to <b>${escapeHtml(profile.host)}</b> was terminated. Reconnect?</div>
+        <div class="reconnect-banner-title">Session Stopped</div>
+        <div class="reconnect-banner-desc">Connection to <b>${escapeHtml(hostName)}</b> closed. Press <b>[Enter]</b> to close tab.</div>
       </div>
     </div>
     <div class="reconnect-banner-actions">
-      <button class="btn btn-primary" id="btnRecNow_${tabId}">⚡ Reconnect (Yes)</button>
-      <button class="btn btn-secondary" id="btnRecAuto_${tabId}">🔄 Auto-Retry (5x)</button>
-      <button class="btn btn-outline" id="btnRecDismiss_${tabId}">✕ Dismiss</button>
+      <button class="btn btn-primary" id="btnRecClose_${tabId}" style="background:#dc2626; border-color:#ef4444; color:#fff;">✕ Close Tab (Enter)</button>
+      ${!t.isLocal ? `<button class="btn btn-secondary" id="btnRecNow_${tabId}">⚡ Reconnect (R)</button>` : ''}
+      <button class="btn btn-outline" id="btnRecDismiss_${tabId}">Dismiss</button>
     </div>
   `;
 
   container.appendChild(banner);
+  t.awaitingCloseOnEnter = true;
   t.awaitingReconnectPrompt = true;
+
+  const btnClose = banner.querySelector(`#btnRecClose_${tabId}`);
+  if (btnClose) {
+    btnClose.onclick = () => {
+      hideReconnectBanner(tabId);
+      closeTab(tabId);
+    };
+  }
 
   const btnNow = banner.querySelector(`#btnRecNow_${tabId}`);
   if (btnNow) {
@@ -142,19 +152,12 @@ export function showReconnectPromptBanner(tabId, profile, classifiedErr) {
     };
   }
 
-  const btnAuto = banner.querySelector(`#btnRecAuto_${tabId}`);
-  if (btnAuto) {
-    btnAuto.onclick = () => {
-      hideReconnectBanner(tabId);
-      startReconnectionSequence(tabId, false);
-    };
-  }
-
   const btnDismiss = banner.querySelector(`#btnRecDismiss_${tabId}`);
   if (btnDismiss) {
     btnDismiss.onclick = () => {
       hideReconnectBanner(tabId);
-      if (t.term) t.term.write("\r\n\x1b[90m● Reconnection prompt dismissed.\x1b[0m\r\n");
+      if (t.term) t.term.write("\r\n\x1b[90m● Banner dismissed. Press [Enter] anytime to close tab.\x1b[0m\r
+");
     };
   }
 }
@@ -665,6 +668,28 @@ try {
   registerNotifTabSwitcher(activateTab);
 } catch (_) {}
 
+
+export function disconnectTab(tabId) {
+  const t = tabs[tabId];
+  if (!t) return;
+  if (t.isConnected) {
+    if (window.go && window.go.main && window.go.main.App && window.go.main.App.CloseTab) {
+      try { window.go.main.App.CloseTab(tabId); } catch (_) {}
+    }
+    t.isConnected = false;
+    t.connectionState = "Closed";
+    t.awaitingCloseOnEnter = true;
+    const errInfo = { category: "Session Closed", message: "Disconnected by user" };
+    setTabConnectionState(tabId, "Closed", errInfo, "Disconnected by user");
+    const hostLabel = t.profile?.name || t.profile?.host || (t.isLocal ? "Local Terminal" : "Server");
+    showToast(`● Disconnected: ${hostLabel}`, "info", { eventType: "disconnect", isSystemEvent: true });
+    if (t.term) {
+      t.term.write(`\r\n\x1b[1;33m● Session closed by user. Press \x1b[1;36m[Enter]\x1b[1;33m to close tab${!t.isLocal ? ", or \x1b[1;36m[R]\x1b[1;33m to reconnect" : ""}.\x1b[0m\r\n\r\n`);
+    }
+    showReconnectPromptBanner(tabId, t.profile, errInfo);
+  }
+}
+
 export function closeTab(tabId) {
   const t = tabs[tabId];
   if (!t) return;
@@ -993,6 +1018,22 @@ export function createTab(tabId, profile, isLocal = false, initialState = "Conne
   let outputBuffer = "";
 
   term.onData((data) => {
+    const tObj = tabs[tabId];
+    if (tObj && (tObj.awaitingCloseOnEnter || tObj.connectionState === "Closed" || !tObj.isConnected)) {
+      if (data.includes("\r") || data.includes("\n")) {
+        hideReconnectBanner(tabId);
+        closeTab(tabId);
+        return;
+      }
+      if ((data.toLowerCase() === "r" || data.toLowerCase() === "y") && !isLocal) {
+        tObj.awaitingCloseOnEnter = false;
+        tObj.awaitingReconnectPrompt = false;
+        hideReconnectBanner(tabId);
+        startReconnectionSequence(tabId, true);
+        return;
+      }
+    }
+
     if (window.go && window.go.main && window.go.main.App) {
       window.go.main.App.WriteToTerminal(tabId, data);
     }
@@ -1105,16 +1146,14 @@ export function createTab(tabId, profile, isLocal = false, initialState = "Conne
       showToast(`● Disconnected: ${profile.name || profile.host}`, "warning", { eventType: "disconnect", isSystemEvent: true });
       renderTerminalDiagnosticCard(term, profile, errInfo);
 
-      if (!isLocal && tabs[tabId]) {
-        const shouldAuto = profile.autoReconnect !== undefined ? profile.autoReconnect : userSettings.autoReconnect;
-        if (shouldAuto) {
-          startReconnectionSequence(tabId, false);
-        } else {
-          showReconnectPromptBanner(tabId, profile, errInfo);
-          term.write(`\x1b[1;33m● Connection lost to ${profile.host}. Press \x1b[1;36m[Enter]\x1b[1;33m or \x1b[1;36m[Y]\x1b[1;33m to reconnect, or \x1b[1;36m[N]\x1b[1;33m to dismiss.\x1b[0m\r\n\r\n`);
-          tabs[tabId].awaitingReconnectPrompt = true;
-        }
+      if (tabs[tabId]) {
+        tabs[tabId].isConnected = false;
+        tabs[tabId].connectionState = "Closed";
+        tabs[tabId].awaitingCloseOnEnter = true;
       }
+
+      term.write(`\r\n\x1b[1;33m● Session stopped. Press \x1b[1;36m[Enter]\x1b[1;33m to close tab${!isLocal ? ", or \x1b[1;36m[R]\x1b[1;33m to reconnect" : ""}.\x1b[0m\r\n\r\n`);
+      showReconnectPromptBanner(tabId, profile, errInfo);
     });
     if (typeof unsubClosed === "function") unsubs.push(unsubClosed);
   }
@@ -1123,8 +1162,34 @@ export function createTab(tabId, profile, isLocal = false, initialState = "Conne
     const tObj = tabs[tabId];
     if (!tObj) return;
 
+    // When server or process is closed, hitting Enter automatically closes the tab
+    if (tObj.awaitingCloseOnEnter || tObj.connectionState === "Closed" || !tObj.isConnected) {
+      if (e.key === "\r" || (e.domEvent && e.domEvent.key === "Enter")) {
+        hideReconnectBanner(tabId);
+        closeTab(tabId);
+        return;
+      }
+      if ((e.key.toLowerCase() === "r" || e.key.toLowerCase() === "y") && !isLocal) {
+        tObj.awaitingCloseOnEnter = false;
+        tObj.awaitingReconnectPrompt = false;
+        hideReconnectBanner(tabId);
+        startReconnectionSequence(tabId, true);
+        return;
+      }
+      if (e.domEvent && e.domEvent.key === "Escape") {
+        hideReconnectBanner(tabId);
+        term.write("\r\n\x1b[90m● Banner dismissed. Press [Enter] anytime to close tab.\x1b[0m\r\n");
+        return;
+      }
+    }
+
     if (tObj.awaitingReconnectPrompt) {
-      if (e.key === "\r" || e.key.toLowerCase() === "y") {
+      if (e.key === "\r" || (e.domEvent && e.domEvent.key === "Enter")) {
+        tObj.awaitingReconnectPrompt = false;
+        hideReconnectBanner(tabId);
+        closeTab(tabId);
+        return;
+      } else if (e.key.toLowerCase() === "r" || e.key.toLowerCase() === "y") {
         tObj.awaitingReconnectPrompt = false;
         hideReconnectBanner(tabId);
         startReconnectionSequence(tabId, true);
@@ -1132,14 +1197,21 @@ export function createTab(tabId, profile, isLocal = false, initialState = "Conne
       } else if (e.key.toLowerCase() === "n" || (e.domEvent && e.domEvent.key === "Escape")) {
         tObj.awaitingReconnectPrompt = false;
         hideReconnectBanner(tabId);
-        term.write("\r\n\x1b[90m● Reconnection dismissed.\x1b[0m\r\n");
+        term.write("\r\n\x1b[90m● Reconnection dismissed. Press [Enter] to close tab.\x1b[0m\r\n");
         return;
       }
     }
 
-    if (tObj.reconnectState && tObj.reconnectState.active && e.domEvent && e.domEvent.key === "Escape") {
-      cancelReconnection(tabId);
-      return;
+    if (tObj.reconnectState && tObj.reconnectState.active) {
+      if (e.key === "\r" || (e.domEvent && e.domEvent.key === "Enter")) {
+        cancelReconnection(tabId);
+        closeTab(tabId);
+        return;
+      }
+      if (e.domEvent && e.domEvent.key === "Escape") {
+        cancelReconnection(tabId);
+        return;
+      }
     }
   });
 
@@ -1237,6 +1309,7 @@ export function createTab(tabId, profile, isLocal = false, initialState = "Conne
     unsubscribers: unsubs,
     reconnectState: null,
     awaitingReconnectPrompt: false,
+    awaitingCloseOnEnter: false,
     color: profile.color || "",
     environment: profile.environment || "",
     pinned: false,
@@ -1524,6 +1597,12 @@ export function showTabContextMenu(x, y, tabId) {
       <span class="ctx-text">Broadcast command...</span>
       <span class="ctx-shortcut">Alt+B</span>
     </div>
+    ${t.isConnected && !t.isLocal ? `
+    <div class="context-menu-item" id="tabCtxDisconnect">
+      <span class="ctx-icon">🔌</span>
+      <span class="ctx-text">Disconnect session</span>
+    </div>
+    ` : ''}
     <div class="context-menu-item danger" id="tabCtxClose">
       <span class="ctx-icon">✕</span>
       <span class="ctx-text">Close tab</span>
@@ -1625,6 +1704,15 @@ export function showTabContextMenu(x, y, tabId) {
     btnBcast.onclick = () => {
       hideContextMenu();
       openBroadcastDialog("selected", [tabId]);
+    };
+  }
+
+  // Disconnect session
+  const btnDisconnect = contextMenuEl.querySelector("#tabCtxDisconnect");
+  if (btnDisconnect) {
+    btnDisconnect.onclick = () => {
+      hideContextMenu();
+      disconnectTab(tabId);
     };
   }
 

@@ -7,7 +7,7 @@ import { getContextMenuEl, posMenu, hideContextMenu } from '../ui/contextMenu.js
 import { showToast, escapeHtml } from '../ui/notifications.js';
 import { rootNode } from '../state/sessionState.js';
 import { tabs } from '../state/tabState.js';
-import { connectToSession, activateTab } from '../terminal/terminalManager.js';
+import { connectToSession, activateTab, disconnectTab } from '../terminal/terminalManager.js';
 import { showModal, hideModal } from '../ui/modal.js';
 import {
   showNewSessionDialog,
@@ -430,9 +430,20 @@ export function showSessionContextMenu(x, y, profile, nodeId) {
   const contextMenuEl = getContextMenuEl();
   if (!contextMenuEl) return;
 
+  let activeTabForProfile = null;
+  if (tabs) {
+    for (const [id, tab] of Object.entries(tabs)) {
+      if (tab && tab.profile && tab.profile.id === profile.id && tab.isConnected) {
+        activeTabForProfile = id;
+        break;
+      }
+    }
+  }
+
   contextMenuEl.innerHTML = `
     <div class="context-menu-item" id="cConn">⚡ Connect</div>
     <div class="context-menu-item" id="cConnNew">⧉ Open in New Tab (Duplicate)</div>
+    ${activeTabForProfile ? `<div class="context-menu-item" id="cDisconn" style="color:#ef4444;">🔌 Disconnect Session</div>` : ''}
     <div class="context-menu-item" id="cEdit">✏️ Edit</div>
     <div class="context-menu-item" id="cDup">📋 Duplicate Saved Entry</div>
     <div class="context-menu-item" id="cRenSess">🏷️ Rename</div>
@@ -458,6 +469,14 @@ export function showSessionContextMenu(x, y, profile, nodeId) {
     hideContextMenu();
     connectToSession(profile, true);
   };
+
+  const disconnBtn = contextMenuEl.querySelector("#cDisconn");
+  if (disconnBtn && activeTabForProfile) {
+    disconnBtn.onclick = () => {
+      hideContextMenu();
+      disconnectTab(activeTabForProfile);
+    };
+  }
 
   // 2. Edit
   contextMenuEl.querySelector("#cEdit").onclick = () => {

@@ -398,6 +398,7 @@ export function setupEventListeners() {
   safeClick("mExportSessions", () => { const b = document.getElementById("treeExportBtn"); if (b) b.click(); });
   safeClick("mSaveGroup", () => promptSaveGroup());
   safeClick("mManageGroups", () => showGroupsDialog());
+  safeClick("mDisconnect", () => { if (activeTabId && activeTabId !== "home") disconnectTab(activeTabId); });
   safeClick("mCloseTab", () => { if (activeTabId && activeTabId !== "home") closeTab(activeTabId); });
   safeClick("mClearTab", () => { if (activeTabId && tabs[activeTabId]) tabs[activeTabId].term.clear(); });
   safeClick("mFindInTerm", () => {
