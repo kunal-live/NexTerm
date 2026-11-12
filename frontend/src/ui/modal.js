@@ -25,6 +25,25 @@ export function showModal(htmlContent, extraClass = "") {
   return modalBoxEl;
 }
 
+// showPromptModal shows a prompt that must not destroy a dialog that is already
+// open: if the shared modal is free it is used as usual, otherwise the prompt
+// gets its own overlay stacked on top. Returns the box and a close function.
+export function showPromptModal(htmlContent, extraClass = "") {
+  const base = document.getElementById("modalOverlay");
+  if (!base || base.classList.contains("hidden")) {
+    return { box: showModal(htmlContent, extraClass), close: hideModal };
+  }
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay nx-stacked-modal";
+  overlay.style.zIndex = "600";
+  const box = document.createElement("div");
+  box.className = "modal-card " + extraClass;
+  box.innerHTML = htmlContent;
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  return { box, close: () => overlay.remove() };
+}
+
 export function hideModal() {
   const modalOverlayEl = document.getElementById("modalOverlay");
   const modalBoxEl = document.getElementById("modalBox");
@@ -365,6 +384,10 @@ export function promptBastionSecretDialog({ gatewayLabel, vaultKey, isKey, keyPa
 
 export function showAuthChallengeModal(data) {
   if (!data || !data.requestId) return;
+  // Shown while another dialog may be open (e.g. "Test Connection" in the session
+  // editor): stack it instead of replacing that dialog.
+  let closePrompt = hideModal;
+  const openPrompt = (html, cls = "") => { const r = showPromptModal(html, cls); closePrompt = r.close; return r.box; };
   const { requestId, user, instruction, questions, echoes } = data;
 
   let questionsHtml = "";
@@ -378,7 +401,7 @@ export function showAuthChallengeModal(data) {
     `;
   });
 
-  const box = showModal(`
+  const box = openPrompt(`
     <div class="modal-header">
       <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
         <span>🛡️</span> Interactive Authentication Challenge
@@ -409,7 +432,7 @@ export function showAuthChallengeModal(data) {
     const inputs = box.querySelectorAll(".auth-challenge-field");
     const answers = [];
     inputs.forEach(inp => answers.push(inp.value));
-    hideModal();
+    closePrompt();
     if (window.go?.main?.App?.RespondAuthChallenge) {
       try {
         await window.go.main.App.RespondAuthChallenge(requestId, answers);
@@ -420,7 +443,7 @@ export function showAuthChallengeModal(data) {
   };
 
   const doCancel = async () => {
-    hideModal();
+    closePrompt();
     if (window.go?.main?.App?.CancelAuthChallenge) {
       try {
         await window.go.main.App.CancelAuthChallenge(requestId);
@@ -450,6 +473,10 @@ export function showAuthChallengeModal(data) {
 
 export function showHostKeyVerificationModal(data) {
   if (!data) return;
+  // Shown while another dialog may be open (e.g. "Test Connection" in the session
+  // editor): stack it instead of replacing that dialog.
+  let closePrompt = hideModal;
+  const openPrompt = (html, cls = "") => { const r = showPromptModal(html, cls); closePrompt = r.close; return r.box; };
 
   const isMismatch = data.status === "mismatch";
   let responded = false;
@@ -457,7 +484,7 @@ export function showHostKeyVerificationModal(data) {
   function sendResponse(action) {
     if (responded) return;
     responded = true;
-    hideModal();
+    closePrompt();
     if (window.go && window.go.main && window.go.main.App && window.go.main.App.RespondHostKey) {
       window.go.main.App.RespondHostKey(data.requestId, action);
     }
@@ -569,7 +596,7 @@ export function showHostKeyVerificationModal(data) {
       </div>
     `;
 
-  const box = showModal(`
+  const box = openPrompt(`
     <div class="modal-header ${headerClass}">
       <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">${titleHtml}</div>
       <button class="modal-close-btn" id="modalClose">&times;</button>
@@ -583,7 +610,8 @@ export function showHostKeyVerificationModal(data) {
 
   if (!box) return;
 
-  const modalOverlayEl = document.getElementById("modalOverlay");
+  // The overlay this prompt lives in (shared or stacked).
+  const modalOverlayEl = box.parentElement;
   if (modalOverlayEl) {
     modalOverlayEl.onclick = (e) => {
       if (e.target === modalOverlayEl) sendResponse("reject");

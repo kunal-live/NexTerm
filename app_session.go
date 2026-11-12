@@ -358,19 +358,30 @@ func (a *App) TestSessionConnection(profile model.SessionProfile, password strin
 	}
 
 	// Username provided: test SSH authentication handshake
+	var agentSigners []ssh.Signer
 	if password == "" && a.credentialService != nil {
 		vKey := profile.VaultKey
 		if vKey == "" {
 			vKey = profile.ID
 		}
-		if vKey != "" {
-			if saved := a.credentialService.LoadSecretForConnection(vKey); saved != "" {
-				password = saved
+		// Same lookup a real connect uses (vault key, then host/port/user), so
+		// "Test" agrees with "Connect".
+		password = a.credentialService.ResolveSessionPasswordForConnection(vKey, profile.Host, port, profile.Username)
+	}
+
+	// SSH agent (explicitly chosen, or as an extra method when enabled).
+	if profile.AuthType == "agent" || profile.UseAgent {
+		if agentClient, _, err := sshsession.DialSSHAgent(""); err == nil {
+			if signers, sErr := agentClient.Signers(); sErr == nil && len(signers) > 0 {
+				agentSigners = signers
 			}
 		}
 	}
 
 	var authMethods []ssh.AuthMethod
+	if len(agentSigners) > 0 {
+		authMethods = append(authMethods, ssh.PublicKeys(agentSigners...))
+	}
 	if password != "" {
 		authMethods = append(authMethods, ssh.Password(password), ssh.KeyboardInteractive(func(user, instruction string, questions []string, echos []bool) ([]string, error) {
 			answers := make([]string, len(questions))

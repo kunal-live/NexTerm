@@ -258,16 +258,16 @@ export function HasAppPassword() {
   return window['go']['main']['App']['HasAppPassword']();
 }
 
+export function HasConnectCredential(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['HasConnectCredential'](arg1, arg2, arg3, arg4);
+}
+
 export function HasMasterPassword() {
   return window['go']['main']['App']['HasMasterPassword']();
 }
 
 export function HasPreviousMasterPasswords() {
   return window['go']['main']['App']['HasPreviousMasterPasswords']();
-}
-
-export function HasConnectCredential(arg1, arg2, arg3, arg4) {
-  return window['go']['main']['App']['HasConnectCredential'](arg1, arg2, arg3, arg4);
 }
 
 export function HasSavedPassword(arg1) {

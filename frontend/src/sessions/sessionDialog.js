@@ -1633,8 +1633,10 @@ export async function showNewSessionDialog(parentFolderId = "", editProfile = nu
         return;
       }
       const port = parseInt(box.querySelector("#sPort")?.value, 10) || (currentProto === "rdp" ? 3389 : (currentProto === "vnc" ? 5900 : (currentProto === "telnet" ? 23 : 22)));
-      const username = box.querySelector("#sUsername")?.value.trim() || "";
-      const password = box.querySelector("#sPassword")?.value || "";
+      // Same fields the Save button reads (the username input is #sUser; the
+      // password may be typed in either the General or the Auth tab).
+      const username = box.querySelector("#sUser")?.value.trim() || "";
+      const password = box.querySelector("#sPasswordGen")?.value || box.querySelector("#sPassword")?.value || "";
       const keyPath = box.querySelector("#sKeyPath")?.value.trim() || "";
       const passphrase = box.querySelector("#sKeyPassphrase")?.value || "";
       const authType = box.querySelector("#sAuthType")?.value || "password";
@@ -1652,7 +1654,9 @@ export async function showNewSessionDialog(parentFolderId = "", editProfile = nu
         privateKeyPath: keyPath,
         keyPassphrase: passphrase,
         serialPort: serialPort,
-        vaultKey: isEdit ? (editNode?.session?.vaultKey || editNode?.session?.id || "") : ""
+        // editNode does not exist in this dialog (ReferenceError on edit); use the profile being edited.
+        id: isEdit ? (editProfile?.id || "") : "",
+        vaultKey: isEdit ? (editProfile?.vaultKey || editProfile?.id || "") : ""
       };
 
       try {
