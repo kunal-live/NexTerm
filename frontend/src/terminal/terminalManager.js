@@ -369,18 +369,10 @@ export async function executeReconnectAttempt(tabId, attempt) {
     } catch (_) {}
   }
 
-  let password = "";
-  const vKey = profile.vaultKey || profile.id;
-  if (!profile.privateKeyPath && window.go && window.go.main && window.go.main.App) {
-    try {
-      if (vKey && typeof window.go.main.App.GetSessionPassword === "function") {
-        password = await window.go.main.App.GetSessionPassword(vKey);
-      }
-      if (!password && window.go.main.App.FindSessionPassword && profile.host && profile.username) {
-        password = await window.go.main.App.FindSessionPassword(vKey || "", profile.host, profile.port || 22, profile.username);
-      }
-    } catch (_) {}
-  }
+  // Saved credentials are resolved by the backend itself when the password is
+  // empty, so reconnecting works without unlocking the vault and the secret
+  // never has to pass through the UI.
+  const password = "";
 
   try {
     if (window.go && window.go.main && window.go.main.App) {
@@ -1384,29 +1376,23 @@ export async function connectToSession(profile, forceNewTab = false) {
 
   if (authType === "password") {
     if (!password) {
+      // Only ask whether a password is saved — never read it here. The backend
+      // logs in with the saved password itself (password left empty), which
+      // works while the master password / vault lock is still closed: that lock
+      // only protects passwords from being *shown* in the Password Manager.
       let hasSaved = false;
-      if (window.go && window.go.main && window.go.main.App) {
+      const App = window.go && window.go.main && window.go.main.App;
+      if (App) {
         try {
-          if (vKey) {
-            hasSaved = await window.go.main.App.HasSavedPassword(vKey);
-            if (hasSaved) {
-              if (typeof window.go.main.App.GetSessionPassword === "function") {
-                password = await window.go.main.App.GetSessionPassword(vKey);
-              }
-            }
+          if (typeof App.HasConnectCredential === "function") {
+            hasSaved = await App.HasConnectCredential(vKey || "", profile.host || "", profile.port || 22, profile.username || "");
+          } else if (vKey && typeof App.HasSavedPassword === "function") {
+            hasSaved = await App.HasSavedPassword(vKey);
           }
-          // Cross-session fallback: check if existing credentials match this host/username
-          if (!password && window.go.main.App.FindSessionPassword && profile.host && profile.username) {
-            const found = await window.go.main.App.FindSessionPassword(vKey || "", profile.host, profile.port || 22, profile.username);
-            if (found) {
-              password = found;
-              hasSaved = true;
-            }
-          }
-        } catch (err) {}
+        } catch (_) {}
       }
 
-      if (!hasSaved || !password) {
+      if (!hasSaved) {
         password = await promptPasswordDialog(profile);
         if (password === null) return;
       }
@@ -1415,10 +1401,10 @@ export async function connectToSession(profile, forceNewTab = false) {
     if (profile.privateKeyPath && window.go && window.go.main && window.go.main.App && window.go.main.App.ValidatePrivateKeyFile) {
       let hasSavedPass = false;
       const passKey = profile.passphraseVaultKey || (profile.vaultKey ? profile.vaultKey + "_passphrase" : "");
-      if (passKey && window.go.main.App.GetSessionPassphrase) {
+      if (passKey && window.go.main.App.HasSavedPassword) {
         try {
-          const saved = await window.go.main.App.GetSessionPassphrase(passKey);
-          if (saved) hasSavedPass = true;
+          // Existence check only; the backend applies the saved passphrase.
+          hasSavedPass = await window.go.main.App.HasSavedPassword(passKey);
         } catch (_) {}
       }
       if (!hasSavedPass && !profile.keyPassphrase) {
@@ -1453,13 +1439,16 @@ export async function connectToSession(profile, forceNewTab = false) {
     const jumpAuthType = profile.jumpAuthType || "password";
     const gatewayLabel = `${profile.jumpUsername || 'bastion'}@${profile.jumpHost}:${profile.jumpPort || 22}`;
 
+    // As above: only check that a bastion secret is saved; leaving jumpSecret
+    // empty makes the backend use the saved one (works with the vault locked).
     if (jumpAuthType === "key") {
-      if (profile.jumpVaultKey && window.go?.main?.App?.GetSessionPassphrase) {
+      let jumpSaved = false;
+      if (profile.jumpVaultKey && window.go?.main?.App?.HasSavedPassword) {
         try {
-          jumpSecret = (await window.go.main.App.GetSessionPassphrase(profile.jumpVaultKey + "_passphrase")) || "";
+          jumpSaved = await window.go.main.App.HasSavedPassword(profile.jumpVaultKey + "_passphrase");
         } catch (_) {}
       }
-      if (!jumpSecret && profile.jumpPrivateKeyPath && window.go?.main?.App?.ValidatePrivateKeyFile) {
+      if (!jumpSaved && profile.jumpPrivateKeyPath && window.go?.main?.App?.ValidatePrivateKeyFile) {
         try {
           const info = await window.go.main.App.ValidatePrivateKeyFile(profile.jumpPrivateKeyPath, "");
           if (info && info.encrypted) {
@@ -1475,15 +1464,13 @@ export async function connectToSession(profile, forceNewTab = false) {
         } catch (_) {}
       }
     } else {
+      let jumpSaved = false;
       if (profile.jumpVaultKey && window.go?.main?.App?.HasSavedPassword) {
         try {
-          const hasSaved = await window.go.main.App.HasSavedPassword(profile.jumpVaultKey);
-          if (hasSaved && window.go.main.App.GetSessionPassword) {
-            jumpSecret = (await window.go.main.App.GetSessionPassword(profile.jumpVaultKey)) || "";
-          }
+          jumpSaved = await window.go.main.App.HasSavedPassword(profile.jumpVaultKey);
         } catch (_) {}
       }
-      if (!jumpSecret) {
+      if (!jumpSaved) {
         const entered = await promptBastionSecretDialog({
           gatewayLabel,
           vaultKey: profile.jumpVaultKey,

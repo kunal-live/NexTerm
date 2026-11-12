@@ -151,8 +151,10 @@ func (a *App) startup(ctx context.Context) {
 		func(key string) { _ = a.credentialService.DeleteSavedPassword(key) },
 		func(key, val string) error { return a.credentialService.SaveSessionPassword(key, val) },
 		func(key string) (string, bool, error) {
-			p, err := a.credentialService.GetSessionPassword(key)
-			return p, p != "", err
+			// Internal copy/migration of a session's secret (e.g. duplicate): must
+			// work while the vault is locked and never reaches the UI.
+			p := a.credentialService.LoadSecretForConnection(key)
+			return p, p != "", nil
 		},
 	)
 

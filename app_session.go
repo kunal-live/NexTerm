@@ -364,7 +364,7 @@ func (a *App) TestSessionConnection(profile model.SessionProfile, password strin
 			vKey = profile.ID
 		}
 		if vKey != "" {
-			if saved, err := a.credentialService.GetSessionPassword(vKey); err == nil && saved != "" {
+			if saved := a.credentialService.LoadSecretForConnection(vKey); saved != "" {
 				password = saved
 			}
 		}

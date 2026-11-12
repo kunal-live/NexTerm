@@ -38,6 +38,16 @@ async function hasAppPassword() {
 }
 
 async function isAppLockActive() {
+  // The backend is the source of truth: an app password is set and app lock is
+  // switched on. (The localStorage flag can drift from it, e.g. after a reset
+  // or reinstall, which made the startup prompt silently disappear.)
+  const App = window.go && window.go.main && window.go.main.App;
+  if (App && App.IsAppLockEnabled && App.HasAppPassword) {
+    try {
+      const [enabled, hasPwd] = await Promise.all([App.IsAppLockEnabled(), App.HasAppPassword()]);
+      return !!(enabled && hasPwd);
+    } catch (_) { /* fall back to the local flag below */ }
+  }
   if (!isAppLockEnabled()) return false;
   try {
     if (window.go && window.go.main && window.go.main.App && window.go.main.App.IsAppLockEnabled) {

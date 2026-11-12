@@ -143,6 +143,8 @@ export function HasMasterPassword():Promise<boolean>;
 
 export function HasPreviousMasterPasswords():Promise<boolean>;
 
+export function HasConnectCredential(arg1:string,arg2:string,arg3:number,arg4:string):Promise<boolean>;
+
 export function HasSavedPassword(arg1:string):Promise<boolean>;
 
 export function ImportSessions(arg1:string):Promise<model.TreeNode>;

@@ -63,7 +63,12 @@ type CredentialService struct {
 	vault           *vault.Vault
 	treeProvider    func() *model.TreeNode
 	lockoutFilePath string
-	isLocked        bool
+	// appLocked: the app-lock gate is closed (app password not yet entered).
+	// masterLocked: the master password has not been entered this session, so
+	// saved passwords may not be *shown* (Password Manager, edit dialog).
+	// Neither stops the backend from *using* a saved password to connect.
+	appLocked       bool
+	masterLocked    bool
 	vaultErr        error // why vault is nil, when known
 
 	// Master password lockout
@@ -87,17 +92,7 @@ func NewCredentialService(v *vault.Vault) *CredentialService {
 		appLockStage: 1,
 	}
 	cs.loadLockoutStateLocked()
-	if v != nil {
-		if hash, ok, _ := v.Load(vaultMasterHashKey); ok && strings.TrimSpace(hash) != "" {
-			cs.isLocked = true
-		}
-		if aHash, aOk, _ := v.Load(vaultAppLockHashKey); aOk && strings.TrimSpace(aHash) != "" {
-			enVal, eOk, _ := v.Load(vaultAppLockEnabledKey)
-			if !eOk || enVal == "true" {
-				cs.isLocked = true
-			}
-		}
-	}
+	cs.initLockStateLocked()
 	return cs
 }
 
@@ -112,18 +107,53 @@ func (c *CredentialService) Vault() *vault.Vault {
 func (c *CredentialService) SetVault(v *vault.Vault) {
 	c.mu.Lock()
 	c.vault = v
-	if v != nil {
-		if hash, ok, _ := v.Load(vaultMasterHashKey); ok && strings.TrimSpace(hash) != "" {
-			c.isLocked = true
-		}
-		if aHash, aOk, _ := v.Load(vaultAppLockHashKey); aOk && strings.TrimSpace(aHash) != "" {
-			enVal, eOk, _ := v.Load(vaultAppLockEnabledKey)
-			if !eOk || enVal == "true" {
-				c.isLocked = true
-			}
-		}
-	}
+	c.initLockStateLocked()
 	c.mu.Unlock()
+}
+
+// hasMasterLocked reports whether a master password is configured.
+func (c *CredentialService) hasMasterLocked() bool {
+	if c.vault == nil {
+		return false
+	}
+	hash, ok, _ := c.vault.Load(vaultMasterHashKey)
+	return ok && strings.TrimSpace(hash) != ""
+}
+
+// appLockActiveLocked reports whether an app password is set and app lock is on.
+func (c *CredentialService) appLockActiveLocked() bool {
+	if c.vault == nil {
+		return false
+	}
+	aHash, aOk, _ := c.vault.Load(vaultAppLockHashKey)
+	if !aOk || strings.TrimSpace(aHash) == "" {
+		return false
+	}
+	enVal, eOk, _ := c.vault.Load(vaultAppLockEnabledKey)
+	return !eOk || enVal == "true"
+}
+
+// initLockStateLocked sets the start-of-session state. Saved passwords stay
+// hidden until the master password is entered (if one is set). The app gate is
+// closed by the UI calling LockApp when it shows the lock screen (on startup
+// when an app password is set, or on idle), so a user who turned "lock on
+// startup" off is not left with a backend that refuses everything.
+func (c *CredentialService) initLockStateLocked() {
+	c.appLocked = false
+	c.masterLocked = c.hasMasterLocked()
+}
+
+// revealBlockedLocked returns an error when saved secrets may not be shown to the
+// UI right now: while the app lock is closed, or until the master password has
+// been entered this session.
+func (c *CredentialService) revealBlockedLocked() error {
+	if c.appLocked && c.appLockActiveLocked() {
+		return fmt.Errorf("application is locked: unlock NexTerm first")
+	}
+	if c.masterLocked && c.hasMasterLocked() {
+		return fmt.Errorf("vault is locked: enter your master password to view saved passwords")
+	}
+	return nil
 }
 
 // SetTreeProvider configures a callback to fetch the live session tree for cross-referencing credentials.
@@ -344,8 +374,8 @@ func (c *CredentialService) GetSavedPasswords(root *model.TreeNode) ([]SavedCred
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	if c.isLocked {
-		return nil, fmt.Errorf("vault is locked: authentication required")
+	if err := c.revealBlockedLocked(); err != nil {
+		return nil, err
 	}
 
 	var list []SavedCredential
@@ -430,34 +460,55 @@ func (c *CredentialService) DeleteSavedPassword(vaultKey string) error {
 	return c.vault.Delete(vaultKey)
 }
 
-// GetSessionPassword retrieves a stored password from the platform vault for editing.
+// GetSessionPassword returns a stored password for display (e.g. the session
+// edit dialog). It is refused while the app or master lock is closed; the
+// connection code uses LoadSecretForConnection instead.
 func (c *CredentialService) GetSessionPassword(vaultKey string) (string, error) {
 	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	if c.isLocked {
-		return "", fmt.Errorf("vault is locked: authentication required")
+	err := c.revealBlockedLocked()
+	c.mu.RUnlock()
+	if err != nil {
+		return "", err
 	}
+	return c.LoadSecretForConnection(vaultKey), nil
+}
+
+// LoadSecretForConnection returns a stored secret for the backend's own use when
+// it opens a connection, or "" if none is saved. It deliberately ignores the app
+// and master locks: those decide whether a password may be shown to the user,
+// not whether a saved password may be used to log in. The value never leaves
+// the backend.
+func (c *CredentialService) LoadSecretForConnection(vaultKey string) string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	if c.vault == nil || vaultKey == "" {
-		return "", nil
+		return ""
 	}
 	pwd, ok, err := c.vault.Load(vaultKey)
 	if err != nil || !ok {
-		return "", nil
+		return ""
 	}
-	return pwd, nil
+	return pwd
 }
 
 // GetSessionPassphrase retrieves a stored key passphrase from the vault for editing.
 func (c *CredentialService) GetSessionPassphrase(vaultKey string) (string, error) {
 	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	if c.isLocked {
-		return "", fmt.Errorf("vault is locked: authentication required")
+	err := c.revealBlockedLocked()
+	c.mu.RUnlock()
+	if err != nil {
+		return "", err
 	}
+	return c.LoadPassphraseForConnection(vaultKey), nil
+}
+
+// LoadPassphraseForConnection is the lock-independent counterpart of
+// GetSessionPassphrase, for the backend's own use when connecting.
+func (c *CredentialService) LoadPassphraseForConnection(vaultKey string) string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	if c.vault == nil || vaultKey == "" {
-		return "", nil
+		return ""
 	}
 	key := vaultKey
 	if !strings.HasSuffix(key, "_passphrase") {
@@ -467,27 +518,43 @@ func (c *CredentialService) GetSessionPassphrase(vaultKey string) (string, error
 	if err != nil || !ok || pass == "" {
 		pass, ok, err = c.vault.Load(vaultKey)
 		if err != nil || !ok {
-			return "", nil
+			return ""
 		}
 	}
-	return pass, nil
+	return pass
 }
 
 // FindSessionPassword searches for a stored password by vaultKey, or falls back to
 // host, port, and username matching across saved sessions and deterministic vault keys.
 func (c *CredentialService) FindSessionPassword(vaultKey, host string, port int, username string) (string, error) {
 	c.mu.RLock()
-	if c.isLocked {
-		c.mu.RUnlock()
-		return "", fmt.Errorf("vault is locked: authentication required")
+	err := c.revealBlockedLocked()
+	c.mu.RUnlock()
+	if err != nil {
+		return "", err
 	}
+	return c.ResolveSessionPasswordForConnection(vaultKey, host, port, username), nil
+}
+
+// HasConnectCredential reports whether a saved password exists for this server,
+// without revealing it, so the UI can skip the password prompt and let the
+// backend log in with the saved credential even while the vault is locked.
+func (c *CredentialService) HasConnectCredential(vaultKey, host string, port int, username string) bool {
+	return c.ResolveSessionPasswordForConnection(vaultKey, host, port, username) != ""
+}
+
+// ResolveSessionPasswordForConnection finds a saved password by vault key, then
+// by host/port/user, for the backend's own use when connecting. It is
+// lock-independent (see LoadSecretForConnection).
+func (c *CredentialService) ResolveSessionPasswordForConnection(vaultKey, host string, port int, username string) string {
+	c.mu.RLock()
 	treeFn := c.treeProvider
 	c.mu.RUnlock()
 
 	// 1. Direct VaultKey lookup
 	if vaultKey != "" {
-		if pwd, err := c.GetSessionPassword(vaultKey); err == nil && pwd != "" {
-			return pwd, nil
+		if pwd := c.LoadSecretForConnection(vaultKey); pwd != "" {
+			return pwd
 		}
 	}
 
@@ -508,11 +575,11 @@ func (c *CredentialService) FindSessionPassword(vaultKey, host string, port int,
 			fmt.Sprintf("session_%s_%s", cleanUser, underHost),
 		}
 		for _, detKey := range detKeys {
-			if pwd, err := c.GetSessionPassword(detKey); err == nil && pwd != "" {
+			if pwd := c.LoadSecretForConnection(detKey); pwd != "" {
 				if vaultKey != "" && vaultKey != detKey {
 					_ = c.SaveSessionPassword(vaultKey, pwd)
 				}
-				return pwd, nil
+				return pwd
 			}
 		}
 	}
@@ -531,7 +598,7 @@ func (c *CredentialService) FindSessionPassword(vaultKey, host string, port int,
 					s := n.Session
 					if strings.EqualFold(s.Host, host) && strings.EqualFold(s.Username, username) {
 						if s.VaultKey != "" {
-							if p, err := c.GetSessionPassword(s.VaultKey); err == nil && p != "" {
+							if p := c.LoadSecretForConnection(s.VaultKey); p != "" {
 								foundPwd = p
 								return
 							}
@@ -551,12 +618,12 @@ func (c *CredentialService) FindSessionPassword(vaultKey, host string, port int,
 				if vaultKey != "" {
 					_ = c.SaveSessionPassword(vaultKey, foundPwd)
 				}
-				return foundPwd, nil
+				return foundPwd
 			}
 		}
 	}
 
-	return "", nil
+	return ""
 }
 
 func sanitizeVaultKey(s string) string {
@@ -673,7 +740,7 @@ func (c *CredentialService) SetMasterPassword(password, hint string) error {
 	}
 
 	c.resetLockoutLocked()
-	c.isLocked = false
+	c.masterLocked = false
 	return nil
 }
 
@@ -714,7 +781,7 @@ func (c *CredentialService) VerifyMasterPassword(password string) (bool, error) 
 	if err == nil {
 		// Password correct -> reset lockout state completely and unlock vault
 		c.resetLockoutLocked()
-		c.isLocked = false
+		c.masterLocked = false
 		return true, nil
 	}
 
@@ -925,7 +992,7 @@ func (c *CredentialService) RemoveMasterPassword(currentPassword string) error {
 	_ = c.vault.Delete(vaultMasterHintKey)
 	_ = c.vault.Delete(vaultMasterHistoryKey)
 	c.resetLockoutLocked()
-	c.isLocked = false
+	c.masterLocked = false
 	return nil
 }
 
@@ -962,7 +1029,7 @@ func (c *CredentialService) ResetMasterPassword() error {
 		}
 	}
 	c.resetLockoutLocked()
-	c.isLocked = false
+	c.masterLocked = false
 	return nil
 }
 
@@ -1067,6 +1134,9 @@ func (c *CredentialService) SetAppLockEnabled(enabled bool) error {
 	if c.vault == nil {
 		return fmt.Errorf("vault is not initialized")
 	}
+	if !enabled && c.appLocked && c.appLockActiveLocked() {
+		return fmt.Errorf("application is locked: unlock NexTerm before turning app lock off")
+	}
 	val := "false"
 	if enabled {
 		val = "true"
@@ -1118,7 +1188,7 @@ func (c *CredentialService) SetAppPassword(password, hint string) error {
 	_ = c.vault.Save(vaultAppLockEnabledKey, "true")
 
 	c.resetAppLockoutLocked()
-	c.isLocked = false
+	c.appLocked = false
 	return nil
 }
 
@@ -1148,7 +1218,7 @@ func (c *CredentialService) VerifyAppPassword(password string) (bool, error) {
 	err = bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(strings.TrimSpace(password)))
 	if err == nil {
 		c.resetAppLockoutLocked()
-		c.isLocked = false
+		c.appLocked = false
 		return true, nil
 	}
 
@@ -1480,37 +1550,24 @@ func GenerateSecurePassword(length int, includeSymbols bool) string {
 func (c *CredentialService) Lock() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.isLocked = true
+	// Locking the app also re-protects the Password Manager until the master
+	// password is entered again.
+	c.appLocked = true
+	c.masterLocked = true
 }
 
 // Unlock marks the credential vault as unlocked.
 func (c *CredentialService) Unlock() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.isLocked = false
+	c.appLocked = false
+	c.masterLocked = false
 }
 
 // IsLocked reports whether the credential vault is currently locked.
 func (c *CredentialService) IsLocked() bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	if c.vault == nil {
-		return false
-	}
-	hasMaster := false
-	if hash, ok, _ := c.vault.Load(vaultMasterHashKey); ok && strings.TrimSpace(hash) != "" {
-		hasMaster = true
-	}
-	hasApp := false
-	if aHash, aOk, _ := c.vault.Load(vaultAppLockHashKey); aOk && strings.TrimSpace(aHash) != "" {
-		enVal, eOk, _ := c.vault.Load(vaultAppLockEnabledKey)
-		if !eOk || enVal == "true" {
-			hasApp = true
-		}
-	}
-	if !hasMaster && !hasApp {
-		return false
-	}
-	return c.isLocked
+	return c.revealBlockedLocked() != nil
 }
 

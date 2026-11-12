@@ -260,13 +260,14 @@ func (cm *ConnectionManager) buildSSHConnectOptions(tabID string, profile model.
 		opts.Password = password
 	} else if cm.credService != nil {
 		if vKey != "" {
-			saved, err := cm.credService.GetSessionPassword(vKey)
-			if err == nil && saved != "" {
+			// Lock-independent: the app/master locks stop passwords being shown,
+			// not used to log in.
+			if saved := cm.credService.LoadSecretForConnection(vKey); saved != "" {
 				opts.Password = saved
 			}
 		}
 		if opts.Password == "" && profile.Host != "" && profile.Username != "" {
-			if fallback, err := cm.credService.FindSessionPassword(vKey, profile.Host, profile.Port, profile.Username); err == nil && fallback != "" {
+			if fallback := cm.credService.ResolveSessionPasswordForConnection(vKey, profile.Host, profile.Port, profile.Username); fallback != "" {
 				opts.Password = fallback
 			}
 		}
@@ -280,7 +281,7 @@ func (cm *ConnectionManager) buildSSHConnectOptions(tabID string, profile model.
 			pxKey = vKey + "_proxy"
 		}
 		if pxKey != "" {
-			if pxPw, err := cm.credService.GetSessionPassword(pxKey); err == nil && pxPw != "" {
+			if pxPw := cm.credService.LoadSecretForConnection(pxKey); pxPw != "" {
 				opts.ProxyPassword = pxPw
 			}
 		}
@@ -301,9 +302,9 @@ func (cm *ConnectionManager) buildSSHConnectOptions(tabID string, profile model.
 			pvKey = vKey + "_passphrase"
 		}
 		if pvKey != "" && cm.credService != nil {
-			if savedPass, err := cm.credService.GetSessionPassword(pvKey); err == nil && savedPass != "" {
+			if savedPass := cm.credService.LoadSecretForConnection(pvKey); savedPass != "" {
 				opts.KeyPassphrase = savedPass
-			} else if savedPass, err := cm.credService.GetSessionPassphrase(vKey); err == nil && savedPass != "" {
+			} else if savedPass := cm.credService.LoadPassphraseForConnection(vKey); savedPass != "" {
 				opts.KeyPassphrase = savedPass
 			}
 		}
@@ -340,10 +341,10 @@ func (cm *ConnectionManager) buildSSHConnectOptions(tabID string, profile model.
 			}
 		} else if profile.JumpVaultKey != "" && cm.credService != nil {
 			if opts.JumpAuthType == sshsession.AuthTypePrivateKey {
-				if jPass, err := cm.credService.GetSessionPassphrase(profile.JumpVaultKey + "_passphrase"); err == nil && jPass != "" {
+				if jPass := cm.credService.LoadPassphraseForConnection(profile.JumpVaultKey + "_passphrase"); jPass != "" {
 					opts.JumpKeyPassphrase = jPass
 				}
-			} else if jPw, err := cm.credService.GetSessionPassword(profile.JumpVaultKey); err == nil && jPw != "" {
+			} else if jPw := cm.credService.LoadSecretForConnection(profile.JumpVaultKey); jPw != "" {
 				opts.JumpPassword = jPw
 			}
 		}

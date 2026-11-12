@@ -44,6 +44,14 @@ func (a *App) GetSessionPassword(vaultKey string) (string, error) {
 	return a.credentialService.GetSessionPassword(vaultKey)
 }
 
+// HasConnectCredential reports whether a saved password exists for the server
+// (by vault key, then host/port/user) without revealing it. The connect flow uses
+// it to decide whether to prompt; the backend then logs in with the saved
+// password itself, so connecting works while the vault/master lock is closed.
+func (a *App) HasConnectCredential(vaultKey, host string, port int, username string) bool {
+	return a.credentialService.HasConnectCredential(vaultKey, host, port, username)
+}
+
 func (a *App) GetSessionPassphrase(vaultKey string) (string, error) {
 	return a.credentialService.GetSessionPassphrase(vaultKey)
 }
