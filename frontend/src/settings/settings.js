@@ -2707,7 +2707,7 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
     const btnResetLock = box.querySelector("#btnResetMasterLock");
     if (btnResetLock) {
       btnResetLock.onclick = async () => {
-        if (!confirm("⚠️ Reset Master Password Lock?\n\nThis will remove the master password lock so you can regain access and configure a new password.\n\nAll stored session credentials protected by Windows DPAPI will remain safely intact in your vault.\n\nAre you sure you want to proceed?")) {
+        if (!confirm("⚠️ Reset Master Password Lock?\n\nWithout the master password the saved credentials cannot be shown to you, so resetting the lock PERMANENTLY DELETES every saved session password and key passphrase from the credential vault. Your sessions and settings are kept, but you will have to enter the passwords again.\n\nThis cannot be undone. Are you sure you want to proceed?")) {
           return;
         }
         try {
@@ -2715,7 +2715,7 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
             await window.go.main.App.ResetMasterPassword();
           }
           isVaultUnlocked = true;
-          showToast("Master password lock reset successfully! You can now access your vault.", "success");
+          showToast("Master password lock reset. Saved credentials were cleared — set a new master password and re-enter your passwords.", "success");
           await refreshVaultView();
         } catch (err) {
           showToast("Failed to reset master password lock: " + err, "error");

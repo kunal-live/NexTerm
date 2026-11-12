@@ -13,6 +13,7 @@ import (
 	"nexterm/internal/model"
 	"nexterm/internal/nettools"
 	"nexterm/internal/protocol"
+	"nexterm/internal/sshsession"
 )
 
 // =========================================================================
@@ -381,7 +382,7 @@ func (a *App) TestSessionConnection(profile model.SessionProfile, password strin
 	}
 
 	if profile.PrivateKeyPath != "" {
-		keyBytes, err := os.ReadFile(profile.PrivateKeyPath)
+		keyBytes, err := sshsession.ReadPrivateKeyFile(profile.PrivateKeyPath)
 		if err == nil {
 			var signer ssh.Signer
 			if profile.KeyPassphrase != "" {

@@ -72,11 +72,12 @@ func (p *PrivateKeyAuthProvider) Type() AuthType {
 }
 
 func (p *PrivateKeyAuthProvider) BuildAuthMethods() ([]ssh.AuthMethod, error) {
+	keyPath := ExpandUserPath(p.KeyPath)
 	keyData := p.KeyPEM
-	if len(keyData) == 0 && p.KeyPath != "" {
-		data, err := os.ReadFile(p.KeyPath)
+	if len(keyData) == 0 && keyPath != "" {
+		data, err := os.ReadFile(keyPath)
 		if err != nil {
-			return nil, fmt.Errorf("read private key file %s: %w", p.KeyPath, err)
+			return nil, fmt.Errorf("read private key file %s: %w", keyPath, err)
 		}
 		keyData = data
 	}
@@ -106,12 +107,12 @@ func (p *PrivateKeyAuthProvider) BuildAuthMethods() ([]ssh.AuthMethod, error) {
 	// Check for OpenSSH Certificate
 	certData := p.CertificatePEM
 	if len(certData) == 0 && p.CertificatePath != "" {
-		if cData, err := os.ReadFile(p.CertificatePath); err == nil {
+		if cData, err := os.ReadFile(ExpandUserPath(p.CertificatePath)); err == nil {
 			certData = cData
 		}
-	} else if len(certData) == 0 && p.KeyPath != "" {
+	} else if len(certData) == 0 && keyPath != "" {
 		// Standard OpenSSH certificate file convention: <key>-cert.pub
-		certFile := p.KeyPath + "-cert.pub"
+		certFile := keyPath + "-cert.pub"
 		if cData, err := os.ReadFile(certFile); err == nil {
 			certData = cData
 		}

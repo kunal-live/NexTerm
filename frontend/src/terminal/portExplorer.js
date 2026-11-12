@@ -7,6 +7,7 @@
 import { showModal, hideModal } from "../ui/modal.js";
 import { showToast, escapeHtml } from "../ui/notifications.js";
 import { runSSH, targetName, pickTargetTab } from "./sshExec.js";
+import { isPid } from "./shellQuote.js";
 
 const WELL_KNOWN = {
   "22": "SSH", "80": "HTTP", "443": "HTTPS", "3306": "MySQL", "5432": "PostgreSQL",
@@ -86,6 +87,7 @@ async function loadPorts() {
 async function showPortDetails(port, pid, proc) {
   const root = document.getElementById("portRoot");
   if (!root) return;
+  if (!isPid(pid)) pid = "—"; // only a numeric pid may ever reach a command line
   root.innerHTML = `
     <div class="sx-card proc-card">
       <div class="sx-head">

@@ -18,6 +18,9 @@ func unixSerialBaud(baud int) (uint32, error) {
 	}
 	value, ok := values[baud]
 	if !ok {
+		value, ok = platformBaud(baud)
+	}
+	if !ok {
 		return 0, fmt.Errorf("unsupported serial baud rate %d", baud)
 	}
 	return value, nil

@@ -508,6 +508,28 @@ func (cm *ConnectionManager) CloseSession(tabID string) error {
 	return nil
 }
 
+// CloseAll disconnects every session (SSH connections, serial ports, RDP/VNC viewer
+// processes). It is meant for application shutdown: the session-closed hook is
+// dropped first so tearing down does not rewrite the saved workspace.
+func (cm *ConnectionManager) CloseAll() {
+	cm.mu.Lock()
+	cm.onSessionClosed = nil
+	sessions := make([]protocol.ProtocolSession, 0, len(cm.sessions))
+	for id, s := range cm.sessions {
+		if s != nil {
+			sessions = append(sessions, s)
+		}
+		delete(cm.sessions, id)
+	}
+	cm.connecting = make(map[string]bool)
+	cm.connectAttempts = make(map[string]uint64)
+	cm.mu.Unlock()
+
+	for _, s := range sessions {
+		_ = s.Disconnect()
+	}
+}
+
 // GetSession retrieves a ProtocolSession by tabID.
 func (cm *ConnectionManager) GetSession(tabID string) (protocol.ProtocolSession, bool) {
 	cm.mu.Lock()

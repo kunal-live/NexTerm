@@ -96,19 +96,75 @@ func localX11AuthCookie(display int) []byte {
 		}
 	}
 	if runtime.GOOS != "windows" {
-		if out, err := exec.Command("xauth", "list", fmt.Sprintf(":%d", display)).Output(); err == nil {
-			sc := bufio.NewScanner(bytes.NewReader(out))
-			for sc.Scan() {
-				fields := strings.Fields(sc.Text())
-				if len(fields) == 3 && fields[1] == x11AuthProto {
-					if c, err := hex.DecodeString(fields[2]); err == nil {
-						return c
+		if xauth := findXauth(); xauth != "" {
+			// XQuartz's DISPLAY is a launchd socket path, so query by the real
+			// DISPLAY when it is set; fall back to ":N".
+			target := fmt.Sprintf(":%d", display)
+			if d := os.Getenv("DISPLAY"); d != "" {
+				target = d
+			}
+			if out, err := exec.Command(xauth, "list", target).Output(); err == nil {
+				sc := bufio.NewScanner(bytes.NewReader(out))
+				for sc.Scan() {
+					fields := strings.Fields(sc.Text())
+					if len(fields) == 3 && fields[1] == x11AuthProto {
+						if c, err := hex.DecodeString(fields[2]); err == nil {
+							return c
+						}
 					}
 				}
 			}
 		}
 	}
 	return nil
+}
+
+// findXauth locates the xauth tool. GUI apps on macOS do not inherit a PATH that
+// includes XQuartz's /opt/X11/bin.
+func findXauth() string {
+	if p, err := exec.LookPath("xauth"); err == nil {
+		return p
+	}
+	for _, p := range []string{"/opt/X11/bin/xauth", "/usr/X11/bin/xauth", "/opt/homebrew/bin/xauth", "/usr/local/bin/xauth"} {
+		if fi, err := os.Stat(p); err == nil && !fi.IsDir() {
+			return p
+		}
+	}
+	return ""
+}
+
+// dialLocalX11 connects to the local X server for display. Off Windows it tries
+// the socket named by $DISPLAY first (XQuartz on macOS uses a launchd-managed
+// socket such as /private/tmp/com.apple.launchd.X/org.xquartz:0), then the
+// conventional /tmp/.X11-unix/X<n> socket, and finally TCP 6000+n.
+func dialLocalX11(display int) (net.Conn, error) {
+	var lastErr error
+	if runtime.GOOS != "windows" {
+		var sockets []string
+		if d := os.Getenv("DISPLAY"); strings.HasPrefix(d, "/") {
+			if i := strings.LastIndex(d, ":"); i > 0 {
+				sockets = append(sockets, d[:i])
+			} else {
+				sockets = append(sockets, d)
+			}
+		}
+		sockets = append(sockets, fmt.Sprintf("/tmp/.X11-unix/X%d", display))
+		for _, s := range sockets {
+			c, err := net.DialTimeout("unix", s, 5*time.Second)
+			if err == nil {
+				return c, nil
+			}
+			lastErr = err
+		}
+	}
+	c, err := net.DialTimeout("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(6000+display)), 5*time.Second)
+	if err == nil {
+		return c, nil
+	}
+	if lastErr == nil {
+		lastErr = err
+	}
+	return nil, lastErr
 }
 
 // parseXAuthorityCookie extracts the MIT-MAGIC-COOKIE-1 data for display from an Xauthority file.
@@ -256,13 +312,7 @@ func forwardX11Channel(ch ssh.Channel, display int, fakeCookie []byte) {
 		return
 	}
 
-	var xconn net.Conn
-	if runtime.GOOS != "windows" {
-		xconn, err = net.DialTimeout("unix", fmt.Sprintf("/tmp/.X11-unix/X%d", display), 5*time.Second)
-	}
-	if xconn == nil {
-		xconn, err = net.DialTimeout("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(6000+display)), 5*time.Second)
-	}
+	xconn, err := dialLocalX11(display)
 	if err != nil || xconn == nil {
 		_ = ch.Close()
 		return

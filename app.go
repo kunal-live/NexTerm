@@ -135,6 +135,7 @@ func (a *App) startup(ctx context.Context) {
 		v, err := vault.NewVault()
 		if err != nil {
 			a.logRuntimeError("vault init failed: %v", err)
+			a.credentialService.SetVaultError(err)
 		} else {
 			a.credentialService.SetVault(v)
 		}
@@ -171,8 +172,23 @@ func (a *App) onWailsStartup(ctx context.Context) {
 	a.startup(ctx)
 }
 
+// shutdown releases everything that outlives the window: local shells, SSH/serial
+// connections, RDP/VNC viewer processes, port-forward listeners, open transcript
+// logs and the downloaded copies of remote files in the temp directory.
 func (a *App) shutdown(ctx context.Context) {
 	a.wailsReady.Store(false)
+	if a.tunnelMgr != nil {
+		a.tunnelMgr.StopAll()
+	}
+	if a.terminalService != nil {
+		a.terminalService.CloseAll()
+	}
+	if a.connectionManager != nil {
+		a.connectionManager.CloseAll()
+	}
+	if a.sftpService != nil {
+		a.sftpService.CleanupExternalCache()
+	}
 	if a.loggingService != nil {
 		a.loggingService.StopAllSessionLogs()
 	}

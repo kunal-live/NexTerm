@@ -10,6 +10,17 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+// platformBaud supplies the Linux-only high-speed rates that have termios constants.
+func platformBaud(baud int) (uint32, bool) {
+	switch baud {
+	case 460800:
+		return unix.B460800, true
+	case 921600:
+		return unix.B921600, true
+	}
+	return 0, false
+}
+
 func configureSerialPort(f *os.File, baud, dataBits, stopBits int, parity string) error {
 	speed, err := unixSerialBaud(baud)
 	if err != nil {

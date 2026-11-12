@@ -8,6 +8,7 @@
 import { tabs, activeTabId } from '../state/tabState.js';
 import { showModal, hideModal } from '../ui/modal.js';
 import { showToast, escapeHtml } from '../ui/notifications.js';
+import { shQuote, isPid, isUnitName, isDockerRef, isTtyName, isServiceOp } from '../terminal/shellQuote.js';
 
 let monitorState = {
   open: false,
@@ -327,7 +328,7 @@ async function fetchProcesses() {
 }
 
 async function killProcess(pid, name) {
-  if (!pid) return;
+  if (!isPid(pid)) { showToast('Invalid process id', 'error'); return; }
   if (!confirm(`Kill process ${pid} (${name}) on this server?`)) return;
   try {
     await window.go.main.App.RunSSHCommand(monitorState.tabId, `kill -TERM ${pid} 2>&1 || sudo kill -TERM ${pid} 2>&1`);
@@ -369,9 +370,10 @@ async function fetchServices() {
 
 async function serviceAction(unit, op) {
   if (!unit || !op) return;
+  if (!isUnitName(unit) || !isServiceOp(op)) { showToast('Refusing to run: unexpected service name or action', 'error'); return; }
   if (!confirm(`${op} service "${unit}" on this server?`)) return;
   try {
-    await window.go.main.App.RunSSHCommand(monitorState.tabId, `systemctl ${op} ${unit} 2>&1 || sudo systemctl ${op} ${unit} 2>&1`);
+    await window.go.main.App.RunSSHCommand(monitorState.tabId, `systemctl ${op} -- ${shQuote(unit)} 2>&1 || sudo systemctl ${op} -- ${shQuote(unit)} 2>&1`);
     showToast(`${op} sent to ${unit}`, 'info');
     setTimeout(fetchServices, 700);
   } catch (err) { showToast('Service action failed: ' + err, 'error'); }
@@ -414,17 +416,19 @@ async function fetchDocker() {
 
 async function dockerAction(id, op, name) {
   if (!id) return;
+  if (!isDockerRef(id) || !isServiceOp(op)) { showToast('Refusing to run: unexpected container id or action', 'error'); return; }
   if (op === 'stop' && !confirm(`Stop container ${name}?`)) return;
   try {
-    await window.go.main.App.RunSSHCommand(monitorState.tabId, `docker ${op} ${id} 2>&1 || sudo docker ${op} ${id} 2>&1`);
+    await window.go.main.App.RunSSHCommand(monitorState.tabId, `docker ${op} ${shQuote(id)} 2>&1 || sudo docker ${op} ${shQuote(id)} 2>&1`);
     showToast(`docker ${op} ${name}`, 'info');
     setTimeout(fetchDocker, 900);
   } catch (err) { showToast('Docker action failed: ' + err, 'error'); }
 }
 
 async function dockerLogs(id, name) {
+  if (!isDockerRef(id)) { showToast('Refusing to run: unexpected container id', 'error'); return; }
   try {
-    const out = await window.go.main.App.RunSSHCommand(monitorState.tabId, `docker logs --tail 200 ${id} 2>&1 || sudo docker logs --tail 200 ${id} 2>&1`);
+    const out = await window.go.main.App.RunSSHCommand(monitorState.tabId, `docker logs --tail 200 ${shQuote(id)} 2>&1 || sudo docker logs --tail 200 ${shQuote(id)} 2>&1`);
     // Pause polling so a background refresh doesn't close/overwrite the logs view.
     if (monitorState.interval) { clearInterval(monitorState.interval); monitorState.interval = null; }
     monitorState.open = false;
@@ -652,7 +656,7 @@ function updateLocalBar() {
 }
 
 async function killPort(pid, port) {
-  if (!pid) return;
+  if (!isPid(pid)) { showToast('Invalid process id', 'error'); return; }
   if (!confirm(`Close port ${port} by terminating process PID ${pid} on this server?\n\nThis can disrupt a running service. Continue?`)) return;
   try {
     await window.go.main.App.RunSSHCommand(monitorState.tabId, `kill -TERM ${pid} 2>&1 || sudo kill -TERM ${pid} 2>&1`);
@@ -665,10 +669,11 @@ async function killPort(pid, port) {
 
 async function kickUser(user, tty) {
   if (!tty) { showToast('No TTY to disconnect', 'warning'); return; }
+  if (!isTtyName(tty)) { showToast('Refusing to run: unexpected TTY name', 'error'); return; }
   if (!confirm(`Disconnect user "${user}" on ${tty}?\n\nTheir session will be terminated. Continue?`)) return;
   try {
     // Kill processes attached to that terminal line.
-    await window.go.main.App.RunSSHCommand(monitorState.tabId, `pkill -9 -t ${tty} 2>&1 || sudo pkill -9 -t ${tty} 2>&1`);
+    await window.go.main.App.RunSSHCommand(monitorState.tabId, `pkill -9 -t ${shQuote(tty)} 2>&1 || sudo pkill -9 -t ${shQuote(tty)} 2>&1`);
     showToast(`Disconnected ${user} (${tty})`, 'info');
     setTimeout(poll, 600);
   } catch (err) {

@@ -91,7 +91,7 @@ export function formatConnectionDetails(profile) {
     case "serial":
       return `Serial: ${profile.port || "COM1"} (Baud: ${profile.baudRate || 9600})`;
     case "local":
-      return `Local Shell: ${profile.shellPath || "powershell.exe"}`;
+      return `Local Shell: ${profile.shellPath || "default shell"}`;
     default:
       return `${proto}://${user ? user + "@" : ""}${host}:${port}`;
   }

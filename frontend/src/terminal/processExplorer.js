@@ -7,6 +7,7 @@
 import { showModal, hideModal } from "../ui/modal.js";
 import { showToast, escapeHtml } from "../ui/notifications.js";
 import { runSSH, targetName, pickTargetTab } from "./sshExec.js";
+import { isPid, isSignal } from "./shellQuote.js";
 
 let sortKey = "cpu";
 
@@ -80,6 +81,7 @@ async function loadRows() {
 async function showDetails(pid) {
   const root = document.getElementById("procRoot");
   if (!root) return;
+  if (!isPid(pid)) { showToast("Invalid process id", "error"); return; }
   root.innerHTML = `
     <div class="sx-card proc-card">
       <div class="sx-head">
@@ -123,6 +125,7 @@ async function showDetails(pid) {
 }
 
 async function killProc(pid, sig) {
+  if (!isPid(pid) || !isSignal(sig)) { showToast("Invalid process id or signal", "error"); return; }
   if (!confirm(`Send SIG${sig} to process ${pid}?`)) return;
   const res = await runSSH(`kill -${sig} ${pid} 2>&1 || sudo kill -${sig} ${pid} 2>&1`);
   showToast(res.ok ? `Sent SIG${sig} to ${pid}` : "Kill failed", res.ok ? "success" : "error");

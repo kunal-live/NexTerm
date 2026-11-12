@@ -18,6 +18,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -170,36 +171,8 @@ func (s *UpdateService) CheckForUpdates(ctx context.Context) (*UpdateInfo, error
 
 	hasUpdate := CompareVersions(cleanLatest, cleanCurrent) > 0
 
-	// Select the best asset for the platform
-	var selectedAsset *githubReleaseAsset
-	for _, asset := range rel.Assets {
-		lower := strings.ToLower(asset.Name)
-		switch runtime.GOOS {
-		case "windows":
-			// Prioritize direct portable executable, then portable zip, then setup exe
-			if lower == "nexterm.exe" {
-				selectedAsset = &asset
-				break
-			}
-			if (strings.Contains(lower, "portable") || strings.Contains(lower, "windows")) && strings.HasSuffix(lower, ".zip") {
-				selectedAsset = &asset
-			} else if selectedAsset == nil && (strings.HasSuffix(lower, ".zip") || strings.HasSuffix(lower, ".exe")) {
-				selectedAsset = &asset
-			}
-		case "darwin":
-			// macOS Apple Silicon (arm64) or universal archive
-			if (strings.Contains(lower, "macos") || strings.Contains(lower, "darwin") || strings.Contains(lower, "mac")) && strings.HasSuffix(lower, ".zip") {
-				selectedAsset = &asset
-				break
-			}
-		case "linux":
-			// Linux x86_64 tarball
-			if strings.Contains(lower, "linux") && (strings.HasSuffix(lower, ".tar.gz") || strings.HasSuffix(lower, ".tgz") || strings.HasSuffix(lower, ".zip")) {
-				selectedAsset = &asset
-				break
-			}
-		}
-	}
+	// Select the best asset for this OS and CPU architecture
+	selectedAsset := selectUpdateAsset(runtime.GOOS, runtime.GOARCH, rel.Assets)
 
 	info := &UpdateInfo{
 		CurrentVersion: curVer,
@@ -229,6 +202,85 @@ func (s *UpdateService) CheckForUpdates(ctx context.Context) (*UpdateInfo, error
 	s.mu.Unlock()
 
 	return info, nil
+}
+
+// archTokens are the spellings release assets use for each CPU architecture.
+var archTokens = map[string][]string{
+	"amd64": {"amd64", "x86_64", "x86-64", "x64"},
+	"arm64": {"arm64", "aarch64"},
+	"386":   {"386", "i386", "i686"},
+	"arm":   {"armv7", "armhf"},
+}
+
+// assetArchMatch reports whether lowerName names goarch (match), names a
+// different architecture (conflict), or names none (neither).
+func assetArchMatch(lowerName, goarch string) (match, conflict bool) {
+	hasToken := func(tokens []string) bool {
+		for _, t := range tokens {
+			// The token must be delimited so "x86" does not match inside "x86_64".
+			if regexp.MustCompile(`(^|[-_. ])` + regexp.QuoteMeta(t) + `($|[-_. ])`).MatchString(lowerName) {
+				return true
+			}
+		}
+		return false
+	}
+	if hasToken(archTokens[goarch]) {
+		return true, false
+	}
+	for arch, tokens := range archTokens {
+		if arch != goarch && hasToken(tokens) {
+			return false, true
+		}
+	}
+	return false, false
+}
+
+// selectUpdateAsset picks the release asset the in-app updater can install on
+// goos/goarch: a portable executable/zip on Windows, an .app zip on macOS, a
+// tarball on Linux. Installers (Setup.exe), checksum files and assets built for
+// another CPU architecture are never selected. Returns nil if nothing fits.
+func selectUpdateAsset(goos, goarch string, assets []githubReleaseAsset) *githubReleaseAsset {
+	var best *githubReleaseAsset
+	bestScore := 0
+	for i := range assets {
+		asset := &assets[i]
+		lower := strings.ToLower(asset.Name)
+		match, conflict := assetArchMatch(lower, goarch)
+		if conflict {
+			continue
+		}
+
+		score := 0
+		switch goos {
+		case "windows":
+			switch {
+			case lower == "nexterm.exe":
+				score = 100
+			case (strings.Contains(lower, "portable") || strings.Contains(lower, "windows")) && strings.HasSuffix(lower, ".zip"):
+				score = 80
+			case strings.HasSuffix(lower, ".exe") && !strings.Contains(lower, "setup") && !strings.Contains(lower, "install"):
+				score = 50
+			}
+		case "darwin":
+			if (strings.Contains(lower, "macos") || strings.Contains(lower, "darwin") || strings.Contains(lower, "osx") || strings.Contains(lower, "mac")) && strings.HasSuffix(lower, ".zip") {
+				score = 80
+			}
+		case "linux":
+			if strings.Contains(lower, "linux") && (strings.HasSuffix(lower, ".tar.gz") || strings.HasSuffix(lower, ".tgz") || strings.HasSuffix(lower, ".zip")) {
+				score = 80
+			}
+		}
+		if score == 0 {
+			continue
+		}
+		if match {
+			score += 10
+		}
+		if score > bestScore {
+			best, bestScore = asset, score
+		}
+	}
+	return best
 }
 
 // findChecksumAssetURL returns the download URL of the release's SHA-256 manifest, if any.
@@ -418,7 +470,7 @@ func (s *UpdateService) DownloadAndApplyUpdate(ctx context.Context, downloadURL 
 		return nil
 
 	case "linux":
-		if err := applyLinuxHotRestart(currentExe, downloadPath, tempDir); err != nil {
+		if err := applyLinuxHotRestart(currentExe, downloadPath, pending.assetName, tempDir); err != nil {
 			return err
 		}
 		handedOff = true
@@ -565,6 +617,13 @@ func copyFile(src, dst string) error {
 }
 
 func applyWindowsHotRestart(currentExe, newExe, tempDir string) error {
+	// The paths are written into a batch file, where % and ! are expanded and a
+	// quote ends the string; refuse to build a script from such a path.
+	for _, p := range []string{currentExe, newExe} {
+		if strings.ContainsAny(p, "%!\"\r\n") {
+			return fmt.Errorf("automatic update is not possible from %q (unsupported characters in the path); install the new release manually", p)
+		}
+	}
 	batScriptPath := filepath.Join(tempDir, "apply_update.bat")
 
 	// The script waits 1 second for the running process to terminate,
@@ -783,44 +842,55 @@ func applyMacOSHotRestart(currentExe, downloadZip, tempDir string) error {
 		targetApp = currentExe
 	}
 
+	// Paths reach the script as positional arguments, never spliced into its
+	// source, so no character in them can change what the script runs.
 	scriptPath := filepath.Join(tempDir, "apply_update.sh")
 	pid := os.Getpid()
-	scriptContent := fmt.Sprintf(`#!/bin/bash
-PID=%d
-TARGET="%s"
-SOURCE="%s"
-TEMP_DIR="%s"
+	const scriptContent = `#!/bin/bash
+PID="$1"
+TARGET="$2"
+SOURCE="$3"
+TEMP_DIR="$4"
 
 for i in $(seq 1 30); do
-    if ! kill -0 $PID 2>/dev/null; then
+    if ! kill -0 "$PID" 2>/dev/null; then
         break
     fi
     sleep 0.5
 done
 
 if [ -d "$TARGET" ]; then
-    rm -rf "$TARGET"
-    cp -R "$SOURCE" "$TARGET"
+    # Swap the bundle in with a rollback path so a failed copy cannot leave the
+    # user without an application.
+    BACKUP="$TARGET.nexterm-old"
+    rm -rf "$BACKUP"
+    if mv "$TARGET" "$BACKUP" 2>/dev/null; then
+        if cp -R "$SOURCE" "$TARGET"; then
+            rm -rf "$BACKUP"
+        else
+            rm -rf "$TARGET"
+            mv "$BACKUP" "$TARGET"
+        fi
+    fi
     xattr -cr "$TARGET" 2>/dev/null || true
     open -n "$TARGET"
 elif [ -f "$TARGET" ]; then
     SOURCE_BIN=$(find "$SOURCE" -type f -perm +111 2>/dev/null | head -n 1)
     if [ -n "$SOURCE_BIN" ]; then
-        cp -f "$SOURCE_BIN" "$TARGET"
-        chmod 0755 "$TARGET"
-        "$TARGET" &
+        cp -f "$SOURCE_BIN" "$TARGET.new" && chmod 0755 "$TARGET.new" && mv -f "$TARGET.new" "$TARGET"
     fi
+    nohup "$TARGET" >/dev/null 2>&1 &
 fi
 
 rm -rf "$TEMP_DIR"
 exit 0
-`, pid, targetApp, appPath, tempDir)
+`
 
 	if err := os.WriteFile(scriptPath, []byte(scriptContent), 0755); err != nil {
 		return fmt.Errorf("write macOS restart script failed: %w", err)
 	}
 
-	cmd := exec.Command("/bin/bash", scriptPath)
+	cmd := exec.Command("/bin/bash", scriptPath, strconv.Itoa(pid), targetApp, appPath, tempDir)
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("launch macOS restart script failed: %w", err)
 	}
@@ -833,13 +903,15 @@ exit 0
 	return nil
 }
 
-func applyLinuxHotRestart(currentExe, downloadTarGz, tempDir string) error {
+func applyLinuxHotRestart(currentExe, downloadTarGz, assetName, tempDir string) error {
 	extractDir := filepath.Join(tempDir, "extracted")
 	if err := os.MkdirAll(extractDir, 0755); err != nil {
 		return fmt.Errorf("create linux extraction dir failed: %w", err)
 	}
 
-	lower := strings.ToLower(downloadTarGz)
+	// The payload is saved without an extension, so the archive type comes from
+	// the release asset's name.
+	lower := strings.ToLower(assetName)
 	if strings.HasSuffix(lower, ".tar.gz") || strings.HasSuffix(lower, ".tgz") {
 		cmdTar := exec.Command("tar", "-xzf", downloadTarGz, "-C", extractDir)
 		if err := cmdTar.Run(); err != nil {
@@ -875,33 +947,45 @@ func applyLinuxHotRestart(currentExe, downloadTarGz, tempDir string) error {
 
 	_ = os.Chmod(newBinary, 0755)
 
+	// An AppImage runs from a read-only mount, so os.Executable() points inside
+	// it; the file to replace is the .AppImage itself.
+	target := currentExe
+	if appImage := os.Getenv("APPIMAGE"); appImage != "" {
+		if fi, err := os.Stat(appImage); err == nil && !fi.IsDir() {
+			target = appImage
+		}
+	}
+
+	// Paths reach the script as positional arguments, never spliced into its
+	// source, so no character in them can change what the script runs.
 	scriptPath := filepath.Join(tempDir, "apply_update.sh")
 	pid := os.Getpid()
-	scriptContent := fmt.Sprintf(`#!/bin/bash
-PID=%d
-TARGET="%s"
-SOURCE="%s"
-TEMP_DIR="%s"
+	const scriptContent = `#!/bin/bash
+PID="$1"
+TARGET="$2"
+SOURCE="$3"
+TEMP_DIR="$4"
 
 for i in $(seq 1 30); do
-    if ! kill -0 $PID 2>/dev/null; then
+    if ! kill -0 "$PID" 2>/dev/null; then
         break
     fi
     sleep 0.5
 done
 
-cp -f "$SOURCE" "$TARGET"
-chmod 0755 "$TARGET"
+# Replace atomically: copy next to the target, then rename over it.
+cp -f "$SOURCE" "$TARGET.new" && chmod 0755 "$TARGET.new" && mv -f "$TARGET.new" "$TARGET"
+rm -f "$TARGET.new" 2>/dev/null
 nohup "$TARGET" >/dev/null 2>&1 &
 rm -rf "$TEMP_DIR"
 exit 0
-`, pid, currentExe, newBinary, tempDir)
+`
 
 	if err := os.WriteFile(scriptPath, []byte(scriptContent), 0755); err != nil {
 		return fmt.Errorf("write Linux restart script failed: %w", err)
 	}
 
-	cmd := exec.Command("/bin/bash", scriptPath)
+	cmd := exec.Command("/bin/bash", scriptPath, strconv.Itoa(pid), target, newBinary, tempDir)
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("launch Linux restart script failed: %w", err)
 	}

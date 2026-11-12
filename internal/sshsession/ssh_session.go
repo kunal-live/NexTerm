@@ -549,6 +549,6 @@ func (s *Session) Client() *ssh.Client {
 // ReadPrivateKeyFile is a helper the App layer calls before Connect
 // when the profile specifies a key file path instead of a password.
 func ReadPrivateKeyFile(path string) ([]byte, error) {
-	return os.ReadFile(path)
+	return os.ReadFile(ExpandUserPath(path))
 }
 

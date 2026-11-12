@@ -220,12 +220,72 @@ func (sm *SecurityManager) IsAuditRequired() bool {
 
 // DangerousCommandPatterns matches commands with catastrophic or destructive impact.
 var DangerousCommandPatterns = []*regexp.Regexp{
-	regexp.MustCompile(`(?i)\brm\s+-[a-z]*r[a-z]*f[a-z]*\s+/(?:\s|$)`), // rm -rf /
-	regexp.MustCompile(`(?i)\bmkfs(?:\.[a-z0-9]+)?\b`),                  // mkfs, mkfs.ext4
-	regexp.MustCompile(`(?i)\bdd\s+if=.*?\sof=/dev/[a-z0-9]+`),          // dd to raw block device
-	regexp.MustCompile(`:\(\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;\s*:`),     // shell fork bomb
-	regexp.MustCompile(`(?i)\b(?:shutdown|poweroff|init\s+0)\b`),        // system power down
-	regexp.MustCompile(`(?i)>\s*/dev/sd[a-z]`),                          // disk overwrite
+	regexp.MustCompile(`(?i)\bmkfs(?:\.[a-z0-9]+)?\b`),                                  // mkfs, mkfs.ext4
+	regexp.MustCompile(`(?i)\bdd\b[^\n;|&]*\bof=/dev/[a-z0-9]+`),                         // dd to raw block device (any argument order)
+	regexp.MustCompile(`:\(\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;\s*:`),                      // shell fork bomb
+	regexp.MustCompile(`(?i)\b(?:shutdown|poweroff|halt|reboot|init\s+[06])\b`),          // system power down / restart
+	regexp.MustCompile(`(?i)>\s*/dev/(?:sd[a-z]|nvme\d|hd[a-z]|vd[a-z]|xvd[a-z]|mmcblk)`), // disk overwrite
+}
+
+// commandSeparators splits a command line into the simple commands a shell would
+// run one after another.
+var commandSeparators = regexp.MustCompile(`&&|\|\||[;|&\n\r]`)
+
+// rmWipeTargets are arguments that make a recursive rm catastrophic.
+var rmWipeTargets = map[string]bool{
+	"/": true, "/*": true, "~": true, "~/": true, "~/*": true,
+	"$home": true, "${home}": true, "$home/": true, "$home/*": true, "${home}/*": true,
+	"/home": true, "/etc": true, "/usr": true, "/var": true, "/boot": true, "/bin": true, "/lib": true,
+}
+
+// isDangerousRm reports whether one simple command is a recursive rm aimed at the
+// filesystem root or a home/system directory, whichever way the flags are spelled
+// (-rf, -fr, -r -f, --recursive, --no-preserve-root, sudo/env prefixes).
+func isDangerousRm(segment string) bool {
+	fields := strings.Fields(strings.ToLower(segment))
+	start := -1
+	for i, f := range fields {
+		base := f
+		if idx := strings.LastIndex(base, "/"); idx >= 0 {
+			base = base[idx+1:]
+		}
+		if base == "rm" {
+			start = i
+			break
+		}
+	}
+	if start < 0 {
+		return false
+	}
+	recursive, noPreserve := false, false
+	var targets []string
+	for _, f := range fields[start+1:] {
+		switch {
+		case f == "--recursive":
+			recursive = true
+		case f == "--no-preserve-root":
+			noPreserve = true
+		case strings.HasPrefix(f, "--"):
+		case strings.HasPrefix(f, "-") && len(f) > 1:
+			if strings.ContainsAny(f[1:], "r") {
+				recursive = true
+			}
+		default:
+			targets = append(targets, strings.Trim(f, `"'`))
+		}
+	}
+	if !recursive {
+		return false
+	}
+	if noPreserve {
+		return true
+	}
+	for _, t := range targets {
+		if rmWipeTargets[t] {
+			return true
+		}
+	}
+	return false
 }
 
 // CheckCommand evaluates a command string against security policy rules.
@@ -236,9 +296,15 @@ func (sm *SecurityManager) CheckCommand(cmd string) error {
 		return nil
 	}
 	trimmed := strings.TrimSpace(cmd)
+	denied := fmt.Errorf("security policy denied: dangerous command '%s' is prohibited by administrator policy", trimmed)
 	for _, pattern := range DangerousCommandPatterns {
 		if pattern.MatchString(trimmed) {
-			return fmt.Errorf("security policy denied: dangerous command '%s' is prohibited by administrator policy", trimmed)
+			return denied
+		}
+	}
+	for _, segment := range commandSeparators.Split(trimmed, -1) {
+		if isDangerousRm(segment) {
+			return denied
 		}
 	}
 	return nil

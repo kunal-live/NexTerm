@@ -198,6 +198,60 @@ func (a *App) RunSSHCommand(tabID, command string) (string, error) {
 // System Tools & Local X Server
 // =========================================================================
 
+// startFirstAvailable starts the first command in candidates whose program is on PATH.
+func startFirstAvailable(candidates [][]string, notFound string) error {
+	for _, c := range candidates {
+		if p, err := exec.LookPath(c[0]); err == nil {
+			return exec.Command(p, c[1:]...).Start()
+		}
+	}
+	return errors.New(notFound)
+}
+
+// startInTerminal opens a graphical terminal emulator (whichever the distro ships)
+// running the first command whose program is installed; with no commands it just
+// opens the terminal.
+func startInTerminal(commands ...[]string) error {
+	var run []string
+	for _, c := range commands {
+		if len(c) == 0 {
+			continue
+		}
+		if _, err := exec.LookPath(c[0]); err == nil {
+			run = c
+			break
+		}
+	}
+	if len(commands) > 0 && run == nil {
+		return errors.New("the requested program is not installed")
+	}
+
+	type emulator struct {
+		name string
+		exec string // flag that introduces the command to run
+	}
+	emulators := []emulator{
+		{"x-terminal-emulator", "-e"}, {"gnome-terminal", "--"}, {"konsole", "-e"},
+		{"xfce4-terminal", "-x"}, {"mate-terminal", "-x"}, {"lxterminal", "-e"},
+		{"alacritty", "-e"}, {"kitty", ""}, {"tilix", "-e"}, {"xterm", "-e"},
+	}
+	for _, em := range emulators {
+		p, err := exec.LookPath(em.name)
+		if err != nil {
+			continue
+		}
+		var args []string
+		if len(run) > 0 {
+			if em.exec != "" {
+				args = append(args, em.exec)
+			}
+			args = append(args, run...)
+		}
+		return exec.Command(p, args...).Start()
+	}
+	return errors.New("no terminal emulator found (install gnome-terminal, konsole, xfce4-terminal or xterm)")
+}
+
 func (a *App) LaunchSystemTool(toolKey string) error {
 	if runtime.GOOS == "darwin" {
 		switch toolKey {
@@ -218,18 +272,25 @@ func (a *App) LaunchSystemTool(toolKey string) error {
 	if runtime.GOOS == "linux" {
 		switch toolKey {
 		case "taskmgr":
-			return exec.Command("gnome-system-monitor").Start()
+			return startFirstAvailable([][]string{
+				{"gnome-system-monitor"}, {"plasma-systemmonitor"}, {"ksysguard"},
+				{"xfce4-taskmanager"}, {"mate-system-monitor"}, {"lxtask"}, {"qps"},
+			}, "no graphical system monitor found (install gnome-system-monitor, plasma-systemmonitor or xfce4-taskmanager)")
 		case "resmon":
-			return exec.Command("top").Start()
+			return startInTerminal([]string{"htop"}, []string{"top"})
 		case "devmgmt":
-			return exec.Command("hardinfo").Start()
+			return startFirstAvailable([][]string{
+				{"hardinfo"}, {"hardinfo2"}, {"gnome-control-center", "about"}, {"systemsettings"},
+				{"kinfocenter"}, {"lxqt-config"},
+			}, "no hardware information tool found (install hardinfo or kinfocenter)")
 		case "cmd_admin", "powershell_admin":
-			if _, err := exec.LookPath("pkexec"); err == nil {
-				return exec.Command("x-terminal-emulator", "-e", "pkexec", "bash").Start()
+			// Elevation: sudo inside a terminal works on every distro; pkexec needs a polkit agent.
+			if _, err := exec.LookPath("sudo"); err == nil {
+				return startInTerminal([]string{"sudo", "-i"})
 			}
-			return exec.Command("x-terminal-emulator", "-e", "sudo", "-i").Start()
+			return startInTerminal([]string{"pkexec", "bash"})
 		case "terminal":
-			return exec.Command("x-terminal-emulator").Start()
+			return startInTerminal()
 		}
 		return fmt.Errorf("system tool not available on Linux: %s", toolKey)
 	}

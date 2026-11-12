@@ -222,7 +222,12 @@ func (s *SFTPService) OpenExternal(tabID, remotePath string, chooseApp bool) err
 		return fmt.Errorf("active SSH session not found for tab %s", tabID)
 	}
 
-	cacheDir := filepath.Join(os.TempDir(), "nexterm_cache", tabID)
+	// tabID names a directory under the cache root; it comes from the UI layer, so
+	// refuse anything that could climb out of it (e.g. "../..").
+	if !validTabCacheName(tabID) {
+		return fmt.Errorf("invalid tab id %q", tabID)
+	}
+	cacheDir := filepath.Join(externalCacheRoot(), tabID)
 	if err := os.MkdirAll(cacheDir, 0700); err != nil {
 		return fmt.Errorf("create local cache dir: %w", err)
 	}
@@ -340,6 +345,37 @@ func (s *SFTPService) OpenExternal(tabID, remotePath string, chooseApp bool) err
 	}()
 
 	return nil
+}
+
+// externalCacheRoot is where OpenExternal keeps downloaded copies of remote files.
+func externalCacheRoot() string {
+	return filepath.Join(os.TempDir(), "nexterm_cache")
+}
+
+// CleanupExternalCache stops all file watchers and deletes the downloaded copies of
+// remote files, which may contain sensitive data and would otherwise sit in the
+// system temp directory indefinitely.
+func (s *SFTPService) CleanupExternalCache() {
+	s.watcherMu.Lock()
+	for k, w := range s.fileWatchers {
+		close(w.stopChan)
+		delete(s.fileWatchers, k)
+	}
+	s.watcherMu.Unlock()
+	_ = os.RemoveAll(externalCacheRoot())
+}
+
+// validTabCacheName reports whether tabID is safe to use as a directory name.
+func validTabCacheName(tabID string) bool {
+	if tabID == "" || len(tabID) > 128 {
+		return false
+	}
+	for _, r := range tabID {
+		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' || r == '-' || r == '_') {
+			return false
+		}
+	}
+	return true
 }
 
 // CommitExternalChange uploads the locally edited cached file back to remote server.

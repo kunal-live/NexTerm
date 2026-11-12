@@ -77,3 +77,49 @@ func TestSecurityPolicyEnforcement(t *testing.T) {
 		t.Fatalf("expected password saving to now be allowed, got: %v", err)
 	}
 }
+
+func TestCheckCommandBlocksDangerousVariants(t *testing.T) {
+	sm := &SecurityManager{policy: SecurityPolicy{DisableDangerousCommands: true}}
+
+	blocked := []string{
+		"rm -rf /",
+		"rm -fr /",
+		"rm -r -f /",
+		"rm -rf /*",
+		"sudo rm -rf --no-preserve-root /",
+		"rm --recursive --force /",
+		"ls && rm -rf ~",
+		"echo hi; rm -rf $HOME",
+		"dd of=/dev/sda if=/dev/zero",
+		"dd if=/dev/zero of=/dev/nvme0n1",
+		"mkfs.ext4 /dev/sdb1",
+		"reboot",
+		"shutdown -h now",
+		"cat x > /dev/nvme0n1",
+	}
+	for _, c := range blocked {
+		if err := sm.CheckCommand(c); err == nil {
+			t.Errorf("expected %q to be blocked", c)
+		}
+	}
+
+	allowed := []string{
+		"ls -la /",
+		"rm -rf ./build",
+		"rm file.txt",
+		"rm -rf /tmp/cache",
+		"mkdir -p /var/app",
+		"df -h",
+	}
+	for _, c := range allowed {
+		if err := sm.CheckCommand(c); err != nil {
+			t.Errorf("expected %q to be allowed, got %v", c, err)
+		}
+	}
+
+	// With the policy off nothing is blocked.
+	off := &SecurityManager{policy: SecurityPolicy{DisableDangerousCommands: false}}
+	if err := off.CheckCommand("rm -rf /"); err != nil {
+		t.Errorf("policy disabled should allow everything, got %v", err)
+	}
+}

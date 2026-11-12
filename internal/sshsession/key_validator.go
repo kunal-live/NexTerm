@@ -31,6 +31,7 @@ func ValidatePrivateKey(keyPath string, passphrase string) (*KeyInfo, error) {
 		return &KeyInfo{Valid: false, Error: "private key path is empty"}, errors.New("empty key path")
 	}
 
+	keyPath = ExpandUserPath(keyPath)
 	data, err := os.ReadFile(keyPath)
 	if err != nil {
 		info := &KeyInfo{

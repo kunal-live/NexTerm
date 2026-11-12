@@ -7,6 +7,7 @@
 import { showModal, hideModal } from "../ui/modal.js";
 import { showToast, escapeHtml } from "../ui/notifications.js";
 import { runSSH, targetName, pickTargetTab } from "./sshExec.js";
+import { shQuote } from "./shellQuote.js";
 
 let pollTimer = null;
 let state = { path: "", search: "", regex: false, errorsOnly: false, lines: 300, raw: [] };
@@ -73,7 +74,7 @@ async function toggleTail() {
 }
 
 async function pull() {
-  const res = await runSSH(`tail -n ${state.lines} ${JSON.stringify(state.path)} 2>&1`);
+  const res = await runSSH(`tail -n ${Math.max(1, parseInt(state.lines, 10) || 200)} -- ${shQuote(state.path)} 2>&1`);
   if (!res.ok) { const v = document.getElementById("logView"); if (v) v.innerHTML = `<div class="sched-empty">Can't read log (${escapeHtml(res.err || "error")}).</div>`; return; }
   state.raw = res.out.split("\n");
   paint();

@@ -3,13 +3,16 @@ package protocol
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/url"
 	"nexterm/internal/model"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 // RDPSession implements ProtocolSession for Microsoft Remote Desktop connections.
@@ -109,11 +112,25 @@ func (r *RDPSession) Connect(ctx context.Context) error {
 
 	r.EmitStateChange("connecting", fmt.Sprintf("Launching Remote Desktop to %s:%d...", p.Host, port))
 
-	// Generate .rdp file content
-	tempRDP := filepath.Join(os.TempDir(), fmt.Sprintf("nexterm_%s.rdp", r.ID()))
+	// Generate .rdp file content in a private, unpredictably named temp file
+	// (CreateTemp opens it 0600 and never follows a pre-planted symlink).
 	rdpContent := GenerateRDPProfileContent(p, port)
-
-	if err := os.WriteFile(tempRDP, []byte(rdpContent), 0600); err != nil {
+	tmp, err := os.CreateTemp("", "nexterm_*.rdp")
+	if err != nil {
+		r.SetConnected(false)
+		r.EmitStateChange("failed", err.Error())
+		return fmt.Errorf("failed to generate RDP profile: %w", err)
+	}
+	tempRDP := tmp.Name()
+	if _, err := tmp.WriteString(rdpContent); err != nil {
+		_ = tmp.Close()
+		_ = os.Remove(tempRDP)
+		r.SetConnected(false)
+		r.EmitStateChange("failed", err.Error())
+		return fmt.Errorf("failed to generate RDP profile: %w", err)
+	}
+	if err := tmp.Close(); err != nil {
+		_ = os.Remove(tempRDP)
 		r.SetConnected(false)
 		r.EmitStateChange("failed", err.Error())
 		return fmt.Errorf("failed to generate RDP profile: %w", err)
@@ -121,17 +138,29 @@ func (r *RDPSession) Connect(ctx context.Context) error {
 
 	r.tempPath = tempRDP
 
+	// detached launchers (open, xdg-open) hand the file to another application and
+	// exit at once, so their exit says nothing about the RDP window's lifetime.
 	var cmd *exec.Cmd
+	detached := false
 	switch runtime.GOOS {
 	case "windows":
 		cmd = exec.Command("mstsc.exe", tempRDP)
 	case "darwin":
 		cmd = exec.Command("open", tempRDP)
+		detached = true
 	default:
-		if _, err := exec.LookPath("xfreerdp"); err == nil {
-			args := []string{fmt.Sprintf("/v:%s:%d", p.Host, port)}
+		if freerdp := firstOnPath("xfreerdp3", "xfreerdp", "wlfreerdp3", "wlfreerdp"); freerdp != "" {
+			args := []string{"/v:" + net.JoinHostPort(p.Host, strconv.Itoa(port)), "/cert:tofu", "/dynamic-resolution"}
 			if p.Username != "" {
-				args = append(args, fmt.Sprintf("/u:%s", p.Username))
+				args = append(args, "/u:"+p.Username)
+			}
+			if p.RDPDomain != "" {
+				args = append(args, "/d:"+p.RDPDomain)
+			}
+			if p.RDPFullScreen {
+				args = append(args, "/f")
+			} else if p.RDPWidth > 0 && p.RDPHeight > 0 {
+				args = append(args, fmt.Sprintf("/size:%dx%d", p.RDPWidth, p.RDPHeight))
 			}
 			if p.RDPRedirectDrives {
 				args = append(args, "/drive:hotplug,*")
@@ -140,16 +169,21 @@ func (r *RDPSession) Connect(ctx context.Context) error {
 				args = append(args, "+clipboard")
 			}
 			if p.RDPAudioMode == 0 {
-				args = append(args, "/sound:sys:alsa")
+				args = append(args, "/sound")
 			}
 			if p.RDPAudioCapture {
-				args = append(args, "/microphone:sys:alsa")
+				args = append(args, "/microphone")
 			}
-			cmd = exec.Command("xfreerdp", args...)
-		} else if _, err := exec.LookPath("remmina"); err == nil {
-			cmd = exec.Command("remmina", "-c", tempRDP)
+			cmd = exec.Command(freerdp, args...)
+		} else if remmina := firstOnPath("remmina"); remmina != "" {
+			target := &url.URL{Scheme: "rdp", Host: net.JoinHostPort(p.Host, strconv.Itoa(port))}
+			if p.Username != "" {
+				target.User = url.User(p.Username)
+			}
+			cmd = exec.Command(remmina, "-c", target.String())
 		} else {
 			cmd = exec.Command("xdg-open", tempRDP)
+			detached = true
 		}
 	}
 
@@ -157,10 +191,14 @@ func (r *RDPSession) Connect(ctx context.Context) error {
 		r.SetConnected(false)
 		r.EmitStateChange("failed", err.Error())
 		_ = os.Remove(tempRDP)
-		if runtime.GOOS == "darwin" {
-			return fmt.Errorf("launch RDP client failed: %w (install Microsoft Remote Desktop from Mac App Store)", err)
+		switch runtime.GOOS {
+		case "darwin":
+			return fmt.Errorf("launch RDP client failed: %w (install Microsoft Remote Desktop from the Mac App Store)", err)
+		case "windows":
+			return fmt.Errorf("launch RDP client failed: %w", err)
+		default:
+			return fmt.Errorf("launch RDP client failed: %w (install FreeRDP (xfreerdp) or Remmina)", err)
 		}
-		return fmt.Errorf("launch RDP client failed: %w", err)
 	}
 
 	r.cmd = cmd
@@ -177,7 +215,11 @@ func (r *RDPSession) Connect(ctx context.Context) error {
 	r.EmitData([]byte(banner))
 
 	// Pass cmd explicitly: Disconnect clears r.cmd concurrently.
-	go r.waitProcess(cmd)
+	if detached {
+		go r.waitLauncher(cmd)
+	} else {
+		go r.waitProcess(cmd)
+	}
 
 	return nil
 }
@@ -188,6 +230,37 @@ func (r *RDPSession) waitProcess(cmd *exec.Cmd) {
 	r.SetConnected(false)
 	r.EmitDisconnect("RDP window closed by user", nil)
 	_ = r.Disconnect()
+}
+
+// waitLauncher handles `open` / `xdg-open`: a failure means no application could
+// open the .rdp file; success only means the file was handed over, so the session
+// stays open (until the tab is closed) and the profile file is removed a little
+// later, once the RDP client has had time to read it.
+func (r *RDPSession) waitLauncher(cmd *exec.Cmd) {
+	if err := cmd.Wait(); err != nil {
+		r.SetConnected(false)
+		r.EmitDisconnect("No application could open the RDP connection ("+err.Error()+"). Install Microsoft Remote Desktop (macOS) or FreeRDP/Remmina (Linux).", err)
+		_ = r.Disconnect()
+		return
+	}
+	time.AfterFunc(2*time.Minute, func() {
+		r.mu.Lock()
+		defer r.mu.Unlock()
+		if r.tempPath != "" {
+			_ = os.Remove(r.tempPath)
+			r.tempPath = ""
+		}
+	})
+}
+
+// firstOnPath returns the full path of the first named program found on PATH.
+func firstOnPath(names ...string) string {
+	for _, n := range names {
+		if p, err := exec.LookPath(n); err == nil {
+			return p
+		}
+	}
+	return ""
 }
 
 // Disconnect terminates the RDP process and cleans up temporary config files.

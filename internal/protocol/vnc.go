@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/url"
 	"nexterm/internal/model"
 	"os/exec"
 	"runtime"
@@ -86,19 +87,34 @@ func (v *VNCSession) Connect(ctx context.Context) error {
 	viewerTarget := fmt.Sprintf("%s::%d", p.Host, port)
 	var viewerCmd *exec.Cmd
 	if runtime.GOOS == "darwin" {
-		vncURL := fmt.Sprintf("vnc://%s", addr)
+		// Build the URL structurally so a username/host from an imported session
+		// cannot smuggle in other URL components.
+		vncURL := &url.URL{Scheme: "vnc", Host: addr}
 		if p.Username != "" {
-			vncURL = fmt.Sprintf("vnc://%s@%s", p.Username, addr)
+			vncURL.User = url.User(p.Username)
 		}
-		viewerCmd = exec.Command("open", vncURL)
-	} else if viewerPath, err := exec.LookPath("vncviewer"); err == nil {
-		viewerCmd = exec.Command(viewerPath, viewerTarget)
-	} else if viewerPath, err := exec.LookPath("vncviewer.exe"); err == nil {
-		viewerCmd = exec.Command(viewerPath, viewerTarget)
+		viewerCmd = exec.Command("open", vncURL.String())
+	} else {
+		// Common viewers across Windows and Linux distributions.
+		for _, name := range []string{"vncviewer", "vncviewer.exe", "tigervnc", "xtigervncviewer", "vinagre", "remmina"} {
+			viewerPath, err := exec.LookPath(name)
+			if err != nil {
+				continue
+			}
+			switch name {
+			case "remmina":
+				viewerCmd = exec.Command(viewerPath, "-c", (&url.URL{Scheme: "vnc", Host: addr}).String())
+			case "vinagre":
+				viewerCmd = exec.Command(viewerPath, addr)
+			default:
+				viewerCmd = exec.Command(viewerPath, viewerTarget)
+			}
+			break
+		}
 	}
 
 	if viewerCmd == nil {
-		v.EmitData([]byte("No VNC viewer found on PATH. Install TigerVNC or RealVNC Viewer (vncviewer) and reconnect.\r\n"))
+		v.EmitData([]byte("No VNC viewer found on PATH. Install TigerVNC, RealVNC Viewer (vncviewer) or Remmina and reconnect.\r\n"))
 		return nil
 	}
 	if err := viewerCmd.Start(); err != nil {

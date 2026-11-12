@@ -138,7 +138,15 @@ func (m *Manager) reload() error {
 	}
 
 	cb, err := knownhosts.New(files...)
+	if err != nil && len(files) > 1 {
+		// One malformed line in the user's own ~/.ssh/known_hosts (another tool,
+		// an unsupported marker, a stray edit) makes knownhosts.New reject the
+		// whole set and would leave every host unverifiable. Keep working with
+		// Nexterm's own file.
+		cb, err = knownhosts.New(files[0])
+	}
 	if err != nil {
+		m.cachedCallback = nil
 		return err
 	}
 	m.cachedCallback = cb

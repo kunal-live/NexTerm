@@ -68,6 +68,11 @@ func (v *Vault) Save(key, secret string) error {
 	if key == "" {
 		return errors.New("vault: key cannot be empty")
 	}
+	if secret == "" {
+		// DPAPI rejects empty input ("The parameter is incorrect"), and an empty
+		// secret reads back as absent anyway (e.g. an optional password hint).
+		return v.Delete(key)
+	}
 	encrypted, err := protect([]byte(secret))
 	if err != nil {
 		return fmt.Errorf("dpapi protect: %w", err)

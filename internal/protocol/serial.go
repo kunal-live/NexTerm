@@ -6,8 +6,6 @@ import (
 	"io"
 	"nexterm/internal/model"
 	"os"
-	"runtime"
-	"strings"
 	"sync"
 	"time"
 )
@@ -31,7 +29,7 @@ func NewSerialSession(id string, profile model.SessionProfile) *SerialSession {
 	base := NewBaseSession(id, "serial", profile)
 	port := profile.SerialPort
 	if port == "" {
-		port = "COM1"
+		port = defaultSerialPort()
 	}
 	baud := profile.BaudRate
 	if baud <= 0 {
@@ -66,15 +64,17 @@ func (s *SerialSession) Connect(ctx context.Context) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	targetPort := s.portName
-	// Windows COM port device naming requires \\.\ prefix; macOS/Linux use /dev/tty* or /dev/cu*
-	if runtime.GOOS == "windows" && !strings.HasPrefix(targetPort, `\\.\`) {
-		targetPort = `\\.\` + targetPort
+	// Windows COM ports need the \\.\ prefix; macOS/Linux ports must be /dev nodes.
+	targetPort, err := resolveSerialPath(s.portName)
+	if err != nil {
+		s.SetConnected(false)
+		s.EmitStateChange("failed", err.Error())
+		return fmt.Errorf("open serial port %s failed: %w", s.portName, err)
 	}
 
 	s.EmitStateChange("connecting", fmt.Sprintf("Opening serial port %s at %d baud...", s.portName, s.baudRate))
 
-	f, err := os.OpenFile(targetPort, os.O_RDWR, 0)
+	f, err := os.OpenFile(targetPort, serialOpenFlags, 0)
 	if err != nil {
 		s.SetConnected(false)
 		s.EmitStateChange("failed", err.Error())

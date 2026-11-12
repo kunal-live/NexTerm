@@ -9,6 +9,7 @@ import { showModal, hideModal } from "../ui/modal.js";
 import { posMenu, hideContextMenu, getContextMenuEl } from "../ui/contextMenu.js";
 import { getActiveTabId, getTabs } from "../state/tabState.js";
 import { userSettings } from "../settings/settings.js";
+import { shQuote } from "../terminal/shellQuote.js";
 
 let refreshSFTPFn = null;
 
@@ -368,8 +369,8 @@ export function showSFTPContextMenu(x, y, item) {
       cdTermBtn.onclick = () => {
         hideContextMenu();
         if (activeTabId && tabs[activeTabId] && !tabs[activeTabId].isLocal && window.go && window.go.main && window.go.main.App) {
-          window.go.main.App.WriteToTerminal(activeTabId, `cd "${item.path}"\r`);
-          showToast(`Sent: cd "${item.path}" to terminal`, "info");
+          window.go.main.App.WriteToTerminal(activeTabId, `cd -- ${shQuote(item.path)}\r`);
+          showToast(`Sent: cd ${shQuote(item.path)} to terminal`, "info");
         }
       };
     }
@@ -384,7 +385,7 @@ export function showSFTPContextMenu(x, y, item) {
   contextMenuEl.querySelector("#sftpCopyPathTerm").onclick = () => {
     hideContextMenu();
     if (activeTabId && tabs[activeTabId] && window.go && window.go.main && window.go.main.App) {
-      window.go.main.App.WriteToTerminal(activeTabId, `"${item.path}" `);
+      window.go.main.App.WriteToTerminal(activeTabId, `${shQuote(item.path)} `);
       showToast("Pasted file path to terminal", "info");
     }
   };

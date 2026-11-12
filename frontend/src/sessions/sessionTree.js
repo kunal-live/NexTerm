@@ -151,7 +151,7 @@ export function renderConnectedServers() {
     const serialNo = t.serialNo || 1;
     const srvName = t.customTitle || t.remoteHostname || ((t.profile?.name && t.profile.name !== "New Server" && t.profile.name !== "New Session") ? t.profile.name : (t.profile?.host ? (t.profile.username ? `${t.profile.username}@${t.profile.host}` : t.profile.host) : (t.isLocal ? "Local Terminal" : "Terminal")));
     const titleText = `[${serialNo}] ${srvName}`;
-    const subText = t.isLocal ? "Local Terminal (PowerShell)" : `SSH • ${t.profile?.username || 'user'}@${t.profile?.host || 'host'}:${t.profile?.port || 22}`;
+    const subText = t.isLocal ? "Local Terminal" : `SSH • ${t.profile?.username || 'user'}@${t.profile?.host || 'host'}:${t.profile?.port || 22}`;
     const activePath = t.sftpPath || (t.profile && t.profile.initialDir) || "/";
 
     const env = getEnvironmentInfo(t.environment || t.profile?.environment || t.color || t.profile?.color);

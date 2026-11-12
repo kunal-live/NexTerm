@@ -9,6 +9,46 @@ on:
   workflow_dispatch: {}
 
 jobs:
+  verify-unix:
+    name: Vet & test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-14]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install Linux Dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libsecret-tools gnome-keyring dbus-x11
+
+      - name: Vet
+        run: go vet ./...
+
+      # The credential vault uses the OS keyring (Secret Service on Linux, Keychain on
+      # macOS), so the tests need one. Kept non-blocking until the runner keyring
+      # setup has proven stable; failures are still visible on the job.
+      - name: Test (Linux, with a temporary keyring)
+        if: runner.os == 'Linux'
+        continue-on-error: true
+        run: |
+          dbus-run-session -- bash -c 'echo -n "" | gnome-keyring-daemon --unlock --components=secrets >/dev/null; go test ./...'
+
+      - name: Test (macOS)
+        if: runner.os == 'macOS'
+        continue-on-error: true
+        run: go test ./...
+
   build-windows:
     name: Windows x86_64
     runs-on: windows-latest
@@ -125,6 +165,51 @@ jobs:
           name: Nexterm-macos-arm64
           path: build/bin/*.zip
 
+  build-macos-amd64:
+    name: macOS Intel (x86_64)
+    runs-on: macos-14
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Build macOS App Bundle
+        run: wails build -platform darwin/amd64 -clean
+
+      - name: Ad-Hoc Code Sign (Bypass Gatekeeper)
+        run: |
+          # Remove quarantine attribute so macOS doesn't block the app on first launch
+          xattr -cr build/bin/nexterm.app
+          # Ad-hoc sign the app bundle — satisfies Gatekeeper on macOS 10.15+
+          codesign --force --deep --sign - build/bin/nexterm.app
+
+      - name: Package macOS App as Zip
+        run: |
+          cd build/bin
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VER="${GITHUB_REF_NAME}"
+          else
+            PROD_VER=$(python3 -c "import os, json; print(json.load(open(os.path.join(os.environ.get('GITHUB_WORKSPACE', '.'), 'wails.json')))['info']['productVersion'])" 2>/dev/null || echo "1.4.2")
+            VER="v${PROD_VER}"
+          fi
+          ditto -c -k --sequesterRsrc --keepParent nexterm.app "Nexterm-macos-amd64.zip"
+          ditto -c -k --sequesterRsrc --keepParent nexterm.app "Nexterm-${VER}-macos-amd64.zip"
+          cd ../..
+
+      - name: Upload macOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nexterm-macos-amd64
+          path: build/bin/*.zip
+
   build-linux-amd64:
     name: Linux x86_64
     runs-on: ubuntu-22.04
@@ -168,7 +253,7 @@ jobs:
 
   release:
     name: Publish GitHub Release
-    needs: [build-windows, build-macos-arm64, build-linux-amd64]
+    needs: [build-windows, build-macos-arm64, build-macos-amd64, build-linux-amd64]
     runs-on: ubuntu-latest
     if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch')
     permissions:
@@ -200,6 +285,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: Nexterm-macos-arm64
+          path: release/
+
+      - name: Download macOS Intel Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: Nexterm-macos-amd64
           path: release/
 
       - name: Download Linux Artifacts
@@ -235,6 +326,7 @@ jobs:
           | **Windows 10 / 11 (64-bit)** | ⚡ Portable Archive (`.zip`) | **[⬇️ Nexterm-windows-x64-portable.zip](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-windows-x64-portable.zip)** | **[⬇️ Nexterm-TAG-windows-amd64-portable.zip](https://github.com/kunal-live/NexTerm/releases/download/TAG/Nexterm-TAG-windows-amd64-portable.zip)** |
           | **Windows 10 / 11 (64-bit)** | 🚀 Standalone Executable (`.exe`) | **[⬇️ nexterm.exe](https://github.com/kunal-live/NexTerm/releases/latest/download/nexterm.exe)** | **[⬇️ nexterm.exe](https://github.com/kunal-live/NexTerm/releases/download/TAG/nexterm.exe)** |
           | **macOS (Apple Silicon)** | 🍏 App Bundle (`.zip`) | **[⬇️ Nexterm-macos-arm64.zip](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-macos-arm64.zip)** | **[⬇️ Nexterm-TAG-macos-arm64.zip](https://github.com/kunal-live/NexTerm/releases/download/TAG/Nexterm-TAG-macos-arm64.zip)** |
+          | **macOS (Intel)** | 🍏 App Bundle (`.zip`) | **[⬇️ Nexterm-macos-amd64.zip](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-macos-amd64.zip)** | **[⬇️ Nexterm-TAG-macos-amd64.zip](https://github.com/kunal-live/NexTerm/releases/download/TAG/Nexterm-TAG-macos-amd64.zip)** |
           | **Linux (Ubuntu, Debian, Fedora, Arch)** | 🐧 Binary Archive (`.tar.gz`) | **[⬇️ Nexterm-linux-x64.tar.gz](https://github.com/kunal-live/NexTerm/releases/latest/download/Nexterm-linux-x64.tar.gz)** | **[⬇️ Nexterm-TAG-linux-amd64.tar.gz](https://github.com/kunal-live/NexTerm/releases/download/TAG/Nexterm-TAG-linux-amd64.tar.gz)** |
           | **Cryptographic Hashes** | 🔐 SHA-256 Checksums | **[📄 SHA256SUMS](https://github.com/kunal-live/NexTerm/releases/latest/download/SHA256SUMS)** | **[📄 SHA256SUMS](https://github.com/kunal-live/NexTerm/releases/download/TAG/SHA256SUMS)** |
 

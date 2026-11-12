@@ -50,7 +50,8 @@ func main() {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		OnStartup: app.onWailsStartup,
+		OnStartup:  app.onWailsStartup,
+		OnShutdown: app.shutdown,
 		Bind: []interface{}{
 			app,
 		},

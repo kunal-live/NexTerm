@@ -138,7 +138,7 @@ registerCommandPaletteActions([
     id: "cmd-local-term",
     category: "Sessions",
     title: "New Local Terminal",
-    subtitle: "Start a local PowerShell or Command Prompt tab",
+    subtitle: "Start a local shell tab (PowerShell/CMD on Windows, zsh/bash on macOS & Linux)",
     icon: "💻",
     action: () => startLocalTerminal("powershell")
   },
@@ -693,7 +693,8 @@ export function setupEventListeners() {
       try {
         const localFile = await window.go.main.App.SelectUploadFile();
         if (localFile) {
-          const fileName = localFile.substring(localFile.lastIndexOf("\\") + 1);
+          // Basename on every OS (Windows uses "\", macOS/Linux use "/").
+          const fileName = localFile.split(/[\\/]/).pop();
           const remoteDest = (currentSFTPPath === "/" ? "" : currentSFTPPath) + "/" + fileName;
           showToast(`Uploading ${fileName}...`, "info");
           await window.go.main.App.SFTPUpload(activeTabId, localFile, remoteDest);

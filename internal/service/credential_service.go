@@ -64,6 +64,7 @@ type CredentialService struct {
 	treeProvider    func() *model.TreeNode
 	lockoutFilePath string
 	isLocked        bool
+	vaultErr        error // why vault is nil, when known
 
 	// Master password lockout
 	stage          int
@@ -385,9 +386,25 @@ func (c *CredentialService) SaveSessionPassword(vaultKey, password string) error
 	defer c.mu.Unlock()
 
 	if c.vault == nil {
-		return fmt.Errorf("vault is not initialized")
+		return c.vaultUnavailableError()
 	}
 	return c.vault.Save(vaultKey, password)
+}
+
+// SetVaultError records why the platform credential store could not be opened at
+// startup (e.g. no secret-tool/keyring on Linux) so saving a password can tell the
+// user what to install instead of a bare "vault is not initialized".
+func (c *CredentialService) SetVaultError(err error) {
+	c.mu.Lock()
+	c.vaultErr = err
+	c.mu.Unlock()
+}
+
+func (c *CredentialService) vaultUnavailableError() error {
+	if c.vaultErr != nil {
+		return fmt.Errorf("secure credential storage is unavailable: %w", c.vaultErr)
+	}
+	return fmt.Errorf("vault is not initialized")
 }
 
 // HasSavedPassword returns true if a password is encrypted in the vault.
@@ -701,58 +718,78 @@ func (c *CredentialService) VerifyMasterPassword(password string) (bool, error) 
 		return true, nil
 	}
 
-	// Incorrect password -> increment failure count
-	c.failedAttempts++
+	// Incorrect password -> count the failure (and escalate/lock out/wipe if due)
+	if lerr := c.recordFailureLocked(&c.stage, &c.failedAttempts, &c.lockoutUntil, "master", c.resetLockoutLocked); lerr != nil {
+		return false, lerr
+	}
+	return false, nil
+}
 
-	switch c.stage {
+// lockedOutLocked returns an error while a lockout window is still running and
+// clears an expired one. Every code path that checks a master/app password must
+// go through it, or the lockout can be bypassed by guessing via another entry point.
+func (c *CredentialService) lockedOutLocked(stage *int, until *time.Time, noun string) error {
+	if !until.IsZero() {
+		if time.Now().Before(*until) {
+			remaining := int(time.Until(*until).Seconds()) + 1
+			return fmt.Errorf("%s locked out: please wait %d seconds before trying again", noun, remaining)
+		}
+		*until = time.Time{}
+		c.saveLockoutStateLocked()
+	}
+	if *stage < 1 {
+		*stage = 1
+	}
+	return nil
+}
+
+// recordFailureLocked counts one failed password attempt against a lockout state
+// machine (5 tries, 30 s; 5 tries, 2 min; 3 tries, 30 min; 1 final try, then a
+// security wipe). It returns a non-nil error only when this attempt triggered a
+// lockout or the wipe; an ordinary miss returns nil.
+func (c *CredentialService) recordFailureLocked(stage, failed *int, until *time.Time, label string, reset func()) error {
+	*failed++
+
+	switch *stage {
 	case 1:
-		if c.failedAttempts >= 5 {
-			c.lockoutUntil = time.Now().Add(30 * time.Second)
-			c.stage = 2
-			c.failedAttempts = 0
+		if *failed >= 5 {
+			*until = time.Now().Add(30 * time.Second)
+			*stage = 2
+			*failed = 0
 			c.saveLockoutStateLocked()
-			return false, fmt.Errorf("incorrect master password: 5 failed attempts reached, locked out for 30 seconds")
+			return fmt.Errorf("incorrect %s password: 5 failed attempts reached, locked out for 30 seconds", label)
 		}
-		c.saveLockoutStateLocked()
-		return false, nil
-
 	case 2:
-		if c.failedAttempts >= 5 {
-			c.lockoutUntil = time.Now().Add(2 * time.Minute)
-			c.stage = 3
-			c.failedAttempts = 0
+		if *failed >= 5 {
+			*until = time.Now().Add(2 * time.Minute)
+			*stage = 3
+			*failed = 0
 			c.saveLockoutStateLocked()
-			return false, fmt.Errorf("incorrect master password: 5 failed attempts reached, locked out for 2 minutes")
+			return fmt.Errorf("incorrect %s password: 5 failed attempts reached, locked out for 2 minutes", label)
 		}
-		c.saveLockoutStateLocked()
-		return false, nil
-
 	case 3:
-		if c.failedAttempts >= 3 {
-			c.lockoutUntil = time.Now().Add(30 * time.Minute)
-			c.stage = 4
-			c.failedAttempts = 0
+		if *failed >= 3 {
+			*until = time.Now().Add(30 * time.Minute)
+			*stage = 4
+			*failed = 0
 			c.saveLockoutStateLocked()
-			return false, fmt.Errorf("incorrect master password: 3 failed attempts reached, locked out for 30 minutes")
+			return fmt.Errorf("incorrect %s password: 3 failed attempts reached, locked out for 30 minutes", label)
 		}
-		c.saveLockoutStateLocked()
-		return false, nil
-
-	default: // Stage 4: final attempt round after 30-min lockout
-		if c.failedAttempts >= 1 {
+	default: // Stage 4: final attempt round after the 30-min lockout
+		if *failed >= 1 {
 			// Trigger automatic security wipe
 			_ = c.clearAllLocked()
-			c.resetLockoutLocked()
+			reset()
 			if c.onSecurityWipe != nil {
 				go func() {
 					_ = c.onSecurityWipe()
 				}()
 			}
-			return false, fmt.Errorf("SECURITY_WIPE: 4th authentication stage failed, all server credentials deleted and application restarting")
+			return fmt.Errorf("SECURITY_WIPE: 4th authentication stage failed, all server credentials deleted and application restarting")
 		}
-		c.saveLockoutStateLocked()
-		return false, nil
 	}
+	c.saveLockoutStateLocked()
+	return nil
 }
 
 // GetMasterPasswordHint returns the password hint configured by the user.
@@ -814,6 +851,9 @@ func (c *CredentialService) ResetMasterPasswordWithPrevious(previousPassword, ne
 		return fmt.Errorf("no master password history found; new users cannot use this recovery method")
 	}
 
+	if lerr := c.lockedOutLocked(&c.stage, &c.lockoutUntil, "master password"); lerr != nil {
+		return lerr
+	}
 	trimmedPrev := strings.TrimSpace(previousPassword)
 	matched := false
 	for _, h := range history {
@@ -823,6 +863,9 @@ func (c *CredentialService) ResetMasterPasswordWithPrevious(previousPassword, ne
 		}
 	}
 	if !matched {
+		if lerr := c.recordFailureLocked(&c.stage, &c.failedAttempts, &c.lockoutUntil, "master", c.resetLockoutLocked); lerr != nil {
+			return lerr
+		}
 		return fmt.Errorf("entered password does not match any of your last 3 master passwords")
 	}
 
@@ -867,7 +910,13 @@ func (c *CredentialService) RemoveMasterPassword(currentPassword string) error {
 		return err
 	}
 	if ok && storedHash != "" {
+		if lerr := c.lockedOutLocked(&c.stage, &c.lockoutUntil, "master password"); lerr != nil {
+			return lerr
+		}
 		if err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(strings.TrimSpace(currentPassword))); err != nil {
+			if lerr := c.recordFailureLocked(&c.stage, &c.failedAttempts, &c.lockoutUntil, "master", c.resetLockoutLocked); lerr != nil {
+				return lerr
+			}
 			return fmt.Errorf("incorrect master password")
 		}
 	}
@@ -880,8 +929,11 @@ func (c *CredentialService) RemoveMasterPassword(currentPassword string) error {
 	return nil
 }
 
-// ResetMasterPassword removes the master password protection without requiring the current password.
-// This is used for recovery when the user has forgotten their master password.
+// ResetMasterPassword is the "I forgot my master password" path. Because the
+// caller has not proven they know the password, it must not leave the saved
+// credentials readable: it permanently deletes every stored secret together with
+// the master password, which is the only way to recover without being a bypass of
+// the lock. The user can then set a new master password and re-enter credentials.
 func (c *CredentialService) ResetMasterPassword() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -889,9 +941,26 @@ func (c *CredentialService) ResetMasterPassword() error {
 	if c.vault == nil {
 		return fmt.Errorf("vault is not initialized")
 	}
+
+	// The app-lock settings are a separate gate, not part of what this reset is
+	// allowed to remove: keep them across the wipe.
+	keep := map[string]string{}
+	for _, k := range []string{vaultAppLockHashKey, vaultAppLockHintKey, vaultAppLockHistoryKey, vaultAppLockEnabledKey} {
+		if v, ok, _ := c.vault.Load(k); ok {
+			keep[k] = v
+		}
+	}
+	if err := c.vault.ClearAll(); err != nil {
+		return fmt.Errorf("failed to clear stored credentials: %w", err)
+	}
 	_ = c.vault.Delete(vaultMasterHashKey)
 	_ = c.vault.Delete(vaultMasterHintKey)
 	_ = c.vault.Delete(vaultMasterHistoryKey)
+	for k, v := range keep {
+		if err := c.vault.Save(k, v); err != nil {
+			return fmt.Errorf("failed to restore app lock settings: %w", err)
+		}
+	}
 	c.resetLockoutLocked()
 	c.isLocked = false
 	return nil
@@ -911,7 +980,13 @@ func (c *CredentialService) ChangeMasterPassword(currentPassword, newPassword, n
 		return err
 	}
 	if ok && storedHash != "" {
+		if lerr := c.lockedOutLocked(&c.stage, &c.lockoutUntil, "master password"); lerr != nil {
+			return lerr
+		}
 		if err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(strings.TrimSpace(currentPassword))); err != nil {
+			if lerr := c.recordFailureLocked(&c.stage, &c.failedAttempts, &c.lockoutUntil, "master", c.resetLockoutLocked); lerr != nil {
+				return lerr
+			}
 			return fmt.Errorf("incorrect current master password")
 		}
 	}
@@ -1077,55 +1152,10 @@ func (c *CredentialService) VerifyAppPassword(password string) (bool, error) {
 		return true, nil
 	}
 
-	c.appLockFailedAttempts++
-	switch c.appLockStage {
-	case 1:
-		if c.appLockFailedAttempts >= 5 {
-			c.appLockLockoutUntil = time.Now().Add(30 * time.Second)
-			c.appLockStage = 2
-			c.appLockFailedAttempts = 0
-			c.saveLockoutStateLocked()
-			return false, fmt.Errorf("incorrect app password: 5 failed attempts reached, locked out for 30 seconds")
-		}
-		c.saveLockoutStateLocked()
-		return false, nil
-
-	case 2:
-		if c.appLockFailedAttempts >= 5 {
-			c.appLockLockoutUntil = time.Now().Add(2 * time.Minute)
-			c.appLockStage = 3
-			c.appLockFailedAttempts = 0
-			c.saveLockoutStateLocked()
-			return false, fmt.Errorf("incorrect app password: 5 failed attempts reached, locked out for 2 minutes")
-		}
-		c.saveLockoutStateLocked()
-		return false, nil
-
-	case 3:
-		if c.appLockFailedAttempts >= 3 {
-			c.appLockLockoutUntil = time.Now().Add(30 * time.Minute)
-			c.appLockStage = 4
-			c.appLockFailedAttempts = 0
-			c.saveLockoutStateLocked()
-			return false, fmt.Errorf("incorrect app password: 3 failed attempts reached, locked out for 30 minutes")
-		}
-		c.saveLockoutStateLocked()
-		return false, nil
-
-	default: // Stage 4: final attempt
-		if c.appLockFailedAttempts >= 1 {
-			_ = c.clearAllLocked()
-			c.resetAppLockoutLocked()
-			if c.onSecurityWipe != nil {
-				go func() {
-					_ = c.onSecurityWipe()
-				}()
-			}
-			return false, fmt.Errorf("SECURITY_WIPE: 4th authentication stage failed, all server credentials deleted and application restarting")
-		}
-		c.saveLockoutStateLocked()
-		return false, nil
+	if lerr := c.recordFailureLocked(&c.appLockStage, &c.appLockFailedAttempts, &c.appLockLockoutUntil, "app", c.resetAppLockoutLocked); lerr != nil {
+		return false, lerr
 	}
+	return false, nil
 }
 
 // GetAppPasswordHint returns the reminder hint configured for the app lock password.
@@ -1156,7 +1186,13 @@ func (c *CredentialService) ChangeAppPassword(currentPassword, newPassword, newH
 		return err
 	}
 	if ok && storedHash != "" {
+		if lerr := c.lockedOutLocked(&c.appLockStage, &c.appLockLockoutUntil, "app password"); lerr != nil {
+			return lerr
+		}
 		if err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(strings.TrimSpace(currentPassword))); err != nil {
+			if lerr := c.recordFailureLocked(&c.appLockStage, &c.appLockFailedAttempts, &c.appLockLockoutUntil, "app", c.resetAppLockoutLocked); lerr != nil {
+				return lerr
+			}
 			return fmt.Errorf("incorrect current app password")
 		}
 	}
@@ -1210,7 +1246,13 @@ func (c *CredentialService) RemoveAppPassword(currentPassword string) error {
 		return err
 	}
 	if ok && storedHash != "" {
+		if lerr := c.lockedOutLocked(&c.appLockStage, &c.appLockLockoutUntil, "app password"); lerr != nil {
+			return lerr
+		}
 		if err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(strings.TrimSpace(currentPassword))); err != nil {
+			if lerr := c.recordFailureLocked(&c.appLockStage, &c.appLockFailedAttempts, &c.appLockLockoutUntil, "app", c.resetAppLockoutLocked); lerr != nil {
+				return lerr
+			}
 			return fmt.Errorf("incorrect app password")
 		}
 	}
@@ -1247,6 +1289,9 @@ func (c *CredentialService) ResetAppPasswordWithPrevious(previousPassword, newPa
 		return fmt.Errorf("no app password history found; new users cannot use this recovery method")
 	}
 
+	if lerr := c.lockedOutLocked(&c.appLockStage, &c.appLockLockoutUntil, "app password"); lerr != nil {
+		return lerr
+	}
 	trimmedPrev := strings.TrimSpace(previousPassword)
 	matched := false
 	for _, h := range history {
@@ -1256,6 +1301,9 @@ func (c *CredentialService) ResetAppPasswordWithPrevious(previousPassword, newPa
 		}
 	}
 	if !matched {
+		if lerr := c.recordFailureLocked(&c.appLockStage, &c.appLockFailedAttempts, &c.appLockLockoutUntil, "app", c.resetAppLockoutLocked); lerr != nil {
+			return lerr
+		}
 		return fmt.Errorf("entered password does not match any of your last 3 app passwords")
 	}
 

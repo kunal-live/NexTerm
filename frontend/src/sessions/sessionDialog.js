@@ -361,7 +361,7 @@ export async function showNewSessionDialog(parentFolderId = "", editProfile = nu
               <option value="vnc" ${p.protocol === 'vnc' ? 'selected' : ''}>VNC — Virtual Network Computing</option>
               <option value="telnet" ${p.protocol === 'telnet' ? 'selected' : ''}>Telnet — Unencrypted Terminal</option>
               <option value="serial" ${p.protocol === 'serial' ? 'selected' : ''}>Serial — COM Port</option>
-              <option value="local" ${p.protocol === 'local' ? 'selected' : ''}>Local — PowerShell / CMD</option>
+              <option value="local" ${p.protocol === 'local' ? 'selected' : ''}>Local — Shell (PowerShell / CMD / zsh / bash)</option>
             </select>
           </div>
 

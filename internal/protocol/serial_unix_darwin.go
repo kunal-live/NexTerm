@@ -10,6 +10,15 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+// platformBaud: macOS termios stores the numeric rate, so any positive rate up to
+// 4 Mbaud is accepted (the driver rejects what the hardware cannot do).
+func platformBaud(baud int) (uint32, bool) {
+	if baud > 0 && baud <= 4000000 {
+		return uint32(baud), true
+	}
+	return 0, false
+}
+
 func configureSerialPort(f *os.File, baud, dataBits, stopBits int, parity string) error {
 	speed, err := unixSerialBaud(baud)
 	if err != nil {

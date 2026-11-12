@@ -14,7 +14,7 @@ import (
 const linuxServiceName = "Nexterm"
 
 // ErrSecretServiceUnavailable indicates that the Linux Secret Service / libsecret tool is missing.
-var ErrSecretServiceUnavailable = errors.New("vault: Linux Secret Service / libsecret is unavailable (secret-tool not found)")
+var ErrSecretServiceUnavailable = errors.New("vault: Linux Secret Service / libsecret is unavailable (secret-tool not found). Install it to save passwords: libsecret-tools (Debian/Ubuntu) or libsecret (Fedora/Arch/openSUSE), plus a running keyring such as GNOME Keyring or KWallet")
 
 // Vault stores credentials securely using the Linux Secret Service API (via secret-tool / GNOME Keyring / KWallet).
 // Passwords are sent over standard input to avoid leaking secrets in process arguments.
@@ -38,6 +38,11 @@ func NewVaultAt(dir string) (*Vault, error) {
 func (v *Vault) Save(key, secret string) error {
 	if key == "" {
 		return errors.New("vault: key cannot be empty")
+	}
+	if secret == "" {
+		// secret-tool cannot store an empty secret, and Load reports an empty
+		// value as absent anyway (e.g. an optional password hint).
+		return v.Delete(key)
 	}
 
 	// secret-tool store --label="Nexterm" service Nexterm account <key>
@@ -76,7 +81,12 @@ func (v *Vault) Load(key string) (string, bool, error) {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		// Non-zero exit code means secret was not found
+		// secret-tool exits 1 with no output when nothing matches. Anything it
+		// prints (no D-Bus session, locked keyring, ...) is a real failure that must
+		// not be mistaken for "no saved password".
+		if msg := strings.TrimSpace(stderr.String()); msg != "" {
+			return "", false, fmt.Errorf("secret-tool lookup failed: %w (%s)", err, msg)
+		}
 		return "", false, nil
 	}
 	val := strings.TrimRight(stdout.String(), "\r\n")
