@@ -54,7 +54,23 @@ type TunnelManager struct {
 	mu       sync.Mutex
 	tunnels  map[string]TunnelConfig
 	running  map[string]*runningTunnel
+	// lastErr remembers why a tunnel last failed. A tunnel's status is derived
+	// from running + lastErr (see statusLocked) instead of being kept in sync by
+	// hand in a Status field.
+	lastErr  map[string]string
 	filePath string
+}
+
+// statusLocked is the single source of a tunnel's status: running if it has a
+// live listener, error if its last start/run failed, otherwise stopped.
+func (tm *TunnelManager) statusLocked(id string) (status, errMsg string) {
+	if _, ok := tm.running[id]; ok {
+		return "running", ""
+	}
+	if e, ok := tm.lastErr[id]; ok {
+		return "error", e
+	}
+	return "stopped", ""
 }
 
 func NewTunnelManager() *TunnelManager {
@@ -68,6 +84,7 @@ func NewTunnelManager() *TunnelManager {
 	tm := &TunnelManager{
 		tunnels:  make(map[string]TunnelConfig),
 		running:  make(map[string]*runningTunnel),
+		lastErr:  make(map[string]string),
 		filePath: filepath.Join(dir, "tunnels.json"),
 	}
 	_ = tm.load()
@@ -96,11 +113,7 @@ func (tm *TunnelManager) save() error {
 	var list []TunnelConfig
 	for _, t := range tm.tunnels {
 		copyT := t
-		if _, ok := tm.running[t.ID]; ok {
-			copyT.Status = "running"
-		} else {
-			copyT.Status = "stopped"
-		}
+		copyT.Status, copyT.ErrorMsg = tm.statusLocked(t.ID)
 		list = append(list, copyT)
 	}
 	data, err := json.MarshalIndent(list, "", "  ")
@@ -120,11 +133,7 @@ func (tm *TunnelManager) GetTunnels() []TunnelConfig {
 
 	var list []TunnelConfig
 	for _, t := range tm.tunnels {
-		if _, ok := tm.running[t.ID]; ok {
-			t.Status = "running"
-		} else if t.Status != "error" {
-			t.Status = "stopped"
-		}
+		t.Status, t.ErrorMsg = tm.statusLocked(t.ID)
 		list = append(list, t)
 	}
 	// Map iteration order is random; keep the UI list stable.
@@ -144,7 +153,8 @@ func (tm *TunnelManager) SaveTunnel(t TunnelConfig) error {
 	if t.ID == "" {
 		t.ID = fmt.Sprintf("tun-%d", time.Now().UnixNano())
 	}
-	t.Status = "stopped"
+	t.Status, t.ErrorMsg = "", "" // derived, never stored
+	delete(tm.lastErr, t.ID)
 	tm.tunnels[t.ID] = t
 	return tm.save()
 }
@@ -155,6 +165,7 @@ func (tm *TunnelManager) DeleteTunnel(id string) error {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 	delete(tm.tunnels, id)
+	delete(tm.lastErr, id)
 	return tm.save()
 }
 
@@ -193,9 +204,7 @@ func (tm *TunnelManager) StartTunnel(id string, sshClient *ssh.Client) error {
 	}
 
 	if err != nil {
-		t.Status = "error"
-		t.ErrorMsg = err.Error()
-		tm.tunnels[id] = t
+		tm.lastErr[id] = err.Error()
 		tm.mu.Unlock()
 		return err
 	}
@@ -206,9 +215,7 @@ func (tm *TunnelManager) StartTunnel(id string, sshClient *ssh.Client) error {
 		stopChan: make(chan struct{}),
 	}
 	tm.running[id] = rt
-	t.Status = "running"
-	t.ErrorMsg = ""
-	tm.tunnels[id] = t
+	delete(tm.lastErr, id)
 	tm.mu.Unlock()
 
 	go tm.handleConnections(rt, sshClient)
@@ -227,11 +234,7 @@ func (tm *TunnelManager) handleConnections(rt *runningTunnel, client *ssh.Client
 				tm.mu.Lock()
 				if tm.running[rt.config.ID] == rt {
 					delete(tm.running, rt.config.ID)
-					if t, ok := tm.tunnels[rt.config.ID]; ok {
-						t.Status = "error"
-						t.ErrorMsg = err.Error()
-						tm.tunnels[rt.config.ID] = t
-					}
+					tm.lastErr[rt.config.ID] = err.Error()
 				}
 				tm.mu.Unlock()
 			}
@@ -303,11 +306,7 @@ func (tm *TunnelManager) StopTunnel(id string) error {
 		delete(tm.running, id)
 	}
 
-	if t, ok := tm.tunnels[id]; ok {
-		t.Status = "stopped"
-		t.ErrorMsg = ""
-		tm.tunnels[id] = t
-	}
+	delete(tm.lastErr, id)
 	return nil
 }
 

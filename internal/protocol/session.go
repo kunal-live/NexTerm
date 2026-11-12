@@ -3,6 +3,8 @@ package protocol
 import (
 	"context"
 	"nexterm/internal/model"
+	"nexterm/internal/sshsession"
+	"strings"
 	"sync"
 )
 
@@ -127,6 +129,32 @@ func (b *BaseSession) EmitStateChange(state, message string) {
 	h := b.StateChangeHandle
 	b.Mu.RUnlock()
 	if h != nil {
-		h(state, message)
+		h(CanonicalState(state), message)
 	}
+}
+
+// CanonicalState maps a protocol's state name onto the single vocabulary the UI
+// understands (sshsession.ConnectionState: "Connecting", "Connected", "Failed",
+// ...). RDP/VNC/Telnet/Serial historically reported lowercase names, which the
+// UI never matched, so their tabs never showed the right state.
+func CanonicalState(state string) string {
+	switch strings.ToLower(strings.TrimSpace(state)) {
+	case "disconnected":
+		return string(sshsession.StateDisconnected)
+	case "connecting":
+		return string(sshsession.StateConnecting)
+	case "authenticating":
+		return string(sshsession.StateAuthenticating)
+	case "connected":
+		return string(sshsession.StateConnected)
+	case "reconnecting":
+		return string(sshsession.StateReconnecting)
+	case "closing":
+		return string(sshsession.StateClosing)
+	case "closed":
+		return string(sshsession.StateClosed)
+	case "failed":
+		return string(sshsession.StateFailed)
+	}
+	return state
 }

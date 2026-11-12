@@ -10,6 +10,7 @@ import {
   getActiveTabId,
   setActiveTabId,
   setTabConnectionState,
+  isTabSessionEnded,
   deleteTab,
   setTabColor,
   setTabTitle,
@@ -397,6 +398,11 @@ export async function executeReconnectAttempt(tabId, attempt) {
       t.term.write(`\r\n\x1b[1;32m✔ [Attempt ${attempt}/${maxAttempts}] Successfully reconnected to ${profile.host}!\x1b[0m\r\n\r\n`);
     }
     showToast(`Reconnected to ${profile.name}`, "success");
+    // Previously done by the state event; this is now the single owner of the
+    // Reconnecting -> Connected transition.
+    if (refreshSFTPFn && getActiveTabId() === tabId) {
+      refreshSFTPFn((tabs[tabId] && tabs[tabId].sftpPath) || (profile && profile.initialDir) || "~");
+    }
   } catch (err) {
     if (!t.reconnectState || !t.reconnectState.active) return;
 
@@ -1095,23 +1101,23 @@ export function createTab(tabId, profile, isLocal = false, initialState = "Conne
       const st = payload.state;
       const msg = payload.message || "";
       const errInfo = payload.error ? parseClassifiedError(payload.error) : null;
+      const prev = tabs[tabId] ? tabs[tabId].connectionState : null;
       setTabConnectionState(tabId, st, errInfo, msg);
+      const cur = tabs[tabId] ? tabs[tabId].connectionState : st; // canonical name
+      if (cur === prev) return;
 
-      if (st === "Connecting") {
+      // Progress lines only. Announcing the outcome (toast, SFTP refresh,
+      // startup commands, diagnostic card) belongs to the code that awaited the
+      // connect call (startConnection / executeReconnectAttempt), so each
+      // transition has exactly one owner and nothing fires twice.
+      if (cur === "Connecting") {
         term.write(`\r\n\x1b[1;36m● Connecting to ${profile.username || 'user'}@${profile.host}:${profile.port || 22}...\x1b[0m\r\n`);
-      } else if (st === "Authenticating") {
+      } else if (cur === "Authenticating") {
         term.write(`\x1b[1;33m● Authenticating user '${profile.username}'...\x1b[0m\r\n`);
-      } else if (st === "Connected") {
+      } else if (cur === "Connected") {
         term.write(`\x1b[1;32m● Connected to ${profile.host}\x1b[0m\r\n\r\n`);
-        showToast(`● Connected: ${profile.name || profile.host}`, "success", { eventType: "connect", isSystemEvent: true });
         syncTerminalSize(tabId);
         setTimeout(() => syncTerminalSize(tabId), 100);
-        if (switchSidebarViewFn) switchSidebarViewFn("sftp");
-        const currentSFTPPath = (tabs[tabId] && tabs[tabId].sftpPath) || (profile && profile.initialDir) || "~";
-        if (refreshSFTPFn) refreshSFTPFn(currentSFTPPath);
-      } else if (st === "Failed") {
-        renderTerminalDiagnosticCard(term, profile, errInfo);
-        showToast(`● Connection failed: ${profile.name || profile.host}`, "error", { isSystemEvent: true });
       }
     });
     if (typeof unsubState === "function") unsubs.push(unsubState);
@@ -1153,8 +1159,10 @@ export function createTab(tabId, profile, isLocal = false, initialState = "Conne
     const tObj = tabs[tabId];
     if (!tObj) return;
 
-    // When server or process is closed, hitting Enter automatically closes the tab
-    if (tObj.awaitingCloseOnEnter || tObj.connectionState === "Closed" || !tObj.isConnected) {
+    // When the server or process has ended, hitting Enter closes the tab. Only an
+    // ended session qualifies: a tab still Connecting/Reconnecting is not
+    // connected yet, but Enter there must not close it.
+    if (isTabSessionEnded(tObj)) {
       if (e.key === "\r" || (e.domEvent && e.domEvent.key === "Enter")) {
         hideReconnectBanner(tabId);
         closeTab(tabId);

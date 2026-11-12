@@ -222,6 +222,8 @@ export async function lockNow() {
   if (window.go?.main?.App?.LockApp) {
     try { await window.go.main.App.LockApp(); } catch (_) {}
   }
+  // Let open views that show secrets (Password Manager) re-lock themselves.
+  try { window.dispatchEvent(new CustomEvent("nexterm:app-locked")); } catch (_) {}
 
   let countdownInterval = null;
 

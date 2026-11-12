@@ -2488,8 +2488,26 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
       }
       cachedVaultCreds = creds;
       renderVaultList();
-    } catch (_) {}
+    } catch (err) {
+      // The backend refused because it is locked again: follow it instead of
+      // showing an "unlocked" vault with an empty list.
+      if (/locked/i.test(String(err && err.message ? err.message : err)) && isVaultUnlocked) {
+        isVaultUnlocked = false;
+        cachedVaultCreds = [];
+        refreshVaultView();
+      }
+    }
   };
+
+  // When the app locks (manually or on idle) the backend re-locks the vault;
+  // drop the local unlock flag and hide any passwords already on screen.
+  const onAppLocked = () => {
+    if (!box.isConnected) { window.removeEventListener("nexterm:app-locked", onAppLocked); return; }
+    isVaultUnlocked = false;
+    cachedVaultCreds = [];
+    refreshVaultView();
+  };
+  window.addEventListener("nexterm:app-locked", onAppLocked);
 
   const refreshVaultView = async () => {
     const tabEl = box.querySelector("#tab-settings-pwd");
@@ -2528,6 +2546,13 @@ export async function showSettingsDialog(initialTab = "tab-settings-term") {
         securedPillEl.style.border = "1px solid rgba(245, 158, 11, 0.3)";
         securedPillEl.textContent = "⚠️ Vault Lock Inactive (Master Password Recommended)";
       }
+    }
+
+    // The backend decides whether passwords may be shown; resync the local flag.
+    if (hasMaster && isVaultUnlocked && window.go?.main?.App?.IsAppLocked) {
+      try {
+        if (await window.go.main.App.IsAppLocked()) isVaultUnlocked = false;
+      } catch (_) {}
     }
 
     if (hasMaster) {

@@ -188,20 +188,33 @@ export function getStateLabel(tabObj) {
   }
 }
 
+// The tab lifecycle states (mirrors sshsession.ConnectionState in the backend).
+const TAB_STATES = ["Disconnected", "Connecting", "Authenticating", "Connected", "Reconnecting", "Closing", "Closed", "Failed"];
+const TAB_STATE_BY_LOWER = Object.fromEntries(TAB_STATES.map(s => [s.toLowerCase(), s]));
+
+/** Normalizes any spelling ("connected", "CONNECTED") to the canonical state name. */
+export function canonicalTabState(state) {
+  return TAB_STATE_BY_LOWER[String(state || "").toLowerCase()] || state;
+}
+
+/** True once a tab's session has ended (Enter closes it, R reconnects). */
+export function isTabSessionEnded(t) {
+  if (!t) return true;
+  return !!t.awaitingCloseOnEnter || ["Closed", "Failed", "Disconnected"].includes(t.connectionState);
+}
+
 export function setTabConnectionState(tabId, state, errorInfo = null, customMessage = "") {
   const t = tabs[tabId];
   if (!t) return;
 
+  // connectionState is the single source of truth for a tab's lifecycle;
+  // isConnected is derived from it so the two can never disagree.
+  state = canonicalTabState(state);
   t.connectionState = state;
+  t.isConnected = state === "Connected";
   if (errorInfo) t.errorInfo = errorInfo;
   if (customMessage) t.stateMessage = customMessage;
-
-  if (state === "Connected") {
-    t.isConnected = true;
-    t.errorInfo = null;
-  } else if (state === "Closed" || state === "Failed" || state === "Disconnected") {
-    t.isConnected = false;
-  }
+  if (state === "Connected") t.errorInfo = null;
 
   const dotClass = getStateDotClass(t);
   const tooltip = getStateTooltip(t);

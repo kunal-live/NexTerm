@@ -423,7 +423,17 @@ func (s *UpdateService) DownloadAndApplyUpdate(ctx context.Context, downloadURL 
 	defer func() {
 		if !handedOff {
 			_ = os.RemoveAll(tempDir)
+			return
 		}
+		// Applied: the offer is consumed. Clear it so a second ApplyUpdate (e.g.
+		// a double click while the app is exiting) cannot start another install
+		// of the same asset; a fresh CheckForUpdates must run first. A failed
+		// attempt keeps the offer so the user can retry.
+		s.mu.Lock()
+		if s.pending == pending {
+			s.pending = nil
+		}
+		s.mu.Unlock()
 	}()
 
 	downloadPath := filepath.Join(tempDir, "update_payload")
