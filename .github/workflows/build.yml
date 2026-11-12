@@ -275,6 +275,27 @@ jobs:
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "title=NexTerm ${TAG} — Desktop SSH & Systems Workspace" >> "$GITHUB_OUTPUT"
 
+      - name: Check version is new
+        id: release_check
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.release_meta.outputs.tag }}"
+          CODE_VER=$(grep -oP 'CurrentAppVersion = "\K[^"]+' internal/service/update_service.go)
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            if [[ "$TAG" != "v${CODE_VER}" ]]; then
+              echo "::error::Tag $TAG does not match CurrentAppVersion v${CODE_VER} in update_service.go; bump it (and wails.json) before tagging."
+              exit 1
+            fi
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          elif gh release view "$TAG" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "::warning::Release $TAG already exists; installed apps only update when the version increases. Bump CurrentAppVersion and wails.json to ship these changes."
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Download Windows Artifacts
         uses: actions/download-artifact@v4
         with:
@@ -336,6 +357,7 @@ jobs:
           sed -i "s/TAG/${TAG}/g" release_body.md
 
       - name: Create or Update GitHub Release
+        if: steps.release_check.outputs.publish == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.release_meta.outputs.tag }}
