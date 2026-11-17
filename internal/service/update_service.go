@@ -27,7 +27,7 @@ import (
 )
 
 // CurrentAppVersion defines the running application version.
-const CurrentAppVersion = "1.4.2"
+const CurrentAppVersion = "1.4.3"
 
 // DefaultUpdateRepo is the GitHub repository queried for updates.
 const DefaultUpdateRepo = "kunal-live/NexTerm"
