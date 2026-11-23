@@ -473,7 +473,7 @@
             <button class="nav-ws-item" data-ws="Testing" type="button"><span class="ws-dot"
                 style="background:#22c55e"></span>Testing</button>
             <button class="nav-ws-item" data-ws="Development" type="button"><span class="ws-dot"
-                style="background:#a855f7"></span>Development</button>
+                style="background:#0284c7"></span>Development</button>
             <button class="nav-ws-item" data-ws="Personal" type="button"><span class="ws-dot"
                 style="background:#3b82f6"></span>Personal</button>
           </div>
@@ -803,7 +803,7 @@
                 </button>
                 <button id="sftpEditBtn" class="moba-sftp-btn" title="Edit selected file in Nexterm Editor" aria-label="Edit selected file in Nexterm Editor">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-                    <rect x="2" y="2" width="20" height="20" rx="3" fill="#a855f7" /><text x="12" y="16.5"
+                    <rect x="2" y="2" width="20" height="20" rx="3" fill="#0284c7" /><text x="12" y="16.5"
                       font-size="14" font-family="Segoe UI, sans-serif" font-weight="900" fill="#ffffff"
                       text-anchor="middle">A</text>
                   </svg>
@@ -818,7 +818,7 @@
                 </button>
                 <button id="sftpSyncBtn" class="moba-sftp-btn" title="Automatic Terminal-SFTP Directory Sync" aria-label="Automatic Terminal-SFTP Directory Sync">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-                    <path d="M15 4l5 5L7 21l-5-5L15 4z" fill="#ec4899" stroke="#db2777" stroke-width="1" />
+                    <path d="M15 4l5 5L7 21l-5-5L15 4z" fill="#38bdf8" stroke="#0284c7" stroke-width="1" />
                     <circle cx="19" cy="3" r="1.5" fill="#facc15" />
                     <circle cx="21" cy="7" r="1" fill="#facc15" />
                     <circle cx="16" cy="1" r="1" fill="#facc15" />
@@ -891,7 +891,7 @@
               </div>
               <div style="padding: 6px 8px;">
                 <button id="sidebarNewMacroBtn" class="btn-primary"
-                  style="width: 100%; font-size: 11px; padding: 5px;">＋ Record New Macro...</button>
+                  style="width: 100%; font-size: 12px; padding: 6px 10px;">＋ Record New Macro...</button>
               </div>
               <div id="macrosList" class="macros-list-container"></div>
             </div>
@@ -903,7 +903,7 @@
               </div>
               <div style="padding: 6px 8px;">
                 <button id="sidebarNewTunnelBtn" class="btn-primary"
-                  style="width: 100%; font-size: 11px; padding: 5px;">＋ New SSH Tunnel...</button>
+                  style="width: 100%; font-size: 12px; padding: 6px 10px;">＋ New SSH Tunnel...</button>
               </div>
               <div id="sidebarTunnelList" class="tunnel-list-container"></div>
             </div>
@@ -997,27 +997,27 @@
                   Follow Terminal Folder
                 </span>
                 <span
-                  style="font-size:10px; background:rgba(56,189,248,0.15); color:#38bdf8; padding:2px 6px; border-radius:4px;">SYNC</span>
+                  style="font-size: 12px; background:rgba(56,189,248,0.15); color:#38bdf8; padding:2px 6px; border-radius:4px;">SYNC</span>
               </div>
-              <p style="font-size:11px; color:#94a3b8; margin:0; line-height:1.4;">
+              <p style="font-size:12.5px; color:#94a3b8; margin:0; line-height:1.4;">
                 Automatically keeps the left SFTP file browser aligned with the remote terminal's working directory
                 whenever you run <code>cd</code> commands.
               </p>
               <div
                 style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:10px; display:flex; flex-direction:column; gap:8px;">
                 <label
-                  style="display:flex; align-items:center; gap:8px; font-size:11px; color:#f1f5f9; cursor:pointer;">
+                  style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:#f1f5f9; cursor:pointer;">
                   <input type="checkbox" id="followTermPanelCheckbox" checked
                     style="accent-color:#38bdf8; width:14px; height:14px;" />
                   <span>Follow active terminal folder automatically</span>
                 </label>
-                <div style="font-size:10px; color:#64748b; margin-top:4px;">Current terminal path:</div>
+                <div style="font-size: 12.5px; color: #94a3b8; margin-top:4px;">Current terminal path:</div>
                 <div id="followTermCurrentPath"
-                  style="font-family:monospace; font-size:11px; color:#38bdf8; background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:4px; word-break:break-all;">
+                  style="font-family:monospace; font-size:12px; color:#38bdf8; background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:4px; word-break:break-all;">
                   —</div>
               </div>
               <button id="followTermSyncNowBtn" class="btn btn-sm btn-primary" type="button"
-                style="width:100%; padding:8px; font-size:11px; font-weight:600; border-radius:6px; background:#0284c7; color:#fff; border:none; cursor:pointer;">
+                style="width:100%; padding:8px; font-size:12px; font-weight:600; border-radius:6px; background:#0369a1; color:#ffffff; border:none; cursor:pointer;">
                 🔄 Sync SFTP to Terminal Directory Now
               </button>
             </div>
@@ -1036,23 +1036,23 @@
                   Remote Server Monitoring
                 </span>
                 <span
-                  style="font-size:10px; background:rgba(34,197,94,0.15); color:#22c55e; padding:2px 6px; border-radius:4px;">LIVE</span>
+                  style="font-size: 12px; background:rgba(34,197,94,0.15); color:#22c55e; padding:2px 6px; border-radius:4px;">LIVE</span>
               </div>
-              <p style="font-size:11px; color:#94a3b8; margin:0; line-height:1.4;">
+              <p style="font-size:12.5px; color:#94a3b8; margin:0; line-height:1.4;">
                 Real-time performance telemetry for remote Linux &amp; Unix SSH hosts (CPU, RAM, Disks, Network I/O,
                 Uptime).
               </p>
               <div
                 style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:6px; padding:10px; display:flex; flex-direction:column; gap:8px;">
-                <div style="display:flex; justify-content:space-between; font-size:11px; color:#94a3b8;">
+                <div style="display:flex; justify-content:space-between; font-size:12.5px; color:#94a3b8;">
                   <span>Monitored Server:</span>
                   <span id="monitorActiveServer" style="color:#f1f5f9; font-weight:600;">No SSH connection</span>
                 </div>
-                <div style="font-size:10px; color:#64748b;">Monitoring updates periodically through SSH subsystem
+                <div style="font-size: 12.5px; color: #94a3b8;">Monitoring updates periodically through SSH subsystem
                   telemetry.</div>
               </div>
               <button id="monitorLaunchBtn" class="btn btn-sm btn-primary" type="button"
-                style="width:100%; padding:8px; font-size:11px; font-weight:600; border-radius:6px; background:#16a34a; color:#fff; border:none; cursor:pointer;">
+                style="width:100%; padding:8px; font-size:12px; font-weight:600; border-radius:6px; background:#15803d; color:#ffffff; border:none; cursor:pointer;">
                 📊 Open Live Monitoring Dashboard
               </button>
             </div>
